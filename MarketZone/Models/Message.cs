@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MarketZone.Models
@@ -9,8 +8,7 @@ namespace MarketZone.Models
 		[Key]
 		public int Id { get; set; }
 
-		[Required]
-		[StringLength(1000)]
+		[Required, StringLength(1000)]
 		public string Content { get; set; } = null!;
 
 		public DateTime SentOn { get; set; } = DateTime.Now;

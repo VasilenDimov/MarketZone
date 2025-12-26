@@ -13,6 +13,10 @@ namespace MarketZone.Data
 		public DbSet<Ad> Ads { get; set; } = null!;
 		public DbSet<Message> Messages { get; set; } = null!;
 		public DbSet<Review> Reviews { get; set; } = null!;
+		public DbSet<AdImage> AdImages { get; set; } = null!;
+		public DbSet<Tag> Tags { get; set; } = null!;
+
+
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -45,6 +49,10 @@ namespace MarketZone.Data
 				.WithMany(u => u.ReviewsReceived)
 				.HasForeignKey(r => r.ReviewedUserId)
 				.OnDelete(DeleteBehavior.Restrict);
+
+			builder.Entity<Ad>()
+	            .Property(a => a.Price)
+	            .HasPrecision(18, 2);
 		}
 	}
 }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.Build.Tasks;
 using System.ComponentModel.DataAnnotations;
 
 namespace MarketZone.Models
@@ -9,7 +8,7 @@ namespace MarketZone.Models
 		[StringLength(250)]
 		public string ProfilePictureUrl { get; set; } = null!;
 
-		public ICollection<Ad> Ads { get; set; } = new HashSet<Ad>();
+		public ICollection<Ad> Ads { get; set; } = new List<Ad>();
 		public ICollection<Message> SentMessages { get; set; } = new List<Message>();
 		public ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
 		public ICollection<Review> ReviewsWritten { get; set; } = new List<Review>();
