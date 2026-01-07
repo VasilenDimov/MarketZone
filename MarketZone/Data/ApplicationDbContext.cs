@@ -15,8 +15,7 @@ namespace MarketZone.Data
 		public DbSet<Review> Reviews { get; set; } = null!;
 		public DbSet<AdImage> AdImages { get; set; } = null!;
 		public DbSet<Tag> Tags { get; set; } = null!;
-
-
+		public DbSet<Favorite> Favorites { get; set; } = null!;
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -53,6 +52,22 @@ namespace MarketZone.Data
 			builder.Entity<Ad>()
 	            .Property(a => a.Price)
 	            .HasPrecision(18, 2);
+
+			builder.Entity<Favorite>()
+	            .HasKey(f => new { f.UserId, f.AdId })
+				.IsClustered(false);
+
+			builder.Entity<Favorite>()
+		         .HasOne(f => f.User)
+		         .WithMany(u => u.Favorites)
+		         .HasForeignKey(f => f.UserId)
+		         .OnDelete(DeleteBehavior.NoAction);
+
+			builder.Entity<Favorite>()
+				.HasOne(f => f.Ad)
+				.WithMany(a => a.FavoritedBy)
+				.HasForeignKey(f => f.AdId)
+				.OnDelete(DeleteBehavior.Cascade);
 		}
 	}
 }

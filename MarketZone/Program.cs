@@ -1,4 +1,6 @@
 using MarketZone.Data;
+using MarketZone.Services.Implementations;
+using MarketZone.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +16,8 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 	.AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<IAdService, AdService>();
 
 var app = builder.Build();
 

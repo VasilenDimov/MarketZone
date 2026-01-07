@@ -37,5 +37,7 @@ namespace MarketZone.Models
 		public ICollection<AdImage> Images { get; set; } = new List<AdImage>();
 
 		public ICollection<Tag> Tags { get; set; } = new HashSet<Tag>();
+		public ICollection<Favorite> FavoritedBy { get; set; } = new List<Favorite>();
+
 	}
 }

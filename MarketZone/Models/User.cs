@@ -13,5 +13,7 @@ namespace MarketZone.Models
 		public ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
 		public ICollection<Review> ReviewsWritten { get; set; } = new List<Review>();
 		public ICollection<Review> ReviewsReceived { get; set; } = new List<Review>();
+		public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
+
 	}
 }
