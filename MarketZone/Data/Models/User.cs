@@ -1,12 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
-namespace MarketZone.Models
+namespace MarketZone.Data.Models
 {
 	public class User : IdentityUser
 	{
-		[StringLength(250)]
-		public string ProfilePictureUrl { get; set; } = null!;
+		[Required]
+		public string ProfilePictureUrl { get; set; } = "/images/default-avatar.png";
 
 		public ICollection<Ad> Ads { get; set; } = new List<Ad>();
 		public ICollection<Message> SentMessages { get; set; } = new List<Message>();

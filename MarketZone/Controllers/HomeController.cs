@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using MarketZone.Models;
 using Microsoft.AspNetCore.Mvc;
+using MarketZone.ViewModels;
 
 namespace MarketZone.Controllers
 {

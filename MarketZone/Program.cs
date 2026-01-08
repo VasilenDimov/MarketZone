@@ -1,4 +1,5 @@
 using MarketZone.Data;
+using MarketZone.Data.Models;
 using MarketZone.Services.Implementations;
 using MarketZone.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -11,9 +12,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure Identity
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false)
-	.AddRoles<IdentityRole>()
-	.AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddDefaultIdentity<User>(options =>
+{
+	options.SignIn.RequireConfirmedAccount = false;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<ApplicationDbContext>();
+
 
 builder.Services.AddControllersWithViews();
 

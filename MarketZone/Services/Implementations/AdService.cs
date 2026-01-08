@@ -1,5 +1,5 @@
 ﻿using MarketZone.Data;
-using MarketZone.Models;
+using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Ad;
 

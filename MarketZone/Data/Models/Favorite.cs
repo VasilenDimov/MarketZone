@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MarketZone.Models
+namespace MarketZone.Data.Models
 {
 	public class Favorite
 	{

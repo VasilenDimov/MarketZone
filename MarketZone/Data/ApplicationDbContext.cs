@@ -1,4 +1,4 @@
-﻿using MarketZone.Models;
+﻿using MarketZone.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 

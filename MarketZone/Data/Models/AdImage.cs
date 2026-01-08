@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace MarketZone.Models
+namespace MarketZone.Data.Models
 {
 	public class AdImage
 	{

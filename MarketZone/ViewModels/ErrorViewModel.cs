@@ -1,4 +1,4 @@
-namespace MarketZone.Models
+namespace MarketZone.ViewModels
 {
     public class ErrorViewModel
     {

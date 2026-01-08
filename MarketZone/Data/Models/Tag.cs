@@ -1,19 +1,16 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MarketZone.Models
+namespace MarketZone.Data.Models
 {
-	public class Category
+	public class Tag
 	{
 		[Key]
 		public int Id { get; set; }
 
-		
 		[Required, StringLength(100)]
 		public string Name { get; set; } = null!;
-		
-		[Required, StringLength(500)]
-		public string Description { get; set; } = null!;
 
 		public ICollection<Ad> Ads { get; set; } = new List<Ad>();
 	}
+
 }
