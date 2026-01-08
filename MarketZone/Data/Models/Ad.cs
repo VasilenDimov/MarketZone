@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Azure;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MarketZone.Data.Models
@@ -11,13 +12,16 @@ namespace MarketZone.Data.Models
 		[Required, StringLength(100)]
 		public string Title { get; set; } = null!;
 
-		[Required, StringLength(1000)]
+		[Required, StringLength(5000)]
 		public string Description { get; set; } = null!;
 		
-		[Required, Range(0, double.MaxValue)]
+		[Required]
 		public decimal Price { get; set; }
 
-		public DateTime CreatedOn { get; set; } = DateTime.Now;
+		[Required, StringLength(200)]
+		public string Address { get; set; } = null!;
+
+		public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
 		// Foreign Keys		
 		[Required]
@@ -36,7 +40,8 @@ namespace MarketZone.Data.Models
 
 		public ICollection<AdImage> Images { get; set; } = new List<AdImage>();
 
-		public ICollection<Tag> Tags { get; set; } = new HashSet<Tag>();
+		//public ICollection<Tag> Tags { get; set; } = new HashSet<Tag>();
+		public ICollection<AdTag> AdTags { get; set; } = new List<AdTag>();
 		public ICollection<Favorite> FavoritedBy { get; set; } = new List<Favorite>();
 
 	}

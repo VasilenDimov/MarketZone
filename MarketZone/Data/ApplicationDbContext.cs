@@ -16,6 +16,7 @@ namespace MarketZone.Data
 		public DbSet<AdImage> AdImages { get; set; } = null!;
 		public DbSet<Tag> Tags { get; set; } = null!;
 		public DbSet<Favorite> Favorites { get; set; } = null!;
+		public DbSet<AdTag> AdTags { get; set; } = null!;
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -68,6 +69,20 @@ namespace MarketZone.Data
 				.WithMany(a => a.FavoritedBy)
 				.HasForeignKey(f => f.AdId)
 				.OnDelete(DeleteBehavior.Cascade);
+
+			builder.Entity<AdTag>()
+	            .HasKey(at => new { at.AdId, at.TagId });
+
+			builder.Entity<AdTag>()
+				.HasOne(at => at.Ad)
+				.WithMany(a => a.AdTags)
+				.HasForeignKey(at => at.AdId);
+
+			builder.Entity<AdTag>()
+				.HasOne(at => at.Tag)
+				.WithMany(t => t.AdTags)
+				.HasForeignKey(at => at.TagId);
+
 		}
 	}
 }

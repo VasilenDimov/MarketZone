@@ -1,16 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MarketZone.Data.Models;
+using System.ComponentModel.DataAnnotations;
 
-namespace MarketZone.Data.Models
+public class Tag
 {
-	public class Tag
-	{
-		[Key]
-		public int Id { get; set; }
+	public int Id { get; set; }
 
-		[Required, StringLength(100)]
-		public string Name { get; set; } = null!;
+	[Required, StringLength(100)]
+	public string Name { get; set; } = null!;
 
-		public ICollection<Ad> Ads { get; set; } = new List<Ad>();
-	}
-
+	public ICollection<AdTag> AdTags { get; set; } = new List<AdTag>();
 }

@@ -6,32 +6,64 @@
 
 <h2>Create Ad</h2>
 
-<form asp-action="Create" method="post">
-    <div class="form-group">
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <!-- Title -->
+    <div class="form-group mb-3">
         <label asp-for="Title"></label>
         <input asp-for="Title" class="form-control" />
         <span asp-validation-for="Title" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
+    <!-- Description -->
+    <div class="form-group mb-3">
         <label asp-for="Description"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
+        <textarea asp-for="Description" class="form-control" rows="6"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
+    <!-- Price -->
+    <div class="form-group mb-3">
         <label asp-for="Price"></label>
         <input asp-for="Price" class="form-control" />
         <span asp-validation-for="Price" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
+    <!-- Address -->
+    <div class="form-group mb-3">
+        <label asp-for="Address"></label>
+        <input asp-for="Address" class="form-control" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+
+    <!-- Category dropdown -->
+    <div class="form-group mb-3">
         <label asp-for="CategoryId"></label>
-        <input asp-for="CategoryId" class="form-control" />
+        <select asp-for="CategoryId"
+                class="form-control"
+                asp-items="@(new SelectList(Model.Categories, "Id", "Name"))">
+            <option value="">-- Select category --</option>
+        </select>
         <span asp-validation-for="CategoryId" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary mt-3">Create</button>
+    <!-- Images -->
+    <div class="form-group mb-3">
+        <label asp-for="Images">Images (at least one required)</label>
+        <input asp-for="Images" type="file" multiple class="form-control" />
+        <span asp-validation-for="Images" class="text-danger"></span>
+    </div>
+
+    <!-- Tags -->
+    <div class="form-group mb-3">
+        <label asp-for="Tags">Tags (optional, comma-separated)</label>
+        <input asp-for="Tags" class="form-control" placeholder="e.g. phone, samsung, new" />
+        <span asp-validation-for="Tags" class="text-danger"></span>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="btn btn-primary mt-3">
+        Create Ad
+    </button>
 </form>
 
 @section Scripts {

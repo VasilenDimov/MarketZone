@@ -6,29 +6,40 @@ using MarketZone.ViewModels.Ad;
 
 namespace MarketZone.Controllers
 {
-	//[Authorize]
+	[Authorize]
 	public class AdController : Controller
 	{
 		private readonly IAdService adService;
+		private readonly ICategoryService categoryService;
 
-		public AdController(IAdService adService)
+		public AdController(
+			IAdService adService,
+			ICategoryService categoryService)
 		{
 			this.adService = adService;
+			this.categoryService = categoryService;
 		}
 
-		// GET
+		// GET: /Ad/Create
 		[HttpGet]
-		public IActionResult Create()
+		public async Task<IActionResult> Create()
 		{
-			return View();
+			var model = new AdCreateModel
+			{
+				Categories = await categoryService.GetAllAsync()
+			};
+
+			return View(model);
 		}
 
-		// POST
+		// POST: /Ad/Create
 		[HttpPost]
+		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(AdCreateModel model)
 		{
 			if (!ModelState.IsValid)
 			{
+				model.Categories = await categoryService.GetAllAsync();
 				return View(model);
 			}
 
