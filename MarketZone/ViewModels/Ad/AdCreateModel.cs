@@ -1,4 +1,5 @@
-﻿using MarketZone.Models.Enums;
+﻿using MarketZone.Data.Enums;
+using MarketZone.Models.Enums;
 using MarketZone.ViewModels.Category;
 using System.ComponentModel.DataAnnotations;
 
@@ -20,6 +21,9 @@ namespace MarketZone.ViewModels.Ad
 		[Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than 0.")]
 		public decimal Price { get; set; }
 
+		[Required]
+		[Display(Name = "Currency")]
+		public Currency Currency { get; set; }
 
 		[Required]
 		[Display(Name = "Category")]

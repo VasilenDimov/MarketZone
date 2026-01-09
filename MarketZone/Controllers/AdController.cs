@@ -31,6 +31,19 @@ namespace MarketZone.Controllers
 
 			return View(model);
 		}
+		[AllowAnonymous]
+		[HttpGet]
+		public async Task<IActionResult> Details(int id)
+		{
+			var model = await adService.GetDetailsAsync(id);
+
+			if (model == null)
+			{
+				return NotFound();
+			}
+
+			return View(model);
+		}
 
 		// GET: /Ad/GetChildren
 		[HttpGet]

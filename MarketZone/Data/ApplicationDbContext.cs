@@ -51,6 +51,10 @@ namespace MarketZone.Data
 				.HasForeignKey(r => r.ReviewedUserId)
 				.OnDelete(DeleteBehavior.Restrict);
 
+			builder.Entity<Review>()
+				.HasIndex(r => new { r.ReviewerId, r.ReviewedUserId })
+			    .IsUnique();
+
 			builder.Entity<Ad>()
 	            .Property(a => a.Price)
 	            .HasPrecision(18, 2);
@@ -85,12 +89,12 @@ namespace MarketZone.Data
 				.HasForeignKey(at => at.TagId);
 
 			builder.Entity<Category>().HasData(
-		new Category { Id = 1, Name = "Real Estate" },
-		new Category { Id = 2, Name = "Sales", ParentCategoryId = 1 },
-		new Category { Id = 3, Name = "Rentals", ParentCategoryId = 1 },
-		new Category { Id = 4, Name = "Apartments", ParentCategoryId = 2 },
-		new Category { Id = 5, Name = "Houses", ParentCategoryId = 2 }
-	);
+               	new Category { Id = 1, Name = "Real Estate", ParentCategoryId = null },
+	            new Category { Id = 2, Name = "Sales", ParentCategoryId = 1 },
+	            new Category { Id = 3, Name = "Rentals", ParentCategoryId = 1 },
+                new Category { Id = 4, Name = "Apartments", ParentCategoryId = 2 },
+	            new Category { Id = 5, Name = "Houses", ParentCategoryId = 2 });
+
 		}
 	}
 }

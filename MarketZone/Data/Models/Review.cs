@@ -14,7 +14,7 @@ namespace MarketZone.Data.Models
 		[StringLength(1000)]
 		public string Comment { get; set; } = null!;
 
-		public DateTime CreatedOn { get; set; } = DateTime.Now;
+		public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
 		// Foreign Keys
 		[Required]

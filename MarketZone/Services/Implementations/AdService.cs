@@ -29,6 +29,7 @@ namespace MarketZone.Services.Implementations
 				Title = model.Title,
 				Description = model.Description,
 				Price = model.Price,
+				Currency = model.Currency,
 				Address = model.Address,
 				CategoryId = model.CategoryId,
 				Condition = model.Condition,
@@ -105,5 +106,37 @@ namespace MarketZone.Services.Implementations
 
 			return $"/uploads/ads/{fileName}";
 		}
+		public async Task<AdDetailsModel?> GetDetailsAsync(int id)
+		{
+			return await context.Ads
+				.Where(a => a.Id == id)
+				.Select(a => new AdDetailsModel
+				{
+					Id = a.Id,
+					Title = a.Title,
+					Description = a.Description,
+					Price = a.Price,
+					Currency = a.Currency,
+					Condition = a.Condition,
+					Address = a.Address,
+					CreatedOn = a.CreatedOn,
+
+					SellerName = a.User.UserName!,
+					Tags = a.AdTags
+	                    .Select(t => t.Tag.Name)
+	                    .ToList(),
+
+					ImageUrls = a.Images
+						.OrderBy(i => i.Id)
+						.Select(i => i.ImageUrl)
+						.ToList(),
+
+					CategoryPath = a.Category.ParentCategory != null
+						? a.Category.ParentCategory.Name + " → " + a.Category.Name
+						: a.Category.Name
+				})
+				.FirstOrDefaultAsync();
+		}
+
 	}
 }

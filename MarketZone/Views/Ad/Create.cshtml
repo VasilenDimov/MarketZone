@@ -23,12 +23,24 @@
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
 
-    <!-- Price -->
-    <div class="form-group mb-3">
-        <label asp-for="Price"></label>
-        <input asp-for="Price" class="form-control" />
-        <span asp-validation-for="Price" class="text-danger"></span>
+    <!-- Price + Currency (same row) -->
+    <div class="row mb-3">
+        <div class="col-md-8">
+            <label asp-for="Price" class="form-label"></label>
+            <input asp-for="Price" class="form-control" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4">
+            <label asp-for="Currency" class="form-label"></label>
+            <select asp-for="Currency" class="form-control">
+                <option value="EUR">EUR (€)</option>
+                <option value="USD">USD ($)</option>
+            </select>
+            <span asp-validation-for="Currency" class="text-danger"></span>
+        </div>
     </div>
+
 
     <!-- Address -->
     <div class="form-group mb-3">

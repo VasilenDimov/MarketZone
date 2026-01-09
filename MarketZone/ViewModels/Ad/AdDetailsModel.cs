@@ -1,0 +1,28 @@
+﻿using MarketZone.Data.Enums;
+using MarketZone.Models.Enums;
+
+namespace MarketZone.ViewModels.Ad
+{
+	public class AdDetailsModel
+	{
+		public int Id { get; set; }
+
+		public string Title { get; set; } = null!;
+		public string Description { get; set; } = null!;
+
+		public decimal Price { get; set; }
+		public Currency Currency { get; set; }
+
+		public ItemCondition Condition { get; set; }
+
+		public string CategoryPath { get; set; } = null!;
+
+		public string Address { get; set; } = null!;
+
+		public DateTime CreatedOn { get; set; }
+
+		public string SellerName { get; set; } = null!;
+		public List<string> Tags { get; set; } = new();
+		public List<string> ImageUrls { get; set; } = new();
+	}
+}

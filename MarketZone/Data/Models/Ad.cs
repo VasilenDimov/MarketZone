@@ -1,4 +1,5 @@
-﻿using MarketZone.Models.Enums;
+﻿using MarketZone.Data.Enums;
+using MarketZone.Models.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -17,6 +18,9 @@ namespace MarketZone.Data.Models
 		
 		[Required]
 		public decimal Price { get; set; }
+
+		[Required]
+		public Currency Currency { get; set; }
 
 		[Required, StringLength(200)]
 		public string Address { get; set; } = null!;
