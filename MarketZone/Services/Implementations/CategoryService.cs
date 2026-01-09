@@ -25,5 +25,18 @@ namespace MarketZone.Services.Implementations
 				})
 				.ToListAsync();
 		}
+		public async Task<IEnumerable<CategoryChildDto>> GetChildrenAsync(int? parentId)
+		{
+			return await context.Categories
+				.Where(c => c.ParentCategoryId == parentId)
+				.Select(c => new CategoryChildDto
+				{
+					Id = c.Id,
+					Name = c.Name,
+					HasChildren = context.Categories.Any(sc => sc.ParentCategoryId == c.Id)
+				})
+				.ToListAsync();
+		}
+
 	}
 }

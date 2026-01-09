@@ -31,6 +31,7 @@ namespace MarketZone.Services.Implementations
 				Price = model.Price,
 				Address = model.Address,
 				CategoryId = model.CategoryId,
+				Condition = model.Condition,
 				UserId = userId,
 				CreatedOn = DateTime.UtcNow
 			};

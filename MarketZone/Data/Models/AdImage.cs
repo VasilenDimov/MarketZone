@@ -9,6 +9,7 @@ namespace MarketZone.Data.Models
 		public int Id { get; set; }
 			
 		[Required]
+		//[StringLength(2048)]
 		public string ImageUrl { get; set; } = null!;
 
 		[Required]

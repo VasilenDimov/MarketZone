@@ -7,6 +7,8 @@
 <h2>Create Ad</h2>
 
 <form asp-action="Create" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+
     <!-- Title -->
     <div class="form-group mb-3">
         <label asp-for="Title"></label>
@@ -35,24 +37,75 @@
         <span asp-validation-for="Address" class="text-danger"></span>
     </div>
 
-    <!-- Category dropdown -->
+    <!-- Category picker -->
     <div class="form-group mb-3">
-        <label asp-for="CategoryId"></label>
-        <select asp-for="CategoryId"
-                class="form-control"
-                asp-items="@(new SelectList(Model.Categories, "Id", "Name"))">
-            <option value="">-- Select category --</option>
-        </select>
+        <label>Category</label>
+
+        <div class="border rounded p-2">
+            <div class="d-flex align-items-center mb-2">
+                <button type="button"
+                        id="back-btn"
+                        class="btn btn-sm btn-outline-secondary me-2"
+                        style="display:none;">
+                    ← Back
+                </button>
+
+                <span id="breadcrumb" class="text-muted"></span>
+            </div>
+
+            <ul id="category-list" class="list-unstyled mb-0"></ul>
+        </div>
+
+        <input type="hidden" asp-for="CategoryId" />
         <span asp-validation-for="CategoryId" class="text-danger"></span>
     </div>
-
     <!-- Images -->
     <div class="form-group mb-3">
-        <label asp-for="Images">Images (at least one required)</label>
-        <input asp-for="Images" type="file" multiple class="form-control" />
+        <label class="form-label d-block">Images (up to 10)</label>
+
+        <!-- Hidden real file input -->
+        <input asp-for="Images"
+               type="file"
+               id="image-input"
+               multiple
+               accept="image/*"
+               class="d-none" />
+
+        <div class="image-grid" id="image-grid"></div>
+
         <span asp-validation-for="Images" class="text-danger"></span>
     </div>
 
+    <!-- Condition (New / Used) -->
+    <div class="form-group mb-3">
+        <label class="form-label d-block">Condition</label>
+
+        <div class="btn-group" role="group">
+            <input type="radio"
+                   class="btn-check"
+                   asp-for="Condition"
+                   value="New"
+                   id="condition-new" />
+
+            <label class="btn btn-outline-primary"
+                   for="condition-new">
+                New
+            </label>
+
+            <input type="radio"
+                   class="btn-check"
+                   asp-for="Condition"
+                   value="Used"
+                   id="condition-used" />
+
+            <label class="btn btn-outline-primary"
+                   for="condition-used">
+                Used
+            </label>
+        </div>
+
+        <span asp-validation-for="Condition" class="text-danger"></span>
+    </div>
     <!-- Tags -->
     <div class="form-group mb-3">
         <label asp-for="Tags">Tags (optional, comma-separated)</label>
@@ -68,4 +121,143 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const list = document.getElementById("category-list");
+        const hiddenInput = document.getElementById("CategoryId");
+        const backBtn = document.getElementById("back-btn");
+        const breadcrumb = document.getElementById("breadcrumb");
+
+        let parentStack = [];
+        let currentParentId = null;
+        let breadcrumbStack = [];
+
+        loadCategories(null);
+
+        function loadCategories(parentId, label = null) {
+            if (label) {
+                breadcrumbStack.push(label);
+            }
+
+            fetch(`/Ad/GetChildren?parentId=${parentId ?? ""}`)
+                .then(res => res.json())
+                .then(data => {
+                    list.innerHTML = "";
+                    currentParentId = parentId;
+
+                    backBtn.style.display = parentStack.length > 0 ? "inline-block" : "none";
+                    breadcrumb.textContent = breadcrumbStack.join(" → ");
+
+                    data.forEach(c => {
+                        const li = document.createElement("li");
+                        li.classList.add("p-2", "border-bottom");
+                        li.style.cursor = "pointer";
+
+                        li.textContent = c.name;
+
+                        if (c.hasChildren) {
+                            li.innerHTML += " ➜";
+                            li.onclick = () => {
+                                parentStack.push(currentParentId);
+                                loadCategories(c.id, c.name);
+                            };
+                        } else {
+                            li.onclick = () => {
+                                hiddenInput.value = c.id;
+
+                                [...list.children].forEach(x => x.classList.remove("bg-light"));
+                                li.classList.add("bg-light");
+                            };
+                        }
+
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        backBtn.onclick = () => {
+            currentParentId = parentStack.pop();
+            breadcrumbStack.pop();
+
+            loadCategories(currentParentId);
+        };
+    </script>
+    <script>
+        const grid = document.getElementById("image-grid");
+        const input = document.getElementById("image-input");
+        const errorSpan = document.querySelector("[data-valmsg-for='Images']");
+
+        const MAX_IMAGES = 10;
+        let files = [];
+
+        renderGrid();
+
+        function renderGrid() {
+            grid.innerHTML = "";
+
+            // Render selected images
+            files.forEach((file, index) => {
+                const box = document.createElement("div");
+                box.className = "image-box";
+
+                const reader = new FileReader();
+                reader.onload = e => {
+                    box.innerHTML = `
+                        <img src="${e.target.result}">
+                        <div class="image-actions">
+                            <button type="button" title="Remove">🗑</button>
+                        </div>
+                    `;
+
+                    box.querySelector("[title='Remove']").onclick = ev => {
+                        ev.stopPropagation();
+                        files.splice(index, 1);
+                        syncInputFiles();
+                        renderGrid();
+                    };
+                };
+
+                reader.readAsDataURL(file);
+                grid.appendChild(box);
+            });
+
+            // Render empty slots
+            for (let i = files.length; i < MAX_IMAGES; i++) {
+                const empty = document.createElement("div");
+                empty.className = "image-box";
+                empty.innerHTML = `<span>+</span>`;
+                empty.onclick = () => input.click();
+                grid.appendChild(empty);
+            }
+
+            validateImages();
+        }
+
+        input.addEventListener("change", e => {
+            for (let file of e.target.files) {
+                if (files.length < MAX_IMAGES) {
+                    files.push(file);
+                }
+            }
+
+            input.value = "";
+            syncInputFiles();
+            renderGrid();
+        });
+
+        function syncInputFiles() {
+            const dt = new DataTransfer();
+            files.forEach(f => dt.items.add(f));
+            input.files = dt.files;
+        }
+
+        function validateImages() {
+            if (files.length === 0) {
+                errorSpan.textContent = "At least one image is required.";
+            } else {
+                errorSpan.textContent = "";
+            }
+        }
+    </script>
+
 }

@@ -1,19 +1,23 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MarketZone.Data.Models;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MarketZone.Data.Models
+public class Category
 {
-	public class Category
-	{
-		[Key]
-		public int Id { get; set; }
+	public int Id { get; set; }
 
-		
-		[Required, StringLength(100)]
-		public string Name { get; set; } = null!;
-		
-		[Required, StringLength(500)]
-		public string Description { get; set; } = null!;
+	[Required]
+	[StringLength(100)]
+	public string Name { get; set; } = null!;
 
-		public ICollection<Ad> Ads { get; set; } = new List<Ad>();
-	}
+	public int? ParentCategoryId { get; set; }
+
+	[ForeignKey(nameof(ParentCategoryId))]
+	public Category? ParentCategory { get; set; }
+
+	public ICollection<Category> SubCategories { get; set; }
+		= new List<Category>();
+
+	public ICollection<Ad> Ads { get; set; }
+		= new List<Ad>();
 }

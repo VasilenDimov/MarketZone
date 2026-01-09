@@ -32,6 +32,14 @@ namespace MarketZone.Controllers
 			return View(model);
 		}
 
+		// GET: /Ad/GetChildren
+		[HttpGet]
+		public async Task<IActionResult> GetChildren(int? parentId)
+		{
+			var categories = await categoryService.GetChildrenAsync(parentId);
+			return Json(categories);
+		}
+
 		// POST: /Ad/Create
 		[HttpPost]
 		[ValidateAntiForgeryToken]

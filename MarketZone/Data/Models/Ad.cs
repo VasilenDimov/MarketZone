@@ -1,4 +1,4 @@
-﻿using Azure;
+﻿using MarketZone.Models.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -21,6 +21,8 @@ namespace MarketZone.Data.Models
 		[Required, StringLength(200)]
 		public string Address { get; set; } = null!;
 
+		[Required]
+		public ItemCondition Condition { get; set; }
 		public DateTime CreatedOn { get; set; } = DateTime.UtcNow;
 
 		// Foreign Keys		
@@ -31,16 +33,13 @@ namespace MarketZone.Data.Models
 		public Category Category { get; set; } = null!;
 
 		[Required]
-		public string UserId { get; set; }
+		public string UserId { get; set; } = null!;
 
 		[ForeignKey(nameof(UserId))]
 		public User User { get; set; } = null!;
 
 		public ICollection<Message> Messages { get; set; } = new List<Message>();
-
 		public ICollection<AdImage> Images { get; set; } = new List<AdImage>();
-
-		//public ICollection<Tag> Tags { get; set; } = new HashSet<Tag>();
 		public ICollection<AdTag> AdTags { get; set; } = new List<AdTag>();
 		public ICollection<Favorite> FavoritedBy { get; set; } = new List<Favorite>();
 

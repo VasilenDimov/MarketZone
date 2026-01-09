@@ -1,5 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MarketZone.Models.Enums;
 using MarketZone.ViewModels.Category;
+using System.ComponentModel.DataAnnotations;
 
 namespace MarketZone.ViewModels.Ad
 {
@@ -36,6 +37,10 @@ namespace MarketZone.ViewModels.Ad
 		[Required]
 		[MinLength(1, ErrorMessage = "At least one image is required.")]
 		public List<IFormFile> Images { get; set; } = new();
+
+		[Required]
+		[Display(Name = "Condition")]
+		public ItemCondition Condition { get; set; }
 
 		// Optional tags (comma-separated from UI)
 		[MaxLength(500)]

@@ -15,13 +15,13 @@ namespace MarketZone.Data.Models
 
 		// Foreign Keys
 		[Required]
-		public string SenderId { get; set; }
+		public string SenderId { get; set; } = null!;
 
 		[ForeignKey(nameof(SenderId))]
 		public User Sender { get; set; } = null!;
 
 		[Required]
-		public string ReceiverId { get; set; }
+		public string ReceiverId { get; set; } = null!;
 
 		[ForeignKey(nameof(ReceiverId))]
 		public User Receiver { get; set; } = null!;

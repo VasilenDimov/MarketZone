@@ -18,13 +18,13 @@ namespace MarketZone.Data.Models
 
 		// Foreign Keys
 		[Required]
-		public string ReviewerId { get; set; }
+		public string ReviewerId { get; set; } = null!;
 
 		[ForeignKey(nameof(ReviewerId))]
 		public User Reviewer { get; set; } = null!;
 
 		[Required]
-		public string ReviewedUserId { get; set; }
+		public string ReviewedUserId { get; set; } = null!;
 
 		[ForeignKey(nameof(ReviewedUserId))]
 		public User ReviewedUser { get; set; } = null!;
