@@ -2,7 +2,7 @@
 
 namespace MarketZone.ViewModels.Ad
 {
-	public class MyAdViewModel
+	public class AdListItemViewModel
 	{
 		public int Id { get; set; }
 

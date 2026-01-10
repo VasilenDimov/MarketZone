@@ -17,6 +17,7 @@ namespace MarketZone.Services.Implementations
 		public async Task<IEnumerable<CategorySelectModel>> GetAllAsync()
 		{
 			return await context.Categories
+				.AsNoTracking()
 				.OrderBy(c => c.Name)
 				.Select(c => new CategorySelectModel
 				{
@@ -28,6 +29,7 @@ namespace MarketZone.Services.Implementations
 		public async Task<IEnumerable<CategoryChildDto>> GetChildrenAsync(int? parentId)
 		{
 			return await context.Categories
+				.AsNoTracking()
 				.Where(c => c.ParentCategoryId == parentId)
 				.Select(c => new CategoryChildDto
 				{

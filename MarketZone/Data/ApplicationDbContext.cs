@@ -51,6 +51,7 @@ namespace MarketZone.Data
 				.HasForeignKey(r => r.ReviewedUserId)
 				.OnDelete(DeleteBehavior.Restrict);
 
+			// Composite primary key: one review per user per user
 			builder.Entity<Review>()
 				.HasIndex(r => new { r.ReviewerId, r.ReviewedUserId })
 			    .IsUnique();
@@ -59,6 +60,7 @@ namespace MarketZone.Data
 	            .Property(a => a.Price)
 	            .HasPrecision(18, 2);
 
+			// Composite primary key: one favorite per user per ad
 			builder.Entity<Favorite>()
 	            .HasKey(f => new { f.UserId, f.AdId })
 				.IsClustered(false);

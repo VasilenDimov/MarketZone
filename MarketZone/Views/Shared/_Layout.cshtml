@@ -13,6 +13,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
+                <!-- Logo / Home -->
                 <a class="navbar-brand"
                    asp-controller="Home"
                    asp-action="Index">
@@ -31,14 +32,6 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <!-- Left navigation -->
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark"
-                               asp-controller="Home"
-                               asp-action="Index">
-                                Home
-                            </a>
-                        </li>
-
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <li class="nav-item">

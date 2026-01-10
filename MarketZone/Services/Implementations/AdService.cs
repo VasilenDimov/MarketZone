@@ -109,6 +109,7 @@ namespace MarketZone.Services.Implementations
 		public async Task<AdDetailsModel?> GetDetailsAsync(int id)
 		{
 			return await context.Ads
+				.AsNoTracking()
 				.Where(a => a.Id == id)
 				.Select(a => new AdDetailsModel
 				{
@@ -137,12 +138,13 @@ namespace MarketZone.Services.Implementations
 				})
 				.FirstOrDefaultAsync();
 		}
-		public async Task<IEnumerable<MyAdViewModel>> GetMyAdsAsync(string userId)
+		public async Task<IEnumerable<AdListItemViewModel>> GetMyAdsAsync(string userId)
 		{
 			return await context.Ads
+				.AsNoTracking()
 				.Where(a => a.UserId == userId)
 				.OrderByDescending(a => a.CreatedOn)
-				.Select(a => new MyAdViewModel
+				.Select(a => new AdListItemViewModel
 				{
 					Id = a.Id,
 					Title = a.Title,
@@ -159,6 +161,7 @@ namespace MarketZone.Services.Implementations
 		public async Task<AdCreateModel?> GetEditModelAsync(int adId, string userId)
 		{
 			var ad = await context.Ads
+				.AsNoTracking()
 				.Include(a => a.Images)
 				.FirstOrDefaultAsync(a => a.Id == adId && a.UserId == userId);
 
@@ -255,5 +258,81 @@ namespace MarketZone.Services.Implementations
 			await context.SaveChangesAsync();
 			return true;
 		}
+		public async Task<bool> DeleteAsync(int adId, string userId)
+		{
+			var ad = await context.Ads
+				.Include(a => a.Images)
+				.FirstOrDefaultAsync(a => a.Id == adId && a.UserId == userId);
+
+			if (ad == null)
+				return false;
+
+			// Delete physical images
+			foreach (var img in ad.Images)
+			{
+				var physicalPath = Path.Combine(
+					env.WebRootPath,
+					img.ImageUrl.TrimStart('/')
+				);
+
+				if (File.Exists(physicalPath))
+					File.Delete(physicalPath);
+			}
+
+			context.Ads.Remove(ad);
+			await context.SaveChangesAsync();
+
+			return true;
+		}
+		public async Task<AdSearchViewModel> SearchAsync(string? search, int page, string? userId)
+		{
+			const int PageSize = 21;
+
+			var query = context.Ads
+				.AsNoTracking();
+
+			//Exclude user's own ads if logged in
+			if (!string.IsNullOrEmpty(userId))
+			{
+				query = query.Where(a => a.UserId != userId);
+			}
+
+			//Search by title
+			if (!string.IsNullOrWhiteSpace(search))
+			{
+				query = query.Where(a =>
+					a.Title.ToLower().Contains(search.ToLower()));
+			}
+
+			var totalAds = await query.CountAsync();
+
+			var ads = await query
+				.OrderByDescending(a => a.CreatedOn)
+				.Skip((page - 1) * PageSize)
+				.Take(PageSize)
+				.Select(a => new AdListItemViewModel
+				{
+					Id = a.Id,
+					Title = a.Title,
+					Price = a.Price,
+					Currency = a.Currency,
+					CreatedOn = a.CreatedOn,
+					MainImageUrl = a.Images
+						.OrderBy(i => i.Id)
+						.Select(i => i.ImageUrl)
+						.FirstOrDefault()
+				})
+				.ToListAsync();
+
+			return new AdSearchViewModel
+			{
+				SearchTerm = search,
+				CurrentPage = page,
+				TotalPages = (int)Math.Ceiling(totalAds / (double)PageSize),
+				Ads = ads
+			};
+		}
+
+
 	}
 }

@@ -1,20 +1,29 @@
-using System.Diagnostics;
+using MarketZone.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using MarketZone.ViewModels;
+using System.Security.Claims;
 
 namespace MarketZone.Controllers
 {
-    public class HomeController : Controller
-    {
-        public IActionResult Index()
-        {
-            return View();
-        }
+	public class HomeController : Controller
+	{
+		private readonly IAdService adService;
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-    }
+		public HomeController(IAdService adService)
+		{
+			this.adService = adService;
+		}
+
+		[HttpGet]
+		public async Task<IActionResult> Index(string? search, int page = 1)
+		{
+			var userId = User.Identity?.IsAuthenticated == true
+				? User.FindFirstValue(ClaimTypes.NameIdentifier)
+				: null;
+
+			var model = await adService.SearchAsync(search, page, userId);
+
+			return View(model);
+		}
+	}
+
 }

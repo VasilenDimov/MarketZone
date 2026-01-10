@@ -11,7 +11,7 @@ namespace MarketZone.Data.Models
 		[Required, StringLength(1000)]
 		public string Content { get; set; } = null!;
 
-		public DateTime SentOn { get; set; } = DateTime.Now;
+		public DateTime SentOn { get; set; } = DateTime.UtcNow;
 
 		// Foreign Keys
 		[Required]

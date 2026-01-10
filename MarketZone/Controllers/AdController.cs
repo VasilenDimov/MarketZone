@@ -112,5 +112,18 @@ namespace MarketZone.Controllers
 
 			return RedirectToAction("Details", new { id = model.Id });
 		}
+		[HttpPost]
+		public async Task<IActionResult> Delete(int id)
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+			var success = await adService.DeleteAsync(id, userId!);
+
+			if (!success)
+				return BadRequest();
+
+			return Ok();
+		}
+
 	}
 }

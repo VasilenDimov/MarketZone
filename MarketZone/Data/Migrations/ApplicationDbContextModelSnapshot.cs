@@ -42,7 +42,7 @@ namespace MarketZone.Data.Migrations
 
                     b.HasIndex("ParentCategoryId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
 
                     b.HasData(
                         new
@@ -125,7 +125,7 @@ namespace MarketZone.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Ads");
+                    b.ToTable("Ads", (string)null);
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.AdImage", b =>
@@ -147,7 +147,7 @@ namespace MarketZone.Data.Migrations
 
                     b.HasIndex("AdId");
 
-                    b.ToTable("AdImages");
+                    b.ToTable("AdImages", (string)null);
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.AdTag", b =>
@@ -162,7 +162,7 @@ namespace MarketZone.Data.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("AdTags");
+                    b.ToTable("AdTags", (string)null);
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.Favorite", b =>
@@ -182,7 +182,7 @@ namespace MarketZone.Data.Migrations
 
                     b.HasIndex("AdId");
 
-                    b.ToTable("Favorites");
+                    b.ToTable("Favorites", (string)null);
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.Message", b =>
@@ -220,7 +220,7 @@ namespace MarketZone.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("Messages");
+                    b.ToTable("Messages", (string)null);
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.Review", b =>
@@ -257,7 +257,7 @@ namespace MarketZone.Data.Migrations
                     b.HasIndex("ReviewerId", "ReviewedUserId")
                         .IsUnique();
 
-                    b.ToTable("Reviews");
+                    b.ToTable("Reviews", (string)null);
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.User", b =>
@@ -481,7 +481,7 @@ namespace MarketZone.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
                 });
 
             modelBuilder.Entity("Category", b =>

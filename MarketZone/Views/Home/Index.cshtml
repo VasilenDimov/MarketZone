@@ -1,8 +1,71 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model MarketZone.ViewModels.Ad.AdSearchViewModel
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<form method="get" class="mb-4">
+    <input type="text"
+           name="search"
+           value="@Model.SearchTerm"
+           class="form-control"
+           placeholder="Search by title..." />
+</form>
+
+@if (!Model.Ads.Any())
+{
+    <div class="alert alert-info">
+        No ads found.
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var ad in Model.Ads)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    @if (!string.IsNullOrEmpty(ad.MainImageUrl))
+                    {
+                        <img src="@ad.MainImageUrl"
+                             class="card-img-top"
+                             style="height:200px;object-fit:cover;" />
+                    }
+
+                    <div class="card-body">
+                        <h5>@ad.Title</h5>
+
+                        <p class="fw-bold text-primary">
+                            @ad.Price
+                            @(ad.Currency == MarketZone.Data.Enums.Currency.EUR ? "€" : "$")
+                        </p>
+
+                        <p class="text-muted">
+                            @ad.CreatedOn.ToString("dd MMM yyyy")
+                        </p>
+                    </div>
+
+                    <div class="card-footer bg-white">
+                        <a asp-controller="Ad"
+                           asp-action="Details"
+                           asp-route-id="@ad.Id"
+                           class="btn btn-sm btn-outline-primary">
+                            View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Pagination -->
+    <nav>
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                       href="?search=@Model.SearchTerm&page=@i">
+                        @i
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
