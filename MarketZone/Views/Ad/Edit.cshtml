@@ -1,18 +1,19 @@
 ﻿@model MarketZone.ViewModels.Ad.AdCreateModel
 
 @{
-    ViewData["Title"] = "Create Ad";
+    ViewData["Title"] = "Edit Ad";
 }
 
-<h2>Create Ad</h2>
+<h2>Edit Ad</h2>
 
-<form asp-action="Create" method="post" enctype="multipart/form-data">
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
 
     <partial name="_AdFormPartial" model="Model" />
 
     <button type="submit" class="btn btn-primary mt-3">
-        Create Ad
+        Save Changes
     </button>
 </form>
 

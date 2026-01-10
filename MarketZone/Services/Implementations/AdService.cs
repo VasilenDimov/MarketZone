@@ -137,6 +137,123 @@ namespace MarketZone.Services.Implementations
 				})
 				.FirstOrDefaultAsync();
 		}
+		public async Task<IEnumerable<MyAdViewModel>> GetMyAdsAsync(string userId)
+		{
+			return await context.Ads
+				.Where(a => a.UserId == userId)
+				.OrderByDescending(a => a.CreatedOn)
+				.Select(a => new MyAdViewModel
+				{
+					Id = a.Id,
+					Title = a.Title,
+					Price = a.Price,
+					Currency = a.Currency,
+					CreatedOn = a.CreatedOn,
+					MainImageUrl = a.Images
+						.OrderBy(i => i.Id)
+						.Select(i => i.ImageUrl)
+						.FirstOrDefault()
+				})
+				.ToListAsync();
+		}
+		public async Task<AdCreateModel?> GetEditModelAsync(int adId, string userId)
+		{
+			var ad = await context.Ads
+				.Include(a => a.Images)
+				.FirstOrDefaultAsync(a => a.Id == adId && a.UserId == userId);
 
+			if (ad == null)
+				return null;
+
+			return new AdCreateModel
+			{
+				Id = ad.Id,
+				Title = ad.Title,
+				Description = ad.Description,
+				Price = ad.Price,
+				Currency = ad.Currency,
+				Condition = ad.Condition,
+				Address = ad.Address,
+				CategoryId = ad.CategoryId,
+				Tags = string.Join(", ", ad.AdTags.Select(t => t.Tag.Name)),
+				ExistingImageUrls = ad.Images
+	             .OrderBy(i => i.Id)
+	             .Select(i => i.ImageUrl)
+                 .ToList()
+			};
+
+		}
+		public async Task<bool> UpdateAsync(AdCreateModel model, string userId)
+		{
+			var ad = await context.Ads
+				.Include(a => a.Images)
+				.Include(a => a.AdTags)
+					.ThenInclude(at => at.Tag)
+				.FirstOrDefaultAsync(a => a.Id == model.Id && a.UserId == userId);
+
+			if (ad == null)
+				return false;
+
+			// Update scalar fields
+			ad.Title = model.Title;
+			ad.Description = model.Description;
+			ad.Price = model.Price;
+			ad.Currency = model.Currency;
+			ad.Condition = model.Condition;
+			ad.Address = model.Address;
+			ad.CategoryId = model.CategoryId;
+
+			/* ================= IMAGES ================= */
+
+			// Remove images that user removed in UI
+			var imagesToRemove = ad.Images
+				.Where(i => !model.ExistingImageUrls.Contains(i.ImageUrl))
+				.ToList();
+
+			foreach (var img in imagesToRemove)
+			{
+				ad.Images.Remove(img);
+
+				// Optional: delete physical file later
+				var physicalPath = Path.Combine(env.WebRootPath, img.ImageUrl.TrimStart('/'));
+				if (File.Exists(physicalPath))
+					File.Delete(physicalPath);
+			}
+
+			// Add newly uploaded images
+			foreach (var image in model.Images)
+			{
+				var imageUrl = await SaveImageAsync(image);
+				ad.Images.Add(new AdImage { ImageUrl = imageUrl });
+			}
+
+			// Enforce at least one image AFTER merge
+			if (!ad.Images.Any())
+				throw new InvalidOperationException("At least one image is required.");
+
+			/* ================= TAGS ================= */
+
+			ad.AdTags.Clear();
+
+			if (!string.IsNullOrWhiteSpace(model.Tags))
+			{
+				var tags = model.Tags
+					.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(t => t.Trim().ToLower())
+					.Distinct();
+
+				foreach (var tagName in tags)
+				{
+					var tag = await context.Tags
+						.FirstOrDefaultAsync(t => t.Name == tagName)
+						?? new Tag { Name = tagName };
+
+					ad.AdTags.Add(new AdTag { Tag = tag });
+				}
+			}
+
+			await context.SaveChangesAsync();
+			return true;
+		}
 	}
 }

@@ -45,6 +45,29 @@ namespace MarketZone.Controllers
 			return View(model);
 		}
 
+		[HttpGet]
+		public async Task<IActionResult> MyAds()
+		{
+			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			var ads = await adService.GetMyAdsAsync(userId);
+
+			return View(ads);
+		}
+		[HttpGet]
+		public async Task<IActionResult> Edit(int id)
+		{
+			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			var model = await adService.GetEditModelAsync(id, userId);
+
+			if (model == null)
+			{
+				return NotFound();
+			}
+
+			return View(model);
+		}
 		// GET: /Ad/GetChildren
 		[HttpGet]
 		public async Task<IActionResult> GetChildren(int? parentId)
@@ -69,6 +92,25 @@ namespace MarketZone.Controllers
 			int adId = await adService.CreateAsync(model, userId);
 
 			return RedirectToAction("Details", new { id = adId });
+		}
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Edit(AdCreateModel model)
+		{
+			if (!ModelState.IsValid)
+			{
+				model.Categories = await categoryService.GetAllAsync();
+				return View(model);
+			}
+
+			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			bool updated = await adService.UpdateAsync(model, userId);
+
+			if (!updated)
+				return Forbid();
+
+			return RedirectToAction("Details", new { id = model.Id });
 		}
 	}
 }
