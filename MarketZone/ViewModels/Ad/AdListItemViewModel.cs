@@ -15,5 +15,6 @@ namespace MarketZone.ViewModels.Ad
 		public string? MainImageUrl { get; set; }
 
 		public DateTime CreatedOn { get; set; }
+		public bool CanEdit { get; set; }
 	}
 }

@@ -35,15 +35,18 @@ namespace MarketZone.Controllers
 		[HttpGet]
 		public async Task<IActionResult> Details(int id)
 		{
-			var model = await adService.GetDetailsAsync(id);
+			string? userId = User.Identity!.IsAuthenticated
+				? User.FindFirstValue(ClaimTypes.NameIdentifier)
+				: null;
+
+			var model = await adService.GetDetailsAsync(id, userId);
 
 			if (model == null)
-			{
 				return NotFound();
-			}
 
 			return View(model);
 		}
+
 
 		[HttpGet]
 		public async Task<IActionResult> MyAds()

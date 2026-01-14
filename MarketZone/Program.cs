@@ -25,6 +25,8 @@ builder.Services
 
 // Email sender (IMPORTANT)
 builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
+// Background service for cleaning up expired email verification codes
+builder.Services.AddHostedService<EmailVerificationCleanupService>();
 
 // MVC + Razor Pages
 builder.Services.AddControllersWithViews();
@@ -33,6 +35,7 @@ builder.Services.AddRazorPages();
 // Application services
 builder.Services.AddScoped<IAdService, AdService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 
 var app = builder.Build();
 
@@ -51,9 +54,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// --------------------
 // Routing
-// --------------------
 app.MapControllerRoute(
 	name: "default",
 	pattern: "{controller=Home}/{action=Index}/{id?}");

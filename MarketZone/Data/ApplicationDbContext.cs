@@ -63,20 +63,7 @@ namespace MarketZone.Data
 
 			// Composite primary key: one favorite per user per ad
 			builder.Entity<Favorite>()
-	            .HasKey(f => new { f.UserId, f.AdId })
-				.IsClustered(false);
-
-			builder.Entity<Favorite>()
-		         .HasOne(f => f.User)
-		         .WithMany(u => u.Favorites)
-		         .HasForeignKey(f => f.UserId)
-		         .OnDelete(DeleteBehavior.NoAction);
-
-			builder.Entity<Favorite>()
-				.HasOne(f => f.Ad)
-				.WithMany(a => a.FavoritedBy)
-				.HasForeignKey(f => f.AdId)
-				.OnDelete(DeleteBehavior.Cascade);
+				.HasKey(f => new { f.UserId, f.AdId });
 
 			builder.Entity<AdTag>()
 	            .HasKey(at => new { at.AdId, at.TagId });

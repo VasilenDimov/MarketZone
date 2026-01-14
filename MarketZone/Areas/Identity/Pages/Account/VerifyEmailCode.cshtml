@@ -78,7 +78,7 @@
             const cooldownText = document.getElementById('cooldownText');
             const email = document.querySelector('input[name="Input.Email"]').value;
 
-            /* ================= OTP INPUT ================= */
+            /* OTP INPUT */
 
             function syncCode() {
                 hiddenCode.value = [...inputs].map(i => i.value).join('');
@@ -121,7 +121,7 @@
                 });
             });
 
-            /* ================= RESEND ================= */
+            /* RESEND */
 
             let cooldown = 0;
             let timer = null;

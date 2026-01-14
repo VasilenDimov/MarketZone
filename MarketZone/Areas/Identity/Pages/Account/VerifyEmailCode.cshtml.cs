@@ -1,7 +1,4 @@
-using System;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 using MarketZone.Data;
 using MarketZone.Data.Models;
 using Microsoft.AspNetCore.Identity;
@@ -36,12 +33,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 		public string MaskedEmail { get; set; } = string.Empty;
 
 		public string? ErrorMessage { get; set; }
-
-		public class InputModel
-		{
-			public string Code { get; set; } = string.Empty;
-			public string Email { get; set; } = string.Empty;
-		}
 
 		public IActionResult OnGet(string? email)
 		{
@@ -147,6 +138,11 @@ namespace MarketZone.Areas.Identity.Pages.Account
 	}
 	public class ResendRequest
 	{
+		public string Email { get; set; } = string.Empty;
+	}
+	public class InputModel
+    {
+	    public string Code { get; set; } = string.Empty;
 		public string Email { get; set; } = string.Empty;
 	}
 

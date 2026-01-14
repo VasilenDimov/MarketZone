@@ -45,7 +45,6 @@ namespace MarketZone.Data.Models
 		public ICollection<Message> Messages { get; set; } = new List<Message>();
 		public ICollection<AdImage> Images { get; set; } = new List<AdImage>();
 		public ICollection<AdTag> AdTags { get; set; } = new List<AdTag>();
-		public ICollection<Favorite> FavoritedBy { get; set; } = new List<Favorite>();
 
 	}
 }

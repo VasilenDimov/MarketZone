@@ -1,0 +1,28 @@
+﻿@model MarketZone.ViewModels.Ad.AdListItemViewModel
+
+<div class="card h-100">
+    <img src="@Model.MainImageUrl"
+         class="card-img-top"
+         style="height:200px; object-fit:cover;" />
+
+    <div class="card-body">
+        <h5 class="card-title">@Model.Title</h5>
+
+        <p class="text-primary fw-bold mb-1">
+            @Model.Price @(Model.Currency == MarketZone.Data.Enums.Currency.EUR ? "€" : "$")
+        </p>
+
+        <small class="text-muted">
+            Posted on @Model.CreatedOn.ToString("dd MMM yyyy")
+        </small>
+    </div>
+
+    <div class="card-footer bg-white border-0">
+        <a asp-controller="Ad"
+           asp-action="Details"
+           asp-route-id="@Model.Id"
+           class="btn btn-outline-primary w-100">
+            View
+        </a>
+    </div>
+</div>

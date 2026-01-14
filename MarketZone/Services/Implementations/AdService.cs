@@ -106,7 +106,7 @@ namespace MarketZone.Services.Implementations
 
 			return $"/uploads/ads/{fileName}";
 		}
-		public async Task<AdDetailsModel?> GetDetailsAsync(int id)
+		public async Task<AdDetailsModel?> GetDetailsAsync(int id, string? userId)
 		{
 			return await context.Ads
 				.AsNoTracking()
@@ -121,23 +121,25 @@ namespace MarketZone.Services.Implementations
 					Condition = a.Condition,
 					Address = a.Address,
 					CreatedOn = a.CreatedOn,
+					SellerId = a.UserId,
 
 					SellerName = a.User.UserName!,
-					Tags = a.AdTags
-	                    .Select(t => t.Tag.Name)
-	                    .ToList(),
+					CategoryPath = a.Category.ParentCategory != null
+						? a.Category.ParentCategory.Name + " → " + a.Category.Name
+						: a.Category.Name,
 
 					ImageUrls = a.Images
 						.OrderBy(i => i.Id)
 						.Select(i => i.ImageUrl)
 						.ToList(),
 
-					CategoryPath = a.Category.ParentCategory != null
-						? a.Category.ParentCategory.Name + " → " + a.Category.Name
-						: a.Category.Name
+					IsFavorite = userId != null &&
+						context.Favorites.Any(f =>
+							f.AdId == a.Id && f.UserId == userId)
 				})
 				.FirstOrDefaultAsync();
 		}
+
 		public async Task<IEnumerable<AdListItemViewModel>> GetMyAdsAsync(string userId)
 		{
 			return await context.Ads
@@ -152,9 +154,10 @@ namespace MarketZone.Services.Implementations
 					Currency = a.Currency,
 					CreatedOn = a.CreatedOn,
 					MainImageUrl = a.Images
-						.OrderBy(i => i.Id)
-						.Select(i => i.ImageUrl)
-						.FirstOrDefault()
+		                  .OrderBy(i => i.Id)
+		                  .Select(i => i.ImageUrl)
+		                  .FirstOrDefault(),
+					CanEdit = true
 				})
 				.ToListAsync();
 		}
@@ -206,7 +209,7 @@ namespace MarketZone.Services.Implementations
 			ad.Address = model.Address;
 			ad.CategoryId = model.CategoryId;
 
-			/* ================= IMAGES ================= */
+			// IMAGES
 
 			// Remove images that user removed in UI
 			var imagesToRemove = ad.Images
@@ -234,7 +237,7 @@ namespace MarketZone.Services.Implementations
 			if (!ad.Images.Any())
 				throw new InvalidOperationException("At least one image is required.");
 
-			/* ================= TAGS ================= */
+			// TAGS
 
 			ad.AdTags.Clear();
 
@@ -332,7 +335,6 @@ namespace MarketZone.Services.Implementations
 				Ads = ads
 			};
 		}
-
 
 	}
 }

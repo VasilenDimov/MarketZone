@@ -15,14 +15,16 @@ namespace MarketZone.ViewModels.Ad
 
 		public ItemCondition Condition { get; set; }
 
+		public bool IsFavorite { get; set; }
+
 		public string CategoryPath { get; set; } = null!;
-
 		public string Address { get; set; } = null!;
-
 		public DateTime CreatedOn { get; set; }
 
+		public string SellerId { get; set; } = null!;
 		public string SellerName { get; set; } = null!;
-		public List<string> Tags { get; set; } = new();
+
 		public List<string> ImageUrls { get; set; } = new();
 	}
+
 }
