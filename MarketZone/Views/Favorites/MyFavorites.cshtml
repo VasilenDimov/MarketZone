@@ -1,12 +1,10 @@
 ﻿@model IEnumerable<MarketZone.ViewModels.Ad.AdListItemViewModel>
 
-<h2>My Favorite Ads</h2>
+<h2>My Favorites</h2>
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">
-        You have no favorite ads.
-    </div>
+    <div class="alert alert-info">You have no favorite ads.</div>
 }
 else
 {
@@ -14,7 +12,20 @@ else
         @foreach (var ad in Model)
         {
             <div class="col-md-4 mb-4">
-                <partial name="_AdCardPartial" model="ad" />
+                <div class="card h-100">
+
+                    <partial name="_AdCardPartial" model="ad" />
+
+                    <div class="card-footer bg-white border-0">
+                        <a asp-controller="Ad"
+                           asp-action="Details"
+                           asp-route-id="@ad.Id"
+                           class="btn btn-outline-primary w-100">
+                            View
+                        </a>
+                    </div>
+
+                </div>
             </div>
         }
     </div>

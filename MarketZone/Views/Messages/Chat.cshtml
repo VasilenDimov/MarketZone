@@ -1,0 +1,49 @@
+﻿@using MarketZone.ViewModels.Message
+@model ChatViewModel
+
+<h4>Chat with @Model.OtherUserName</h4>
+
+<div id="chatBox"
+     style="height:300px;overflow-y:auto;border:1px solid #ccc"
+     class="mb-3 p-2">
+    @foreach (var msg in Model.Messages)
+    {
+        <div>
+            <strong>@msg.SenderName:</strong> @msg.Content
+        </div>
+    }
+</div>
+
+<input id="msgInput" class="form-control mb-2" placeholder="Type message..." />
+<button id="sendBtn" class="btn btn-primary">Send</button>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+    <script>
+        const chatId = "@Model.ChatId";
+        const adId = @Model.AdId;
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .build();
+
+        connection.start().then(() => {
+            connection.invoke("JoinChat", chatId);
+        });
+
+        connection.on("ReceiveMessage", (user, message, time) => {
+            document.getElementById("chatBox").innerHTML +=
+                `<div><strong>${user}</strong> (${time}): ${message}</div>`;
+        });
+
+        document.getElementById("sendBtn").addEventListener("click", () => {
+            const msg = document.getElementById("msgInput").value;
+            if (!msg) return;
+
+            connection.invoke("SendMessage", adId, chatId, msg);
+            document.getElementById("msgInput").value = "";
+        });
+    </script>
+}
+

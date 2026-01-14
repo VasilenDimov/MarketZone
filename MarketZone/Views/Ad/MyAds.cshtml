@@ -2,34 +2,49 @@
 
 <h2>My Ads</h2>
 
-<div class="row">
-    @foreach (var ad in Model)
-    {
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <img src="@ad.MainImageUrl"
-                     class="card-img-top"
-                     style="height:200px; object-fit:cover;" />
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        You have not created any ads.
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var ad in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
 
-                <div class="card-body">
-                    <h5>@ad.Title</h5>
-                    <p class="text-primary fw-bold">@ad.Price €</p>
-                    <small class="text-muted">
-                        Posted on @ad.CreatedOn.ToString("dd MMM yyyy")
-                    </small>
-                </div>
+                    <!-- Ad content -->
+                    <partial name="_AdCardPartial" model="ad" />
 
-                <div class="card-footer d-flex gap-2">
-                    <a asp-controller="Ad" asp-action="Details" asp-route-id="@ad.Id"
-                       class="btn btn-outline-primary flex-fill">View</a>
+                    <!-- Actions -->
+                    <div class="card-footer d-flex gap-2 bg-white border-0">
+                        <a asp-controller="Ad"
+                           asp-action="Details"
+                           asp-route-id="@ad.Id"
+                           class="btn btn-outline-primary flex-fill">
+                            View
+                        </a>
 
-                    <a asp-controller="Ad" asp-action="Edit" asp-route-id="@ad.Id"
-                       class="btn btn-outline-secondary flex-fill">Edit</a>
+                        <a asp-controller="Ad"
+                           asp-action="Edit"
+                           asp-route-id="@ad.Id"
+                           class="btn btn-outline-secondary flex-fill">
+                            Edit
+                        </a>
 
-                    <a asp-controller="Ad" asp-action="Delete" asp-route-id="@ad.Id"
-                       class="btn btn-outline-danger flex-fill">Delete</a>
+                        <a asp-controller="Ad"
+                           asp-action="Delete"
+                           asp-route-id="@ad.Id"
+                           class="btn btn-outline-danger flex-fill">
+                            Delete
+                        </a>
+                    </div>
+
                 </div>
             </div>
-        </div>
-    }
-</div>
+        }
+    </div>
+}
