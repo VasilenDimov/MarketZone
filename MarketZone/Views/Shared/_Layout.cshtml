@@ -13,7 +13,8 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <!-- Logo / Home -->
+
+                <!-- Home -->
                 <a class="navbar-brand"
                    asp-controller="Home"
                    asp-action="Index">
@@ -30,38 +31,103 @@
                 </button>
 
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <!-- Left navigation -->
-                    <ul class="navbar-nav flex-grow-1">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark"
-                                   asp-controller="Ad"
-                                   asp-action="MyAds">
-                                    My Ads
-                                </a>
-                            </li>
-                        }
-                    </ul>
 
-                    <!-- Right actions -->
-                    <div class="d-flex align-items-center">
+                    <ul class="navbar-nav flex-grow-1"></ul>
+
+                    <!-- Right side actions -->
+                    <div class="d-flex align-items-center gap-3">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <a class="btn btn-primary me-3"
+                            <!-- Chat (Inbox) -->
+                            <a class="btn btn-outline-secondary d-flex align-items-center gap-1"
+                               asp-controller="Messages"
+                               asp-action="Inbox">
+                                💬 Chat
+                            </a>
+                            <!-- Creating ads -->
+                            <a class="btn btn-primary"
                                asp-controller="Ad"
                                asp-action="Create">
                                 + Create Ad
                             </a>
-                        }
 
-                        <partial name="_LoginPartial" />
+                            <!-- User hover dropdown -->
+                            <div class="user-dropdown d-flex align-items-center gap-2">
+                                <a href="#"
+                                   class="d-flex align-items-center gap-2 text-decoration-none"
+                                   aria-haspopup="true"
+                                   aria-expanded="false">
+
+                                    <img src="/images/default-profile.png"
+                                         class="rounded-circle"
+                                         width="32"
+                                         height="32"
+                                         alt="User profile" />
+
+                                    <span class="text-dark small">
+                                        @User.Identity!.Name
+                                    </span>
+                                </a>
+
+                                <ul class="dropdown-menu user-dropdown-menu shadow">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Ad"
+                                           asp-action="MyAds">
+                                            My Ads
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Favorites"
+                                           asp-action="MyFavorites">
+                                            My Favorites
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-area="Identity"
+                                           asp-page="/Account/Manage/Index">
+                                            Settings
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <hr class="dropdown-divider" />
+                                    </li>
+                                    <li>
+                                        <form asp-area="Identity"
+                                              asp-page="/Account/Logout"
+                                              method="post">
+                                            <button type="submit"
+                                                    class="dropdown-item text-danger">
+                                                Logout
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Guest actions -->
+                            <a class="nav-link"
+                               asp-area="Identity"
+                               asp-page="/Account/Register">
+                                Register
+                            </a>
+                            <a class="nav-link"
+                               asp-area="Identity"
+                               asp-page="/Account/Login">
+                                Login
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
         </nav>
     </header>
 
+    <!-- Main content -->
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -74,6 +140,7 @@
         </div>
     </footer>
 
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

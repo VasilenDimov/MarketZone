@@ -8,7 +8,6 @@
     bool isAuthenticated = User.Identity?.IsAuthenticated ?? false;
     string? currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-    // ✅ CORRECT owner check (NO ViewBag)
     bool isOwner = isAuthenticated && currentUserId == Model.SellerId;
 }
 
@@ -48,12 +47,12 @@
             @Model.Condition
         </span>
 
-        <!-- ACTION BUTTONS -->
+        <!-- Action buttons -->
         @if (!isOwner)
         {
             <div class="d-flex gap-2 mb-3">
 
-                <!-- MESSAGE SELLER -->
+                <!-- Message seller -->
                 @if (isAuthenticated)
                 {
                     <a asp-controller="Messages"
@@ -73,7 +72,7 @@
                     </button>
                 }
 
-                <!-- FAVORITES -->
+                <!-- Favorites -->
                 @if (isAuthenticated)
                 {
                     <button id="favorite-btn"

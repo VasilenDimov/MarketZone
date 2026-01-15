@@ -105,7 +105,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 
-            /* ===================== CATEGORY ===================== */
+            /* Category */
             const list = document.getElementById("category-list");
             const hiddenInput = document.getElementById("CategoryId");
             const backBtn = document.getElementById("back-btn");
@@ -167,7 +167,7 @@
                 };
             }
 
-            /* ===================== IMAGES ===================== */
+            /* Images */
             const grid = document.getElementById("image-grid");
             const input = document.getElementById("image-input");
             const errorSpan = document.querySelector("[data-valmsg-for='Images']");
@@ -186,7 +186,7 @@
             function renderGrid() {
                 grid.innerHTML = "";
 
-                /* EXISTING IMAGES */
+                /* Existing images */
                 existingImages.forEach((url, index) => {
                     const box = document.createElement("div");
                     box.className = "image-box";
@@ -213,7 +213,7 @@
                     grid.appendChild(box);
                 });
 
-                /* NEW FILES */
+                /* New files */
                 files.forEach((file, index) => {
                     const box = document.createElement("div");
                     box.className = "image-box";
@@ -239,7 +239,7 @@
                     grid.appendChild(box);
                 });
 
-                /* EMPTY SLOTS */
+                /* Empty slots */
                 const used = existingImages.length + files.length;
                 for (let i = used; i < MAX_IMAGES; i++) {
                     const empty = document.createElement("div");

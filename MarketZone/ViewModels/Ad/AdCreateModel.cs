@@ -7,7 +7,6 @@ namespace MarketZone.ViewModels.Ad
 {
 	public class AdCreateModel
 	{
-		// Used only for Edit
 		public int Id { get; set; }
 
 		[Required]
@@ -29,14 +28,10 @@ namespace MarketZone.ViewModels.Ad
 		[Required]
 		public int CategoryId { get; set; }
 
-		// Dropdown data (not saved)
 		public IEnumerable<CategorySelectModel> Categories { get; set; }
 			= new List<CategorySelectModel>();
-
-		// Existing DB images (Edit only)
 		public List<string> ExistingImageUrls { get; set; } = new();
 
-		// New uploaded images
 		public List<IFormFile> Images { get; set; } = new();
 
 		[Required]
@@ -46,7 +41,6 @@ namespace MarketZone.ViewModels.Ad
 		[Required]
 		public ItemCondition Condition { get; set; }
 
-		// Optional tags
 		[MaxLength(500)]
 		public string? Tags { get; set; }
 	}

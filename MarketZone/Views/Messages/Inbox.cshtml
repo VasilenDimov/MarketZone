@@ -1,0 +1,53 @@
+﻿@using MarketZone.ViewModels.Message
+@model InboxViewModel
+
+<h3 class="mb-3">Chats</h3>
+
+<!-- Buying / Selling switch -->
+<div class="btn-group mb-3">
+    <a asp-action="Inbox"
+       asp-route-mode="buying"
+       class="btn @(Model.Mode == "buying" ? "btn-primary" : "btn-outline-primary")">
+        Buying
+    </a>
+
+    <a asp-action="Inbox"
+       asp-route-mode="selling"
+       class="btn @(Model.Mode == "selling" ? "btn-primary" : "btn-outline-primary")">
+        Selling
+    </a>
+</div>
+
+<div class="row">
+    <!-- Chat list -->
+    <div class="col-md-4 border-end">
+        @if (!Model.Chats.Any())
+        {
+            <p class="text-muted">
+                No conversations in this section.
+            </p>
+        }
+        else
+        {
+            <ul class="list-group list-group-flush">
+                @foreach (var chat in Model.Chats)
+                {
+                    <a class="list-group-item list-group-item-action"
+                       asp-controller="Messages"
+                       asp-action="Chat"
+                       asp-route-adId="@chat.AdId">
+
+                        <div class="fw-bold">@chat.OtherUserName</div>
+                        <div class="small text-muted">@chat.AdTitle</div>
+                        <div class="text-truncate">@chat.LastMessage</div>
+                    </a>
+                }
+            </ul>
+        }
+    </div>
+
+    <!-- Right placeholder -->
+    <div class="col-md-8 d-flex align-items-center justify-content-center text-muted">
+        Select a conversation to view messages
+    </div>
+</div>

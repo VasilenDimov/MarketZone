@@ -20,9 +20,19 @@ namespace MarketZone.Controllers
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
 			var model = await messageService.GetChatAsync(adId, userId);
-
 			if (model == null)
 				return NotFound();
+
+			model.CurrentUserId = userId;
+
+			return View(model);
+		}
+
+		public async Task<IActionResult> Inbox(string mode = "buying")
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			var model = await messageService.GetInboxAsync(userId, mode);
 
 			return View(model);
 		}

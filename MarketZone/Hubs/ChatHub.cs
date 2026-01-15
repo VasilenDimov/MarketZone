@@ -20,16 +20,17 @@ public class ChatHub : Hub
 
 	public async Task SendMessage(int adId, string chatId, string message)
 	{
-		var senderId = Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!;
-		var senderName = Context.User.Identity!.Name!;
+		var senderId = Context.UserIdentifier!;
+		var sentOn = DateTime.UtcNow;
 
 		await messageService.SaveMessageAsync(adId, senderId, message);
 
 		await Clients.Group(chatId).SendAsync(
 			"ReceiveMessage",
-			senderName,
+			senderId,
 			message,
-			DateTime.UtcNow.ToString("HH:mm")
+			sentOn.ToString("O") // ISO 8601 – JS SAFE
 		);
 	}
+
 }

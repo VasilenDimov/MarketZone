@@ -1,28 +1,76 @@
 ﻿@using MarketZone.ViewModels.Message
 @model ChatViewModel
 
+@{
+    DateTime? lastDate = null;
+}
 <h4>Chat with @Model.OtherUserName</h4>
 
-<div id="chatBox"
-     style="height:300px;overflow-y:auto;border:1px solid #ccc"
-     class="mb-3 p-2">
+<!-- Ad preview header -->
+<a asp-controller="Ad"
+   asp-action="Details"
+   asp-route-id="@Model.AdId"
+   class="chat-ad-preview">
+
+    <img src="@Model.AdImageUrl"
+         class="chat-ad-image"
+         alt="Ad image" />
+
+    <div class="chat-ad-info">
+        <div class="chat-ad-title">@Model.AdTitle</div>
+        <div class="chat-ad-link">View ad details</div>
+    </div>
+</a>
+
+<div id="chat-box" class="chat-box">
     @foreach (var msg in Model.Messages)
     {
-        <div>
-            <strong>@msg.SenderName:</strong> @msg.Content
+        bool isMine = msg.SenderId == Model.CurrentUserId;
+
+        if (lastDate == null || lastDate.Value.Date != msg.SentOn.Date)
+        {
+            <div class="chat-date">
+                @msg.SentOn.ToString("dd MMM yyyy")
+            </div>
+
+            lastDate = msg.SentOn;
+        }
+
+        <div class="chat-message @(isMine ? "mine" : "theirs")">
+            @if (!isMine)
+            {
+                <img src="@msg.SenderProfileImage"
+                     class="chat-avatar"
+                     alt="User avatar" />
+            }
+
+            <div class="chat-bubble">
+                <div class="chat-text">@msg.Content</div>
+                <div class="chat-time">@msg.SentOn.ToString("HH:mm")</div>
+            </div>
         </div>
     }
 </div>
 
-<input id="msgInput" class="form-control mb-2" placeholder="Type message..." />
-<button id="sendBtn" class="btn btn-primary">Send</button>
+<div class="mt-3">
+    <input id="msgInput"
+           class="form-control mb-2"
+           placeholder="Type message..." />
+
+    <button id="sendBtn"
+            class="btn btn-primary">
+        Send
+    </button>
+</div>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 
     <script>
+        const chatBox = document.getElementById("chat-box");
         const chatId = "@Model.ChatId";
         const adId = @Model.AdId;
+        const currentUserId = "@Model.CurrentUserId";
 
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("/chatHub")
@@ -30,20 +78,52 @@
 
         connection.start().then(() => {
             connection.invoke("JoinChat", chatId);
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
 
-        connection.on("ReceiveMessage", (user, message, time) => {
-            document.getElementById("chatBox").innerHTML +=
-                `<div><strong>${user}</strong> (${time}): ${message}</div>`;
+        connection.on("ReceiveMessage", (senderId, content, sentOn) => {
+            const isMine = senderId === currentUserId;
+            const time = new Date(sentOn);
+
+            const wrapper = document.createElement("div");
+            wrapper.className = `chat-message ${isMine ? "mine" : "theirs"}`;
+
+            if (!isMine) {
+                const avatar = document.createElement("img");
+                avatar.src = "/images/default-profile.png";
+                avatar.className = "chat-avatar";
+                wrapper.appendChild(avatar);
+            }
+
+            const bubble = document.createElement("div");
+            bubble.className = "chat-bubble";
+
+            const text = document.createElement("div");
+            text.className = "chat-text";
+            text.textContent = content;
+
+            const timeDiv = document.createElement("div");
+            timeDiv.className = "chat-time";
+            timeDiv.textContent =
+                time.getHours().toString().padStart(2, "0") + ":" +
+                time.getMinutes().toString().padStart(2, "0");
+
+            bubble.appendChild(text);
+            bubble.appendChild(timeDiv);
+            wrapper.appendChild(bubble);
+
+            chatBox.appendChild(wrapper);
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
 
         document.getElementById("sendBtn").addEventListener("click", () => {
-            const msg = document.getElementById("msgInput").value;
-            if (!msg) return;
+            const input = document.getElementById("msgInput");
+            const message = input.value.trim();
 
-            connection.invoke("SendMessage", adId, chatId, msg);
-            document.getElementById("msgInput").value = "";
+            if (!message) return;
+
+            connection.invoke("SendMessage", adId, chatId, message);
+            input.value = "";
         });
     </script>
 }
-
