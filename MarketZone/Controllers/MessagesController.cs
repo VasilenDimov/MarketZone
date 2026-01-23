@@ -36,6 +36,29 @@ namespace MarketZone.Controllers
 
 			return View(model);
 		}
+		[HttpPost]
+		public async Task<IActionResult> UploadChatImage(IFormFile image)
+		{
+			if (image == null || image.Length == 0)
+				return BadRequest();
+
+			var ext = Path.GetExtension(image.FileName).ToLower();
+			var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+
+			if (!allowed.Contains(ext))
+				return BadRequest();
+
+			var fileName = $"{Guid.NewGuid()}{ext}";
+			var path = Path.Combine("wwwroot/uploads/chat", fileName);
+
+			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+			using var stream = new FileStream(path, FileMode.Create);
+			await image.CopyToAsync(stream);
+
+			return Json(new { imageUrl = $"/uploads/chat/{fileName}" });
+		}
+
 	}
 
 }

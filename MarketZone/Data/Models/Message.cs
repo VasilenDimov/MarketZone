@@ -31,6 +31,7 @@ namespace MarketZone.Data.Models
 
 		[ForeignKey(nameof(AdId))]
 		public Ad Ad { get; set; } = null!;
+		public ICollection<MessageImage> Images { get; set; } = new List<MessageImage>();
 
 	}
 }

@@ -26,9 +26,11 @@ namespace MarketZone.Services.Implementations
 				return null;
 
 			var messages = await context.Messages
-				.Where(m => m.AdId == adId &&
-					   (m.SenderId == userId || m.ReceiverId == userId))
+				.Where(m =>
+					m.AdId == adId &&
+					(m.SenderId == userId || m.ReceiverId == userId))
 				.Include(m => m.Sender)
+				.Include(m => m.Images)
 				.OrderBy(m => m.SentOn)
 				.Select(m => new ChatMessageViewModel
 				{
@@ -36,24 +38,23 @@ namespace MarketZone.Services.Implementations
 					SenderName = m.Sender.UserName!,
 					SenderProfileImage = "/images/default-profile.png",
 					Content = m.Content,
+					ImageUrls = m.Images.Select(i => i.ImageUrl).ToList(),
 					SentOn = m.SentOn
 				})
 				.ToListAsync();
 
-			// Determine the OTHER user correctly
 			string otherUserName;
 
 			if (ad.UserId == userId)
 			{
-				// I am the seller → other user is the buyer
 				otherUserName = messages
 					.Where(m => m.SenderId != userId)
 					.Select(m => m.SenderName)
-					.FirstOrDefault() ?? "Unknown user";
+					.FirstOrDefault()
+					?? "Unknown user";
 			}
 			else
 			{
-				// I am the buyer → other user is the seller
 				otherUserName = ad.User.UserName!;
 			}
 
@@ -63,72 +64,94 @@ namespace MarketZone.Services.Implementations
 				ChatId = $"ad_{adId}",
 				OtherUserName = otherUserName,
 				Messages = messages,
-
 				AdTitle = ad.Title,
 				AdImageUrl = ad.Images
-	                .OrderBy(i => i.Id)
-	                .Select(i => i.ImageUrl)
+					.OrderBy(i => i.Id)
+					.Select(i => i.ImageUrl)
 					.FirstOrDefault() ?? "/images/no-image.png"
 			};
 		}
 
-		public async Task SaveMessageAsync(int adId, string senderId, string content)
+		public async Task SaveMessageAsync(
+			int adId,
+			string senderId,
+			string? content,
+			List<string> imageUrls)
 		{
 			var ad = await context.Ads.FindAsync(adId);
+			if (ad == null)
+				return;
 
-			if (ad == null) return;
+			string? receiverId;
 
-			var receiverId = ad.UserId == senderId
-				? context.Messages
-					.Where(m => m.AdId == adId && m.SenderId != senderId)
+			if (senderId == ad.UserId)
+			{
+				receiverId = await context.Messages
+					.Where(m => m.AdId == adId)
 					.Select(m => m.SenderId)
-					.FirstOrDefault()
-				: ad.UserId;
+					.FirstOrDefaultAsync(id => id != senderId);
+			}
+			else
+			{
+				receiverId = ad.UserId;
+			}
 
-			if (receiverId == null) return;
+			if (receiverId == null)
+				return;
 
-			context.Messages.Add(new Message
+			var message = new Message
 			{
 				AdId = adId,
 				SenderId = senderId,
 				ReceiverId = receiverId,
-				Content = content,
+				Content = content ?? string.Empty,
 				SentOn = DateTime.UtcNow
-			});
+			};
 
+			context.Messages.Add(message);
 			await context.SaveChangesAsync();
+
+			if (imageUrls.Any())
+			{
+				foreach (var url in imageUrls)
+				{
+					context.MessageImages.Add(new MessageImage
+					{
+						MessageId = message.Id,
+						ImageUrl = url
+					});
+				}
+
+				await context.SaveChangesAsync();
+			}
 		}
 		public async Task<InboxViewModel> GetInboxAsync(string userId, string mode)
 		{
-			var messages = await context.Messages
-				.Where(m => m.SenderId == userId || m.ReceiverId == userId)
+			var messagesQuery = context.Messages
 				.Include(m => m.Ad)
 				.Include(m => m.Sender)
 				.Include(m => m.Receiver)
-				.OrderByDescending(m => m.SentOn)
-				.ToListAsync();
+				.Where(m => m.SenderId == userId || m.ReceiverId == userId);
 
-			// Filter by role
 			if (mode == "selling")
 			{
-				// User is seller → owns the ad
-				messages = messages
-					.Where(m => m.Ad.UserId == userId)
-					.ToList();
+				messagesQuery = messagesQuery
+					.Where(m => m.Ad.UserId == userId);
 			}
 			else
 			{
-				// User is buyer → does NOT own the ad
-				messages = messages
-					.Where(m => m.Ad.UserId != userId)
-					.ToList();
+				messagesQuery = messagesQuery
+					.Where(m => m.Ad.UserId != userId);
 			}
 
-			var chats = messages
+			var chats = messagesQuery
+				.AsEnumerable() // ✅ switch to LINQ-to-Objects
 				.GroupBy(m => m.AdId)
 				.Select(g =>
 				{
-					var lastMessage = g.First();
+					var lastMessage = g
+						.OrderByDescending(m => m.SentOn)
+						.First();
 
 					return new InboxChatItemViewModel
 					{
@@ -150,6 +173,6 @@ namespace MarketZone.Services.Implementations
 				Chats = chats
 			};
 		}
-	}
 
+	}
 }

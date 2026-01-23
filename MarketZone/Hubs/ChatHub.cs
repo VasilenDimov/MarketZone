@@ -18,19 +18,28 @@ public class ChatHub : Hub
 		await Groups.AddToGroupAsync(Context.ConnectionId, chatId);
 	}
 
-	public async Task SendMessage(int adId, string chatId, string message)
-	{
-		var senderId = Context.UserIdentifier!;
-		var sentOn = DateTime.UtcNow;
+	public async Task SendMessage(
 
-		await messageService.SaveMessageAsync(adId, senderId, message);
+	    int adId,
+	    string chatId,
+	    string? content,
+	    List<string> imageUrls)
+    {
+		var senderId = Context.UserIdentifier!;
+
+		await messageService.SaveMessageAsync(
+			adId,
+			senderId,
+			content,
+			imageUrls
+		);
 
 		await Clients.Group(chatId).SendAsync(
 			"ReceiveMessage",
 			senderId,
-			message,
-			sentOn.ToString("O") // ISO 8601 – JS SAFE
+			content,
+			imageUrls,
+			DateTime.UtcNow.ToString("O")
 		);
 	}
-
 }

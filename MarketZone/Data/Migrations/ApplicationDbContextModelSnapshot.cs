@@ -248,6 +248,28 @@ namespace MarketZone.Data.Migrations
                     b.ToTable("Messages");
                 });
 
+            modelBuilder.Entity("MarketZone.Data.Models.MessageImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("MessageImages");
+                });
+
             modelBuilder.Entity("MarketZone.Data.Models.Review", b =>
                 {
                     b.Property<int>("Id")
@@ -605,6 +627,17 @@ namespace MarketZone.Data.Migrations
                     b.Navigation("Sender");
                 });
 
+            modelBuilder.Entity("MarketZone.Data.Models.MessageImage", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.Message", "Message")
+                        .WithMany("Images")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+                });
+
             modelBuilder.Entity("MarketZone.Data.Models.Review", b =>
                 {
                     b.HasOne("MarketZone.Data.Models.User", "ReviewedUser")
@@ -689,6 +722,11 @@ namespace MarketZone.Data.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Message", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.User", b =>
