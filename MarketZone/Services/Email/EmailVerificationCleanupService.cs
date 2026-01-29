@@ -19,6 +19,7 @@ public class EmailVerificationCleanupService : BackgroundService
 
 			context.EmailVerificationCodes.RemoveRange(
 				context.EmailVerificationCodes
+				    .AsNoTracking()
 					.Where(c => c.ExpiresAt < DateTime.UtcNow));
 
 			await context.SaveChangesAsync(stoppingToken);

@@ -108,7 +108,8 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			_context.EmailVerificationCodes.RemoveRange(
 				_context.EmailVerificationCodes.Where(c => c.UserId == user.Id));
 
-			var newCode = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
+			var newCode = RandomNumberGenerator.GetInt32(100000, 1000000)
+		    .ToString();
 
 			_context.EmailVerificationCodes.Add(new EmailVerificationCode
 			{

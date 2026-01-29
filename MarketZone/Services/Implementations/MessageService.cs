@@ -72,32 +72,31 @@ namespace MarketZone.Services.Implementations
 			};
 		}
 
-		public async Task SaveMessageAsync(
-			int adId,
-			string senderId,
-			string? content,
-			List<string> imageUrls)
+		public async Task SaveMessageAsync(int adId,string senderId,
+		string? content,List<string> imageUrls)
 		{
 			var ad = await context.Ads.FindAsync(adId);
-			if (ad == null)
-				return;
 
-			string? receiverId;
+			if (ad == null)
+				throw new InvalidOperationException("Ad not found.");
+
+			string receiverId;
 
 			if (senderId == ad.UserId)
 			{
 				receiverId = await context.Messages
 					.Where(m => m.AdId == adId)
 					.Select(m => m.SenderId)
-					.FirstOrDefaultAsync(id => id != senderId);
+					.FirstOrDefaultAsync(id => id != senderId)
+					?? throw new InvalidOperationException("Receiver not found.");
 			}
 			else
 			{
 				receiverId = ad.UserId;
 			}
 
-			if (receiverId == null)
-				return;
+			if (string.IsNullOrWhiteSpace(content) && !imageUrls.Any())
+				throw new InvalidOperationException("Message must contain text or images.");
 
 			var message = new Message
 			{
@@ -145,7 +144,7 @@ namespace MarketZone.Services.Implementations
 			}
 
 			var chats = messagesQuery
-				.AsEnumerable() // ✅ switch to LINQ-to-Objects
+				.AsEnumerable()
 				.GroupBy(m => m.AdId)
 				.Select(g =>
 				{

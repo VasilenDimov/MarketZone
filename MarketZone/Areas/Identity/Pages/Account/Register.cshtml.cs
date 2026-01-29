@@ -1,7 +1,6 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
-using System.ComponentModel.DataAnnotations;
 using MarketZone.Data;
 using MarketZone.Data.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -9,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Cryptography;
 
 namespace MarketZone.Areas.Identity.Pages.Account
 {
@@ -97,12 +98,14 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			_logger.LogInformation("User created a new account with password.");
 
 			// 🔐 Generate 6-digit verification code
-			var verificationCode = new Random().Next(100000, 999999).ToString();
+			var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000)
+			.ToString();
 
 			_context.EmailVerificationCodes.Add(new EmailVerificationCode
 			{
 				UserId = user.Id,
 				Code = verificationCode,
+				CreatedAt = DateTime.UtcNow,
 				ExpiresAt = DateTime.UtcNow.AddMinutes(10)
 			});
 

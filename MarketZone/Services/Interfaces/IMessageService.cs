@@ -7,7 +7,6 @@ namespace MarketZone.Services.Interfaces
 		Task<ChatViewModel?> GetChatAsync(int adId, string userId);
 		Task SaveMessageAsync(int adId, string senderId, string? content, List<string> imageUrls);
 		Task<InboxViewModel> GetInboxAsync(string userId,string mode);
-
 	}
 
 }

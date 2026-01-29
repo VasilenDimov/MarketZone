@@ -19,13 +19,17 @@ namespace MarketZone.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Toggle([FromBody] int adId)
 		{
+			if (adId <= 0)
+				return BadRequest();
+
 			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
 			bool isFavorite = await favoriteService.ToggleAsync(adId, userId);
 
-			return Json(new { isFavorite });
+			return Ok(new { isFavorite });
 		}
 
+		[HttpGet]
 		public async Task<IActionResult> MyFavorites()
 		{
 			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;

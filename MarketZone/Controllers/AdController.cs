@@ -116,6 +116,7 @@ namespace MarketZone.Controllers
 			return RedirectToAction("Details", new { id = model.Id });
 		}
 		[HttpPost]
+		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Delete(int id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -125,7 +126,7 @@ namespace MarketZone.Controllers
 			if (!success)
 				return BadRequest();
 
-			return Ok();
+			return RedirectToAction(nameof(MyAds));
 		}
 
 	}

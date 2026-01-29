@@ -63,7 +63,7 @@
     }
 </div>
 
-<!-- ===== INPUT (STRUCTURALLY FIXED, NOTHING ELSE TOUCHED) ===== -->
+<!-- input -->
 <div class="chat-footer">
 
     <div id="imagePreview" class="chat-image-preview"></div>
@@ -75,16 +75,16 @@
 
         <input id="msgInput" class="form-control" placeholder="Type message..." />
 
-        <button id="sendBtn" class="btn btn-primary">Send</button>
+        <button id="sendBtn" type="button" class="btn btn-primary">Send</button>
     </div>
 </div>
 
-<!-- IMAGE VIEWER -->
+<!-- image viewer -->
 <div id="imageViewer" class="image-viewer hidden">
     <div class="image-viewer-header">
         <span id="imageCounter"></span>
         <div>
-            <!-- ONLY CHANGE HERE: id added -->
+            <!--id added -->
             <button id="downloadBtn" title="Download">⬇</button>
             <button onclick="closeViewer()">✕</button>
         </div>
@@ -95,139 +95,19 @@
     <button class="nav right" onclick="nextImage()">›</button>
 </div>
 
+<script>
+    window.chatConfig = {
+        chatId: "@Model.ChatId",
+        adId: @Model.AdId,
+        currentUserId: "@Model.CurrentUserId"
+    };
+</script>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
+}
+
 @section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
-
-    <script>
-        const chatBox = document.getElementById("chat-box");
-        const chatId = "@Model.ChatId";
-        const adId = @Model.AdId;
-        const currentUserId = "@Model.CurrentUserId";
-
-        const imageInput = document.getElementById("imageInput");
-        const imagePreview = document.getElementById("imagePreview");
-        const msgInput = document.getElementById("msgInput");
-        const sendBtn = document.getElementById("sendBtn");
-
-        let selectedImages = [];
-
-        imageInput.addEventListener("change", () => {
-            selectedImages = Array.from(imageInput.files);
-            renderPreview();
-        });
-
-        function renderPreview() {
-            imagePreview.innerHTML = "";
-            selectedImages.forEach((file, i) => {
-                const r = new FileReader();
-                r.onload = e => {
-                    imagePreview.innerHTML += `
-                        <div class="preview-image-wrapper">
-                            <img src="${e.target.result}" />
-                            <span class="remove-image" onclick="removeImage(${i})">✕</span>
-                        </div>`;
-                };
-                r.readAsDataURL(file);
-            });
-        }
-
-        window.removeImage = i => {
-            selectedImages.splice(i, 1);
-            renderPreview();
-        };
-
-        const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/chatHub")
-            .build();
-
-        connection.start().then(() => {
-            connection.invoke("JoinChat", chatId);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
-
-        connection.on("ReceiveMessage", (senderId, content, imageUrls, sentOn) => {
-            const mine = senderId === currentUserId;
-
-            const div = document.createElement("div");
-            div.className = `chat-message ${mine ? "mine" : "theirs"}`;
-
-            div.innerHTML = `
-                ${!mine ? `<img src="/images/default-profile.png" class="chat-avatar" />` : ""}
-                <div class="chat-bubble">
-                    ${imageUrls.length ? `
-                        <div class="chat-images">
-                            ${imageUrls.map((i, x) =>
-                                `<img src="${i}" class="chat-image"
-                                 onclick='openImageGallery(${JSON.stringify(imageUrls)}, ${x})' />`
-                            ).join("")}
-                        </div>` : ""}
-                    ${content ? `<div class="chat-text">${content}</div>` : ""}
-                    <div class="chat-time">${new Date(sentOn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </div>`;
-
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
-
-        sendBtn.addEventListener("click", async () => {
-            if (!msgInput.value && !selectedImages.length) return;
-
-            const urls = [];
-            for (const f of selectedImages) {
-                const fd = new FormData();
-                fd.append("image", f);
-                const r = await fetch("/Messages/UploadChatImage", { method: "POST", body: fd });
-                const d = await r.json();
-                urls.push(d.imageUrl);
-            }
-
-            await connection.invoke("SendMessage", adId, chatId, msgInput.value, urls);
-
-            msgInput.value = "";
-            selectedImages = [];
-            imagePreview.innerHTML = "";
-        });
-
-        /* IMAGE VIEWER */
-        let gallery = [], index = 0;
-
-        function openImageGallery(images, i) {
-            gallery = images;
-            index = i;
-            document.getElementById("imageViewer").classList.remove("hidden");
-            updateViewer();
-        }
-
-        function closeViewer() {
-            document.getElementById("imageViewer").classList.add("hidden");
-        }
-
-        function updateViewer() {
-            document.getElementById("viewerImage").src = gallery[index];
-            document.getElementById("imageCounter").textContent = `${index + 1} / ${gallery.length}`;
-        }
-
-        function prevImage() {
-            if (index > 0) { index--; updateViewer(); }
-        }
-
-        function nextImage() {
-            if (index < gallery.length - 1) { index++; updateViewer(); }
-        }
-
-        /* DOWNLOAD (ONLY ADDITION) */
-        document.getElementById("downloadBtn").addEventListener("click", () => {
-            if (!gallery.length) return;
-
-            const url = gallery[index];
-            const name = url.split("/").pop().split("?")[0] || "image.jpg";
-
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = name;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        });
-    </script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/chat.js" asp-append-version="true"></script>
 }

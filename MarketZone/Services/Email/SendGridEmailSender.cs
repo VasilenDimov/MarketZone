@@ -18,7 +18,7 @@ namespace MarketZone.Services.Implementations
 			var apiKey = _configuration["SendGrid:ApiKey"];
 
 			if (string.IsNullOrWhiteSpace(apiKey))
-				throw new Exception("SendGrid API key is missing");
+				throw new InvalidOperationException("SendGrid API key is missing");
 
 			var client = new SendGridClient(apiKey);
 
@@ -42,7 +42,7 @@ namespace MarketZone.Services.Implementations
 			if ((int)response.StatusCode >= 400)
 			{
 				var body = await response.Body.ReadAsStringAsync();
-				throw new Exception($"SendGrid failed: {response.StatusCode} - {body}");
+				throw new InvalidOperationException($"SendGrid failed: {response.StatusCode} - {body}");
 			}
 		}
 

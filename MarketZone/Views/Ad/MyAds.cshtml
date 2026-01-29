@@ -2,7 +2,7 @@
 
 <h2>My Ads</h2>
 
-@if (!Model.Any())
+@if (Model == null || !Model.Any())
 {
     <div class="alert alert-info">
         You have not created any ads.
@@ -35,12 +35,17 @@ else
                             Edit
                         </a>
 
-                        <a asp-controller="Ad"
-                           asp-action="Delete"
-                           asp-route-id="@ad.Id"
-                           class="btn btn-outline-danger flex-fill">
-                            Delete
-                        </a>
+                        <form asp-controller="Ad"
+                              asp-action="Delete"
+                              asp-route-id="@ad.Id"
+                              method="post"
+                              class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-danger">
+                                Delete
+                            </button>
+                        </form>
+
                     </div>
 
                 </div>

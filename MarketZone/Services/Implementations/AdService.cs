@@ -9,12 +9,12 @@ namespace MarketZone.Services.Implementations
 	public class AdService : IAdService
 	{
 		private readonly ApplicationDbContext context;
-		private readonly IWebHostEnvironment env;
+		private readonly IImageService imageService;
 
-		public AdService(ApplicationDbContext context, IWebHostEnvironment env)
+		public AdService(ApplicationDbContext context, IImageService imageService)
 		{
 			this.context = context;
-			this.env = env;
+			this.imageService = imageService;
 		}
 
 		public async Task<int> CreateAsync(AdCreateModel model, string userId)
@@ -40,7 +40,7 @@ namespace MarketZone.Services.Implementations
 			// 🔹 Images
 			foreach (var image in model.Images)
 			{
-				var imageUrl = await SaveImageAsync(image);
+				var imageUrl = await imageService.UploadAdImageAsync(image);
 
 				ad.Images.Add(new AdImage
 				{
@@ -77,35 +77,6 @@ namespace MarketZone.Services.Implementations
 		}
 
 		// private helper method to save image and return its URL
-		private async Task<string> SaveImageAsync(IFormFile image)
-		{
-			if (image == null || image.Length == 0)
-			{
-				throw new InvalidOperationException("Invalid image file.");
-			}
-
-			var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-			var extension = Path.GetExtension(image.FileName).ToLower();
-
-			if (!allowedExtensions.Contains(extension))
-			{
-				throw new InvalidOperationException("Unsupported image format.");
-			}
-
-			var fileName = $"{Guid.NewGuid()}{extension}";
-			var uploadFolder = Path.Combine(env.WebRootPath, "uploads", "ads");
-
-			Directory.CreateDirectory(uploadFolder);
-
-			var filePath = Path.Combine(uploadFolder, fileName);
-
-			using (var stream = new FileStream(filePath, FileMode.Create))
-			{
-				await image.CopyToAsync(stream);
-			}
-
-			return $"/uploads/ads/{fileName}";
-		}
 		public async Task<AdDetailsModel?> GetDetailsAsync(int id, string? userId)
 		{
 			return await context.Ads
@@ -220,16 +191,13 @@ namespace MarketZone.Services.Implementations
 			{
 				ad.Images.Remove(img);
 
-				// Optional: delete physical file later
-				var physicalPath = Path.Combine(env.WebRootPath, img.ImageUrl.TrimStart('/'));
-				if (File.Exists(physicalPath))
-					File.Delete(physicalPath);
+				await imageService.DeleteImageAsync(img.ImageUrl);
 			}
 
 			// Add newly uploaded images
 			foreach (var image in model.Images)
 			{
-				var imageUrl = await SaveImageAsync(image);
+				var imageUrl = await imageService.UploadAdImageAsync(image);
 				ad.Images.Add(new AdImage { ImageUrl = imageUrl });
 			}
 
@@ -273,13 +241,8 @@ namespace MarketZone.Services.Implementations
 			// Delete physical images
 			foreach (var img in ad.Images)
 			{
-				var physicalPath = Path.Combine(
-					env.WebRootPath,
-					img.ImageUrl.TrimStart('/')
-				);
-
-				if (File.Exists(physicalPath))
-					File.Delete(physicalPath);
+				ad.Images.Remove(img);
+				await imageService.DeleteImageAsync(img.ImageUrl);
 			}
 
 			context.Ads.Remove(ad);
@@ -304,7 +267,7 @@ namespace MarketZone.Services.Implementations
 			if (!string.IsNullOrWhiteSpace(search))
 			{
 				query = query.Where(a =>
-					a.Title.ToLower().Contains(search.ToLower()));
+					a.Title.Contains(search));
 			}
 
 			var totalAds = await query.CountAsync();

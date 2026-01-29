@@ -2,7 +2,7 @@
 
 <h2>My Favorites</h2>
 
-@if (!Model.Any())
+@if (Model == null || !Model.Any())
 {
     <div class="alert alert-info">You have no favorite ads.</div>
 }

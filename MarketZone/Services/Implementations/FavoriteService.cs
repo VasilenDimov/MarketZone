@@ -15,6 +15,11 @@ public class FavoriteService : IFavoriteService
 
 	public async Task<bool> ToggleAsync(int adId, string userId)
 	{
+		bool adExists = await context.Ads.AnyAsync(a => a.Id == adId);
+
+		if (!adExists)
+			throw new InvalidOperationException("Ad does not exist.");
+
 		var favorite = await context.Favorites
 			.FirstOrDefaultAsync(f => f.AdId == adId && f.UserId == userId);
 
@@ -43,25 +48,22 @@ public class FavoriteService : IFavoriteService
 
 	public async Task<IEnumerable<AdListItemViewModel>> GetFavoritesAsync(string userId)
 	{
-		return await context.Favorites
-			.Where(f => f.UserId == userId)
-			.Join(
-				context.Ads,
-				f => f.AdId,
-				a => a.Id,
-				(f, a) => new AdListItemViewModel
-				{
-					Id = a.Id,
-					Title = a.Title,
-					Price = a.Price,
-					Currency = a.Currency,
-					CreatedOn = a.CreatedOn,
-					MainImageUrl = a.Images
-						.OrderBy(i => i.Id)
-						.Select(i => i.ImageUrl)
-						.FirstOrDefault()
-				})
+		return await context.Ads
 			.AsNoTracking()
+		    .Where(a => context.Favorites.Any(f =>f.AdId == a.Id
+			 && f.UserId == userId))
+			.Select(a => new AdListItemViewModel
+			{
+				Id = a.Id,
+				Title = a.Title,
+				Price = a.Price,
+				Currency = a.Currency,
+				CreatedOn = a.CreatedOn,
+				MainImageUrl = a.Images
+					.OrderBy(i => i.Id)
+					.Select(i => i.ImageUrl)
+					.FirstOrDefault()
+			})
 			.ToListAsync();
 	}
 }
