@@ -115,7 +115,7 @@
                asp-route-id="@Model.SellerId"
                class="d-flex align-items-center gap-2 text-decoration-none">
 
-                <img src="/images/default-profile.png"
+                <img src="/images/default-avatar.png"
                      class="rounded-circle"
                      style="width:32px;height:32px;object-fit:cover;" />
 
@@ -124,44 +124,16 @@
         </p>
     </div>
 </div>
+<script>
+    window.adDetailsConfig = {
+        adId: @Model.Id,
+        isAuthenticated: @(isAuthenticated.ToString().ToLower()),
+        isOwner: @(isOwner.ToString().ToLower()),
+        antiForgeryToken:
+            document.querySelector('input[name="__RequestVerificationToken"]').value
+    };
+</script>
 
 @section Scripts {
-    <script>
-        function requireLogin() {
-            alert("You need an account to use this feature.");
-            window.location.href = "/Identity/Account/Login";
-        }
-    </script>
-
-    @if (isAuthenticated && !isOwner)
-    {
-        <script>
-            const favBtn = document.getElementById("favorite-btn");
-            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
-
-            favBtn.addEventListener("click", async () => {
-                try {
-                    const response = await fetch("/Favorites/Toggle", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "RequestVerificationToken": token
-                        },
-                        body: JSON.stringify(parseInt(favBtn.dataset.adId))
-                    });
-
-                    if (!response.ok) throw new Error();
-
-                    const result = await response.json();
-
-                    favBtn.textContent = result.isFavorite
-                        ? "❤️ Remove from Favorites"
-                        : "🤍 Add to Favorites";
-                }
-                catch {
-                    alert("Failed to update favorites.");
-                }
-            });
-        </script>
-    }
+    <script src="~/js/ad-details.js" asp-append-version="true"></script>
 }

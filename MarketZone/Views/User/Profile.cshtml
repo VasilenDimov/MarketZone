@@ -1,0 +1,127 @@
+﻿@model MarketZone.ViewModels.User.UserProfileViewModel
+
+@{
+    ViewData["Title"] = Model.UserName;
+}
+
+<div class="container mt-4">
+
+    <!-- USER HEADER -->
+    <div class="card mb-4">
+        <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
+
+            <div class="d-flex align-items-center gap-3">
+                <img src="@Model.ProfilePictureUrl"
+                     alt="Profile picture"
+                     class="rounded-circle"
+                     style="width:80px;height:80px;object-fit:cover;" />
+
+                <div>
+                    <h4 class="mb-1">@Model.UserName</h4>
+
+                    <div class="text-muted small">
+                        Member since @Model.CreatedOn.ToString("dd MMM yyyy")
+                    </div>
+                    <p class="text-muted small">
+                        Last online @Model.LastOnlineDisplay
+                    </p>
+                </div>
+            </div>
+
+            <!-- REVIEW BUTTONS (visual only for now) -->
+            <div class="d-flex gap-2 mt-3 mt-md-0">
+                <button class="btn btn-outline-primary">
+                    Leave review
+                </button>
+                <button class="btn btn-outline-secondary">
+                    View reviews
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- SEARCH + SORT -->
+    <form method="get" class="row mb-4">
+        <input type="hidden" name="id" value="@Model.UserId" />
+
+        <div class="col-md-6 mb-2">
+            <input type="text"
+                   name="search"
+                   value="@Model.SearchTerm"
+                   class="form-control"
+                   placeholder="Search ads..." />
+        </div>
+
+        <div class="col-md-4 mb-2">
+            <select name="sort" class="form-select">
+                <option value="">Newest</option>
+
+                @if (Model.Sort == "oldest")
+                {
+                    <option value="oldest" selected>Oldest</option>
+                }
+                else
+                {
+                    <option value="oldest">Oldest</option>
+                }
+
+                @if (Model.Sort == "price_asc")
+                {
+                    <option value="price_asc" selected>Price ↑</option>
+                }
+                else
+                {
+                    <option value="price_asc">Price ↑</option>
+                }
+
+                @if (Model.Sort == "price_desc")
+                {
+                    <option value="price_desc" selected>Price ↓</option>
+                }
+                else
+                {
+                    <option value="price_desc">Price ↓</option>
+                }
+            </select>
+
+        </div>
+
+        <div class="col-md-2 mb-2">
+            <button type="submit" class="btn btn-primary w-100">
+                Apply
+            </button>
+        </div>
+    </form>
+
+    <!-- ADS LIST -->
+    @if (!Model.Ads.Any())
+    {
+        <div class="alert alert-info">
+            This user has no ads yet.
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var ad in Model.Ads)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <partial name="_AdCardPartial" model="ad" />
+
+                        <div class="card-footer bg-transparent border-0">
+                            <a asp-controller="Ad"
+                               asp-action="Details"
+                               asp-route-id="@ad.Id"
+                               class="btn btn-sm btn-outline-primary w-100">
+                                View details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>

@@ -36,7 +36,7 @@ namespace MarketZone.Services.Implementations
 				{
 					SenderId = m.SenderId,
 					SenderName = m.Sender.UserName!,
-					SenderProfileImage = "/images/default-profile.png",
+					SenderProfileImage = "/images/default-avatar.png",
 					Content = m.Content,
 					ImageUrls = m.Images.Select(i => i.ImageUrl).ToList(),
 					SentOn = m.SentOn

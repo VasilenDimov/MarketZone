@@ -50,9 +50,9 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
-
 // Global exception handling
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -68,6 +68,8 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<UserOnlineMiddleware>();
 
 // SignalR Hub
 app.MapHub<ChatHub>("/chatHub");
