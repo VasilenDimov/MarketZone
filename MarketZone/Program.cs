@@ -51,6 +51,7 @@ builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 var app = builder.Build();
 // Global exception handling

@@ -13,5 +13,13 @@ namespace MarketZone.Services.Interfaces
 		Task<double> GetAverageRatingAsync(string userId);
 
 		Task<int> GetReviewCountAsync(string userId);
+
+		Task<ReviewEditViewModel?> GetForEditAsync(int reviewId);
+
+		Task<bool> UpdateAsync(ReviewEditViewModel model, string reviewerId);
+
+		Task<bool> DeleteAsync(int reviewId, string reviewerId);
+
+		Task<bool> CanUserEditAsync(int reviewId, string reviewerId);
 	}
 }

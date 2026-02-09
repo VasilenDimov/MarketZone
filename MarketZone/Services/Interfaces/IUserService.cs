@@ -7,6 +7,7 @@ namespace MarketZone.Services.Interfaces
 		Task<UserProfileViewModel> GetProfileAsync(
 			string userId,
 			string? search,
-			string? sort);
+			string? sort,
+			string? viewerId);
 	}
 }

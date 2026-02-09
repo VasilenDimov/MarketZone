@@ -2,8 +2,9 @@
 
 namespace MarketZone.ViewModels.Review
 {
-	public class ReviewCreateViewModel: ReviewFormViewModel
+	public class ReviewEditViewModel: ReviewFormViewModel
 	{
-		
+		public int Id { get; set; }
+
 	}
 }

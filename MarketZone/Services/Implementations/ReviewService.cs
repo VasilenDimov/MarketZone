@@ -31,7 +31,7 @@ namespace MarketZone.Services.Implementations
 			{
 				ReviewerId = reviewerId,
 				ReviewedUserId = model.ReviewedUserId,
-				Rating = model.Rating,
+				Rating = model.Rating, // int (1–5)
 				Comment = model.Comment ?? string.Empty,
 				CreatedOn = DateTime.UtcNow
 			};
@@ -58,9 +58,13 @@ namespace MarketZone.Services.Implementations
 				.OrderByDescending(r => r.CreatedOn)
 				.Select(r => new ReviewViewModel
 				{
+					Id = r.Id,
+					ReviewerId = r.ReviewerId,
+
 					Rating = r.Rating,
 					Comment = r.Comment,
 					CreatedOn = r.CreatedOn,
+
 					ReviewerName = r.Reviewer.UserName!,
 					ReviewerProfilePictureUrl = r.Reviewer.ProfilePictureUrl
 				})
@@ -70,14 +74,68 @@ namespace MarketZone.Services.Implementations
 		public async Task<double> GetAverageRatingAsync(string userId)
 		{
 			return await context.Reviews
+				.AsNoTracking()
 				.Where(r => r.ReviewedUserId == userId)
-				.Select(r => (double?)r.Rating)
-				.AverageAsync() ?? 0;
+				.AverageAsync(r => (double?)r.Rating) ?? 0;
 		}
 
 		public async Task<int> GetReviewCountAsync(string userId)
 		{
 			return await context.Reviews.CountAsync(r => r.ReviewedUserId == userId);
+		}
+
+		public async Task<ReviewEditViewModel?> GetForEditAsync(int reviewId)
+		{
+			return await context.Reviews
+				.AsNoTracking()
+				.Where(r => r.Id == reviewId)
+				.Select(r => new ReviewEditViewModel
+				{
+					Id = r.Id,
+					Rating = r.Rating,
+					Comment = r.Comment,
+					ReviewedUserId = r.ReviewedUserId
+				})
+				.FirstOrDefaultAsync();
+		}
+
+		public async Task<bool> UpdateAsync(ReviewEditViewModel model, string reviewerId)
+		{
+			var review = await context.Reviews.FindAsync(model.Id);
+
+			if (review == null)
+				return false;
+
+			if (review.ReviewerId != reviewerId)
+				return false;
+
+			review.Rating = model.Rating;
+			review.Comment = model.Comment ?? string.Empty;
+
+			await context.SaveChangesAsync();
+			return true;
+		}
+
+		public async Task<bool> DeleteAsync(int reviewId, string reviewerId)
+		{
+			var review = await context.Reviews.FindAsync(reviewId);
+
+			if (review == null)
+				return false;
+
+			if (review.ReviewerId != reviewerId)
+				return false;
+
+			context.Reviews.Remove(review);
+			await context.SaveChangesAsync();
+			return true;
+		}
+
+		public async Task<bool> CanUserEditAsync(int reviewId, string reviewerId)
+		{
+			return await context.Reviews.AnyAsync(r =>
+				r.Id == reviewId &&
+				r.ReviewerId == reviewerId);
 		}
 	}
 }

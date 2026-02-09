@@ -1,4 +1,5 @@
-﻿@model MarketZone.ViewModels.User.UserProfileViewModel
+﻿@using System.Security.Claims
+@model MarketZone.ViewModels.User.UserProfileViewModel
 
 @{
     ViewData["Title"] = Model.UserName;
@@ -25,24 +26,23 @@
                     <p class="text-muted small">
                         Last online @Model.LastOnlineDisplay
                     </p>
+                    <div class="text-muted small">
+                        Rating: @Model.AverageRating.ToString("0.0")
+                        (@Model.ReviewCount review@(Model.ReviewCount == 1 ? "" : "s"))
+                    </div>
                 </div>
             </div>
 
-            <!-- REVIEW BUTTONS (visual only for now) -->
             <div class="d-flex gap-2 mt-3 mt-md-0">
-                <button class="btn btn-outline-primary">
-                    Leave review
-                </button>
-                <button class="btn btn-outline-secondary">
-                    View reviews
-                </button>
+                <a class="btn btn-outline-primary" href="#leave-review">Leave review</a>
+                <a class="btn btn-outline-secondary" href="#reviews">View reviews</a>
             </div>
 
         </div>
     </div>
 
     <!-- SEARCH + SORT -->
-    <form method="get" class="row mb-4">
+    <form method="get" class="row mb-4" novalidate>
         <input type="hidden" name="id" value="@Model.UserId" />
 
         <div class="col-md-6 mb-2">
@@ -88,18 +88,14 @@
         </div>
 
         <div class="col-md-2 mb-2">
-            <button type="submit" class="btn btn-primary w-100">
-                Apply
-            </button>
+            <button type="submit" class="btn btn-primary w-100">Apply</button>
         </div>
     </form>
 
-    <!-- ADS LIST -->
+    <!-- ADS -->
     @if (!Model.Ads.Any())
     {
-        <div class="alert alert-info">
-            This user has no ads yet.
-        </div>
+        <div class="alert alert-info">This user has no ads yet.</div>
     }
     else
     {
@@ -109,7 +105,6 @@
                 <div class="col-md-4 mb-4">
                     <div class="card h-100">
                         <partial name="_AdCardPartial" model="ad" />
-
                         <div class="card-footer bg-transparent border-0">
                             <a asp-controller="Ad"
                                asp-action="Details"
@@ -123,5 +118,116 @@
             }
         </div>
     }
+
+    <!-- REVIEWS -->
+    <div class="card mt-4" id="reviews">
+        <div class="card-body">
+            <h5 class="card-title">Reviews (@Model.ReviewCount)</h5>
+
+            @if (!Model.Reviews.Any())
+            {
+                <div class="alert alert-info">No reviews yet.</div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var review in Model.Reviews)
+                    {
+                        <div class="list-group-item">
+
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="@review.ReviewerProfilePictureUrl"
+                                     class="rounded-circle"
+                                     style="width:40px;height:40px;object-fit:cover;" />
+
+                                <div class="flex-grow-1">
+                                    <strong>@review.ReviewerName</strong>
+                                    <div class="text-muted small">
+                                        @review.CreatedOn.ToString("dd MMM yyyy")
+                                    </div>
+                                </div>
+
+                                @if (User.Identity?.IsAuthenticated == true &&
+                                                        review.ReviewerId == User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier))
+                                {
+                                    <div class="d-flex gap-1">
+                                        <a asp-controller="Review"
+                                           asp-action="Edit"
+                                           asp-route-id="@review.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+
+                                        <form asp-controller="Review"
+                                              asp-action="Delete"
+                                              method="post"
+                                              class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@review.Id" />
+                                            <input type="hidden" name="reviewedUserId" value="@Model.UserId" />
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('Delete this review?');">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="mt-2">
+                                <span class="badge bg-primary">@review.Rating / 5</span>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(review.Comment))
+                            {
+                                <p class="mt-2 mb-0">@review.Comment</p>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- LEAVE REVIEW -->
+    <div class="card mt-4" id="leave-review">
+        <div class="card-body">
+            <h5 class="card-title">Leave a review</h5>
+
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <div class="alert alert-warning">
+                    Please log in to leave a review.
+                </div>
+            }
+            else if (!Model.CanReview)
+            {
+                <div class="alert alert-info">
+                    You cannot leave a review for this user.
+                </div>
+            }
+            else
+            {
+                <form asp-controller="Review"
+                      asp-action="Create"
+                      method="post">
+
+                    <partial name="~/Views/Review/_ReviewFormPartial.cshtml"
+                             model="new MarketZone.ViewModels.Review.ReviewCreateViewModel
+                             {
+                                 ReviewedUserId = Model.UserId,
+                                 Rating = 1
+                             }" />
+
+                <button type="submit" class="btn btn-primary">
+                    Submit review
+                </button>
+            </form>
+            }
+        </div>
+    </div>
 
 </div>

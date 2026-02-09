@@ -1,5 +1,6 @@
 ﻿using MarketZone.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace MarketZone.Controllers
 {
@@ -23,7 +24,11 @@ namespace MarketZone.Controllers
 				return NotFound();
 			}
 
-			var model = await userService.GetProfileAsync(id, search, sort);
+			var viewerId = User.Identity?.IsAuthenticated == true
+				? User.FindFirstValue(ClaimTypes.NameIdentifier)
+				: null;
+
+			var model = await userService.GetProfileAsync(id, search, sort, viewerId);
 
 			return View(model);
 		}

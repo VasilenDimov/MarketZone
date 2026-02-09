@@ -9,31 +9,35 @@ namespace MarketZone.Services.Implementations
 	public class UserService : IUserService
 	{
 		private readonly ApplicationDbContext context;
+		private readonly IReviewService reviewService;
 
-		public UserService(ApplicationDbContext context)
+		public UserService(
+			ApplicationDbContext context,
+			IReviewService reviewService)
 		{
 			this.context = context;
+			this.reviewService = reviewService;
 		}
 
 		public async Task<UserProfileViewModel> GetProfileAsync(
 			string userId,
 			string? search,
-			string? sort)
+			string? sort,
+			string? viewerId)
 		{
+			// USER
 			var user = await context.Users
 				.AsNoTracking()
 				.FirstOrDefaultAsync(u => u.Id == userId);
 
 			if (user == null)
-			{
 				throw new ArgumentException("User not found");
-			}
 
+			// ADS
 			var adsQuery = context.Ads
 				.AsNoTracking()
 				.Where(a => a.UserId == userId);
 
-			// Search
 			if (!string.IsNullOrWhiteSpace(search))
 			{
 				adsQuery = adsQuery.Where(a =>
@@ -41,7 +45,6 @@ namespace MarketZone.Services.Implementations
 					a.Description.Contains(search));
 			}
 
-			// Sorting
 			adsQuery = sort switch
 			{
 				"price_asc" => adsQuery.OrderBy(a => a.Price),
@@ -65,6 +68,28 @@ namespace MarketZone.Services.Implementations
 				})
 				.ToListAsync();
 
+			// REVIEWS (list)
+			var reviews = await reviewService.GetReviewsForUserAsync(userId);
+
+			// REVIEW STATS (ONE QUERY, SAFE)
+			var reviewStats = await context.Reviews
+				.AsNoTracking()
+				.Where(r => r.ReviewedUserId == userId)
+				.GroupBy(r => r.ReviewedUserId)
+				.Select(g => new
+				{
+					AverageRating = g.Average(r => (double?)r.Rating) ?? 0,
+					ReviewCount = g.Count()
+				})
+				.FirstOrDefaultAsync();
+
+			// CAN REVIEW
+			bool canReview = false;
+			if (!string.IsNullOrWhiteSpace(viewerId))
+			{
+				canReview = await reviewService.CanReviewAsync(viewerId, userId);
+			}
+
 			return new UserProfileViewModel
 			{
 				UserId = user.Id,
@@ -77,7 +102,12 @@ namespace MarketZone.Services.Implementations
 
 				SearchTerm = search,
 				Sort = sort,
-				Ads = ads
+
+				Ads = ads,
+				Reviews = reviews,
+				AverageRating = reviewStats?.AverageRating ?? 0,
+				ReviewCount = reviewStats?.ReviewCount ?? 0,
+				CanReview = canReview
 			};
 		}
 	}

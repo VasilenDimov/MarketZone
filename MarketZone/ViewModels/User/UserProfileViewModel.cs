@@ -1,4 +1,5 @@
 ﻿using MarketZone.ViewModels.Ad;
+using MarketZone.ViewModels.Review;
 
 namespace MarketZone.ViewModels.User
 {
@@ -20,7 +21,15 @@ namespace MarketZone.ViewModels.User
 		// Search & sort
 		public string? SearchTerm { get; set; }
 		public string? Sort { get; set; }
+		//Reviews
+		public IEnumerable<ReviewViewModel> Reviews { get; set; }
+			= new List<ReviewViewModel>();
 
+		public double AverageRating { get; set; }
+		public int ReviewCount { get; set; }
+		public bool CanReview { get; set; }
+
+		//Last Online Dislay
 		public string? LastOnlineDisplay =>
 	    LastOnlineOn == null
 		? "Never"
