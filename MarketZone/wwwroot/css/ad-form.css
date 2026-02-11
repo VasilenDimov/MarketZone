@@ -94,3 +94,11 @@
     background-color: #e7f1ff;
     color: #258cfb;
 }
+/* Submit button disabled state */
+#submit-btn:disabled {
+    background-color: #93c5fd !important;
+    border-color: #93c5fd !important;
+    cursor: not-allowed !important;
+    pointer-events: all !important;
+    opacity: 1;
+}

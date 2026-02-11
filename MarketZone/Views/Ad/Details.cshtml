@@ -105,6 +105,22 @@
         <p>
             <strong>Address:</strong> @Model.Address
         </p>
+        @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+        {
+            <div style="height:200px;border-radius:8px;border:1px solid #dee2e6;overflow:hidden;" class="mb-3">
+                <div id="details-map" style="height:100%;width:100%;"></div>
+            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                    const map = L.map("details-map", { scrollWheelZoom: false, dragging: false });
+                    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                        attribution: "© OpenStreetMap"
+                    }).addTo(map);
+                    L.marker([@Model.Latitude, @Model.Longitude]).addTo(map);
+                    map.setView([@Model.Latitude, @Model.Longitude], 14);
+                });
+            </script>
+        }
 
         <!-- Seller -->
         <p class="d-flex align-items-center gap-2">

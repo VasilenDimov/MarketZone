@@ -24,6 +24,15 @@ namespace MarketZone.Services.Implementations
 				throw new InvalidOperationException("At least one image is required.");
 			}
 
+			// Validate that the category exists
+			var categoryExists = await context.Categories
+				.AnyAsync(c => c.Id == model.CategoryId);
+
+			if (!categoryExists)
+			{
+				throw new InvalidOperationException("The selected category does not exist.");
+			}
+
 			var ad = new Ad
 			{
 				Title = model.Title,
@@ -31,13 +40,15 @@ namespace MarketZone.Services.Implementations
 				Price = model.Price,
 				Currency = model.Currency,
 				Address = model.Address,
-				CategoryId = model.CategoryId,
+				Latitude = model.Latitude,
+				Longitude = model.Longitude,
+				CategoryId = model.CategoryId!.Value,
 				Condition = model.Condition,
 				UserId = userId,
 				CreatedOn = DateTime.UtcNow
 			};
 
-			// 🔹 Images
+			//Images
 			foreach (var image in model.Images)
 			{
 				var imageUrl = await imageService.UploadAdImageAsync(image);
@@ -48,7 +59,7 @@ namespace MarketZone.Services.Implementations
 				});
 			}
 
-			// 🔹 Tags (optional, max 20)
+			//Tags (optional, max 20)
 			if (!string.IsNullOrWhiteSpace(model.Tags))
 			{
 				var tagNames = model.Tags
@@ -76,7 +87,6 @@ namespace MarketZone.Services.Implementations
 			return ad.Id;
 		}
 
-		// private helper method to save image and return its URL
 		public async Task<AdDetailsModel?> GetDetailsAsync(int id, string? userId)
 		{
 			return await context.Ads
@@ -91,6 +101,8 @@ namespace MarketZone.Services.Implementations
 					Currency = a.Currency,
 					Condition = a.Condition,
 					Address = a.Address,
+					Latitude = a.Latitude,
+					Longitude = a.Longitude,
 					CreatedOn = a.CreatedOn,
 					SellerId = a.UserId,
 
@@ -137,6 +149,8 @@ namespace MarketZone.Services.Implementations
 			var ad = await context.Ads
 				.AsNoTracking()
 				.Include(a => a.Images)
+				.Include(a => a.AdTags)
+				.ThenInclude(at => at.Tag)
 				.FirstOrDefaultAsync(a => a.Id == adId && a.UserId == userId);
 
 			if (ad == null)
@@ -151,6 +165,8 @@ namespace MarketZone.Services.Implementations
 				Currency = ad.Currency,
 				Condition = ad.Condition,
 				Address = ad.Address,
+				Latitude = ad.Latitude,
+				Longitude = ad.Longitude,
 				CategoryId = ad.CategoryId,
 				Tags = string.Join(", ", ad.AdTags.Select(t => t.Tag.Name)),
 				ExistingImageUrls = ad.Images
@@ -178,7 +194,9 @@ namespace MarketZone.Services.Implementations
 			ad.Currency = model.Currency;
 			ad.Condition = model.Condition;
 			ad.Address = model.Address;
-			ad.CategoryId = model.CategoryId;
+			ad.Latitude = model.Latitude;
+			ad.Longitude = model.Longitude;
+			ad.CategoryId = model.CategoryId!.Value;
 
 			// IMAGES
 
@@ -239,7 +257,7 @@ namespace MarketZone.Services.Implementations
 				return false;
 
 			// Delete physical images
-			foreach (var img in ad.Images)
+			foreach (var img in ad.Images.ToList())
 			{
 				ad.Images.Remove(img);
 				await imageService.DeleteImageAsync(img.ImageUrl);

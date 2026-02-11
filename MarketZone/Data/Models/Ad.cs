@@ -24,6 +24,8 @@ namespace MarketZone.Data.Models
 
 		[Required, StringLength(200)]
 		public string Address { get; set; } = null!;
+		public double? Latitude { get; set; }  
+		public double? Longitude { get; set; }
 
 		[Required]
 		public ItemCondition Condition { get; set; }

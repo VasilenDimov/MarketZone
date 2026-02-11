@@ -25,37 +25,42 @@ namespace MarketZone.Middlewares
 			catch (ArgumentException ex)
 			{
 				logger.LogWarning(ex, ex.Message);
-				await WriteResponseAsync(context, HttpStatusCode.BadRequest, ex.Message);
+				await HandleExceptionAsync(context, HttpStatusCode.BadRequest, ex.Message);
 			}
 			catch (InvalidOperationException ex)
 			{
 				logger.LogWarning(ex, ex.Message);
-				await WriteResponseAsync(context, HttpStatusCode.BadRequest, ex.Message);
+				await HandleExceptionAsync(context, HttpStatusCode.BadRequest, ex.Message);
 			}
 			catch (Exception ex)
 			{
 				logger.LogError(ex, "Unhandled exception");
-				await WriteResponseAsync(
-					context,
-					HttpStatusCode.InternalServerError,
+				await HandleExceptionAsync(context, HttpStatusCode.InternalServerError,
 					"An unexpected error occurred.");
 			}
 		}
 
-		private static async Task WriteResponseAsync(
+		private static async Task HandleExceptionAsync(
 			HttpContext context,
 			HttpStatusCode statusCode,
 			string message)
 		{
-			context.Response.StatusCode = (int)statusCode;
-			context.Response.ContentType = "application/json";
+			bool isAjax = context.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+					   || context.Request.Headers["Accept"].ToString().Contains("application/json");
 
-			var payload = JsonSerializer.Serialize(new
+			if (isAjax)
 			{
-				error = message
-			});
-
-			await context.Response.WriteAsync(payload);
+				// API / AJAX call → return JSON 
+				context.Response.StatusCode = (int)statusCode;
+				context.Response.ContentType = "application/json";
+				await context.Response.WriteAsync(
+					JsonSerializer.Serialize(new { error = message }));
+			}
+			else
+			{
+				// Browser navigation → redirect to error page 
+				context.Response.Redirect($"/Home/Error?message={Uri.EscapeDataString(message)}");
+			}
 		}
 	}
 }

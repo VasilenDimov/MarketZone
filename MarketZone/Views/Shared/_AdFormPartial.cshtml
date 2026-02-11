@@ -31,11 +31,34 @@
     </div>
 
     <!-- Address -->
-    <div class="mb-3">
-        <label asp-for="Address"></label>
-        <input asp-for="Address" class="form-control" />
-        <span asp-validation-for="Address" class="text-danger"></span>
+<!-- Address -->
+<div class="mb-3">
+    <label class="form-label">Address</label>
+    <div class="address-picker-wrapper">
+        <div class="address-input-wrapper">
+            <span class="address-icon">📍</span>
+            <!-- ✅ name="Address" here — no separate hidden field needed -->
+            <input type="text"
+                   id="address-input"
+                   name="Address"
+                   class="form-control"
+                   placeholder="Start typing an address..."
+                   value="@Model.Address"
+                   autocomplete="off" />
+            <div id="address-loading" class="address-loading"></div>
+        </div>
+        <div id="address-suggestions" class="address-suggestions"></div>
     </div>
+    <input type="hidden" id="Latitude" name="Latitude" value="@Model.Latitude" />
+    <input type="hidden" id="Longitude" name="Longitude" value="@Model.Longitude" />
+    <span asp-validation-for="Address" class="text-danger"></span>
+    <div id="address-map-preview" class="address-map-preview">
+        <div id="address-map"></div>
+    </div>
+    <div id="address-confirmed-badge" class="address-confirmed-badge">
+        ✅ Address confirmed
+    </div>
+</div>
 
     <!-- Category picker -->
     <div class="mb-3">
@@ -56,7 +79,7 @@
             <ul id="category-list" class="list-unstyled mb-0"></ul>
         </div>
 
-        <input type="hidden" asp-for="CategoryId" />
+        <input type="hidden" asp-for="CategoryId" id="CategoryId" /> 
         <span asp-validation-for="CategoryId" class="text-danger"></span>
     </div>
 

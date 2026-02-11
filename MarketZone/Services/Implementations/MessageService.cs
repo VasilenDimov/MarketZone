@@ -127,50 +127,36 @@ namespace MarketZone.Services.Implementations
 		public async Task<InboxViewModel> GetInboxAsync(string userId, string mode)
 		{
 			var messagesQuery = context.Messages
-				.Include(m => m.Ad)
-				.Include(m => m.Sender)
-				.Include(m => m.Receiver)
 				.Where(m => m.SenderId == userId || m.ReceiverId == userId);
 
 			if (mode == "selling")
-			{
-				messagesQuery = messagesQuery
-					.Where(m => m.Ad.UserId == userId);
-			}
+				messagesQuery = messagesQuery.Where(m => m.Ad.UserId == userId);
 			else
-			{
-				messagesQuery = messagesQuery
-					.Where(m => m.Ad.UserId != userId);
-			}
+				messagesQuery = messagesQuery.Where(m => m.Ad.UserId != userId);
 
-			var chats = messagesQuery
-				.AsEnumerable()
+			var latestMessageIds = await messagesQuery
 				.GroupBy(m => m.AdId)
-				.Select(g =>
-				{
-					var lastMessage = g
-						.OrderByDescending(m => m.SentOn)
-						.First();
+				.Select(g => g.OrderByDescending(m => m.SentOn)
+							  .Select(m => m.Id)
+							  .First())
+				.ToListAsync(); 
 
-					return new InboxChatItemViewModel
-					{
-						AdId = lastMessage.AdId,
-						AdTitle = lastMessage.Ad.Title,
-						OtherUserName = lastMessage.SenderId == userId
-							? lastMessage.Receiver.UserName!
-							: lastMessage.Sender.UserName!,
-						LastMessage = lastMessage.Content,
-						LastMessageTime = lastMessage.SentOn
-					};
+			var chats = await context.Messages
+				.Where(m => latestMessageIds.Contains(m.Id))
+				.Select(m => new InboxChatItemViewModel
+				{
+					AdId = m.AdId,
+					AdTitle = m.Ad.Title,
+					OtherUserName = m.SenderId == userId
+						? m.Receiver.UserName!
+						: m.Sender.UserName!,
+					LastMessage = m.Content,
+					LastMessageTime = m.SentOn
 				})
 				.OrderByDescending(c => c.LastMessageTime)
-				.ToList();
+				.ToListAsync();
 
-			return new InboxViewModel
-			{
-				Mode = mode,
-				Chats = chats
-			};
+			return new InboxViewModel { Mode = mode, Chats = chats };
 		}
 
 	}

@@ -25,8 +25,9 @@ namespace MarketZone.ViewModels.Ad
 		[Required]
 		public Currency Currency { get; set; }
 
-		[Required]
-		public int CategoryId { get; set; }
+		[Required(ErrorMessage = "Please select a category.")]
+		[Range(1, int.MaxValue, ErrorMessage = "Please select a valid category.")]
+		public int? CategoryId { get; set; }
 
 		public IEnumerable<CategorySelectModel> Categories { get; set; }
 			= new List<CategorySelectModel>();
@@ -34,9 +35,11 @@ namespace MarketZone.ViewModels.Ad
 
 		public List<IFormFile> Images { get; set; } = new();
 
-		[Required]
+		[Required(ErrorMessage = "Please select an address.")]
 		[StringLength(200)]
 		public string Address { get; set; } = null!;
+		public double? Latitude { get; set; }
+		public double? Longitude { get; set; }
 
 		[Required]
 		public ItemCondition Condition { get; set; }

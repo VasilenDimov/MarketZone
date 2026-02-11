@@ -6,21 +6,20 @@
 
 <h2>Create Ad</h2>
 
-<form asp-action="Create" method="post" enctype="multipart/form-data">
+<form id="ad-form" asp-action="Create" method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
-
     <partial name="_AdFormPartial" model="Model" />
-
-    <button type="submit" class="btn btn-primary mt-3">
+    <button id="submit-btn" type="submit" class="btn btn-primary mt-3">
         Create Ad
     </button>
 </form>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/ad-form.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/address-picker.css" asp-append-version="true" />
 }
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script src="~/js/ad-form.js" asp-append-version="true"></script>
+    <script src="~/js/address-picker.js" asp-append-version="true"></script>
 }

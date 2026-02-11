@@ -136,15 +136,15 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			var parts = email.Split('@');
 			return $"{parts[0][0]}***@{parts[1][0]}***";
 		}
-	}
-	public class ResendRequest
-	{
+	    public class ResendRequest
+	    {
 		public string Email { get; set; } = string.Empty;
-	}
-	public class InputModel
-    {
+	    }
+     	public class InputModel
+	    {
 	    public string Code { get; set; } = string.Empty;
 		public string Email { get; set; } = string.Empty;
-	}
+	    }
+    }
 
 }

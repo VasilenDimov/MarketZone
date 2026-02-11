@@ -1,5 +1,8 @@
 using MarketZone.Services.Interfaces;
+using MarketZone.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using System.Security.Claims;
 
 namespace MarketZone.Controllers
@@ -22,6 +25,16 @@ namespace MarketZone.Controllers
 
 			var model = await adService.SearchAsync(search, page, userId);
 
+			return View(model);
+		}
+		[AllowAnonymous]
+		public IActionResult Error(string? message)
+		{
+			var model = new ErrorViewModel
+			{
+				RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+				Message = message
+			};
 			return View(model);
 		}
 	}

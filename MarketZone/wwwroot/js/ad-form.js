@@ -1,22 +1,132 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
 
-    /* Config */
     const existingImages =
         (window.adFormConfig && window.adFormConfig.existingImages) || [];
 
-    /* Category picker */
+    /* ── Elements ── */
+    const form = document.getElementById("ad-form");
+    const submitBtn = document.getElementById("submit-btn");
+
+    // Title
+    const titleInput = document.getElementById("Title");
+    const titleError = document.querySelector("[data-valmsg-for='Title']");
+
+    // Description
+    const descInput = document.getElementById("Description");
+    const descError = document.querySelector("[data-valmsg-for='Description']");
+
+    // Price
+    const priceInput = document.getElementById("Price");
+    const priceError = document.querySelector("[data-valmsg-for='Price']");
+
+    // Address
+    const addrInput = document.getElementById("address-input");
+    const addrError = document.querySelector("[data-valmsg-for='Address']");
+
+    // Category
+    const categoryInput = document.querySelector("#CategoryId") ||
+        document.querySelector("[name='CategoryId']");
+    const categoryError = document.querySelector("[data-valmsg-for='CategoryId']");
+
+    // Condition
+    const conditionInputs = document.querySelectorAll("[name='Condition']");
+    const conditionError = document.querySelector("[data-valmsg-for='Condition']");
+
+    // Images
+    const grid = document.getElementById("image-grid");
+    const fileInput = document.getElementById("image-input");
+    const imageError = document.querySelector("[data-valmsg-for='Images']");
+
+    // Category picker
     const list = document.getElementById("category-list");
-    const hiddenInput = document.getElementById("CategoryId");
     const backBtn = document.getElementById("back-btn");
     const breadcrumb = document.getElementById("breadcrumb");
 
     let parentStack = [];
     let breadcrumbStack = [];
     let currentParentId = null;
+    let files = [];
+    const MAX_IMAGES = 10;
 
-    if (list) {
-        loadCategories(null);
+    /* ── Validators ── */
+    function validateTitle() {
+        const val = titleInput?.value.trim() ?? "";
+        const ok = val.length >= 1 && val.length <= 100;
+        if (titleError) titleError.textContent = ok ? "" : "Title is required (max 100 chars).";
+        return ok;
     }
+
+    function validateDesc() {
+        const val = descInput?.value.trim() ?? "";
+        const ok = val.length >= 40 && val.length <= 5000;
+        if (descError) descError.textContent = ok ? "" : "Description must be at least 40 characters.";
+        return ok;
+    }
+
+    function validatePrice() {
+        const val = parseFloat(priceInput?.value ?? "0");
+        const ok = val > 0;
+        if (priceError) priceError.textContent = ok ? "" : "Price must be greater than 0.";
+        return ok;
+    }
+
+    function validateAddress() {
+        // Check the flag from address-picker.js
+        const confirmed = window.addressConfirmed === true;
+        if (addrError) addrError.textContent = confirmed ? "" : "Please select an address from the suggestions.";
+        return confirmed;
+    }
+
+    function validateCategory() {
+        const val = categoryInput?.value ?? "0";
+        const ok = val !== "0" && val !== "";
+        if (categoryError) categoryError.textContent = ok ? "" : "Please select a category.";
+        return ok;
+    }
+
+    function validateCondition() {
+        const checked = [...conditionInputs].some(r => r.checked);
+        if (conditionError) conditionError.textContent = checked ? "" : "Please select a condition.";
+        return checked;
+    }
+
+    function validateImages() {
+        const count = existingImages.length + files.length;
+        const ok = count > 0;
+        if (imageError) imageError.textContent = ok ? "" : "At least one image is required.";
+        return ok;
+    }
+
+    function validateAll() {
+        const ok =
+            validateTitle() &
+            validateDesc() &
+            validatePrice() &
+            validateAddress() &
+            validateCategory() &
+            validateCondition() &
+            validateImages();
+
+        if (submitBtn) {
+            submitBtn.disabled = !ok;
+        }
+
+        return !!ok;
+    }
+
+    /* ── Show all errors on load & disable submit ── */
+    window.validateAll = validateAll;
+    validateAll();
+
+    /* ── Real-time listeners ── */
+    titleInput?.addEventListener("input", validateAll);
+    descInput?.addEventListener("input", validateAll);
+    priceInput?.addEventListener("input", validateAll);
+    addrInput?.addEventListener("input", validateAll);
+    conditionInputs.forEach(r => r.addEventListener("change", validateAll));
+
+    /* ── Category picker ── */
+    if (list) loadCategories(null);
 
     function loadCategories(parentId, label = null) {
         if (label) breadcrumbStack.push(label);
@@ -29,7 +139,6 @@
 
                 backBtn.style.display =
                     parentStack.length > 0 ? "inline-block" : "none";
-
                 breadcrumb.textContent = breadcrumbStack.join(" → ");
 
                 data.forEach(c => {
@@ -46,13 +155,12 @@
                         };
                     } else {
                         li.onclick = () => {
-                            hiddenInput.value = c.id;
-                            [...list.children].forEach(x =>
-                                x.classList.remove("bg-light"));
+                            categoryInput.value = c.id;
+                            [...list.children].forEach(x => x.classList.remove("bg-light"));
                             li.classList.add("bg-light");
+                            validateAll();
                         };
                     }
-
                     list.appendChild(li);
                 });
             });
@@ -62,112 +170,86 @@
         backBtn.onclick = () => {
             currentParentId = parentStack.pop();
             breadcrumbStack.pop();
+            categoryInput.value = "0";
+            [...list.children].forEach(x => x.classList.remove("bg-light"));
+            validateAll();
             loadCategories(currentParentId);
         };
     }
 
-    /*  image upload.*/
-    const grid = document.getElementById("image-grid");
-    const input = document.getElementById("image-input");
-    const errorSpan =
-        document.querySelector("[data-valmsg-for='Images']");
-
-    if (!grid || !input) return;
-
-    const MAX_IMAGES = 10;
-    let files = [];
+    /* ── Image upload ── */
+    if (!grid || !fileInput) return;
 
     renderGrid();
 
     function renderGrid() {
         grid.innerHTML = "";
 
-        // Existing images
         existingImages.forEach((url, index) => {
             const box = document.createElement("div");
             box.className = "image-box";
-
             box.innerHTML = `
                 <img src="${url}">
-                <div class="image-actions">
-                    <button type="button">🗑</button>
-                </div>
-            `;
-
+                <div class="image-actions"><button type="button">🗑</button></div>`;
             box.querySelector("button").onclick = e => {
                 e.stopPropagation();
                 existingImages.splice(index, 1);
-
-                const hiddenInputs =
-                    document.querySelectorAll("input[name^='ExistingImageUrls']");
-                hiddenInputs[index]?.remove();
-
+                document.querySelectorAll("input[name^='ExistingImageUrls']")[index]?.remove();
                 renderGrid();
+                validateAll();
             };
-
             grid.appendChild(box);
         });
 
-        // New images
         files.forEach((file, index) => {
             const box = document.createElement("div");
             box.className = "image-box";
-
             const reader = new FileReader();
             reader.onload = e => {
                 box.innerHTML = `
                     <img src="${e.target.result}">
-                    <div class="image-actions">
-                        <button type="button">🗑</button>
-                    </div>
-                `;
-
+                    <div class="image-actions"><button type="button">🗑</button></div>`;
                 box.querySelector("button").onclick = ev => {
                     ev.stopPropagation();
                     files.splice(index, 1);
                     syncInputFiles();
                     renderGrid();
+                    validateAll();
                 };
             };
-
             reader.readAsDataURL(file);
             grid.appendChild(box);
         });
 
-        // Empty slots
         const used = existingImages.length + files.length;
         for (let i = used; i < MAX_IMAGES; i++) {
             const empty = document.createElement("div");
             empty.className = "image-box";
             empty.innerHTML = "<span>+</span>";
-            empty.onclick = () => input.click();
+            empty.onclick = () => fileInput.click();
             grid.appendChild(empty);
         }
-
-        validateImages();
     }
 
-    input.addEventListener("change", e => {
+    fileInput.addEventListener("change", e => {
         for (let file of e.target.files) {
-            if (files.length + existingImages.length < MAX_IMAGES) {
-                files.push(file);
-            }
+            if (files.length + existingImages.length < MAX_IMAGES) files.push(file);
         }
-
-        input.value = "";
+        fileInput.value = "";
         syncInputFiles();
         renderGrid();
+        validateAll();
     });
 
     function syncInputFiles() {
         const dt = new DataTransfer();
         files.forEach(f => dt.items.add(f));
-        input.files = dt.files;
+        fileInput.files = dt.files;
     }
 
-    function validateImages() {
-        const count = existingImages.length + files.length;
-        errorSpan.textContent =
-            count === 0 ? "At least one image is required." : "";
-    }
+    /* ── Final guard on submit ── */
+    form?.addEventListener("submit", e => {
+        if (!validateAll()) e.preventDefault();
+    });
+
 });

@@ -8,8 +8,8 @@ namespace MarketZone.Data.Models
 		[Key]
 		public int Id { get; set; }
 
-		[Required, StringLength(1000)]
-		public string Content { get; set; } = null!;
+		[StringLength(1000)]
+		public string Content { get; set; } = string.Empty;
 
 		public DateTime SentOn { get; set; } = DateTime.UtcNow;
 

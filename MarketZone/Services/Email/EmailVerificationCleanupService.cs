@@ -17,12 +17,9 @@ public class EmailVerificationCleanupService : BackgroundService
 			using var scope = _scopeFactory.CreateScope();
 			var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-			context.EmailVerificationCodes.RemoveRange(
-				context.EmailVerificationCodes
-				    .AsNoTracking()
-					.Where(c => c.ExpiresAt < DateTime.UtcNow));
-
-			await context.SaveChangesAsync(stoppingToken);
+			await context.EmailVerificationCodes
+	              .Where(c => c.ExpiresAt < DateTime.UtcNow)
+	              .ExecuteDeleteAsync(stoppingToken);
 
 			// Run every 5 minutes
 			await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
