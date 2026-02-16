@@ -8,6 +8,14 @@ namespace MarketZone.Services.Interfaces
 			string userId,
 			string? search,
 			string? sort,
+			decimal? minPrice,
+			decimal? maxPrice,
+			int? categoryId,
+			string? tags,
+			string? address,
+			double? latitude,
+			double? longitude,
+			double? radiusKm,
 			string? viewerId);
 	}
 }

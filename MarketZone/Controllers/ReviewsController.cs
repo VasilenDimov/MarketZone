@@ -89,6 +89,14 @@ namespace MarketZone.Controllers
 						model.ReviewedUserId,
 						search: null,
 						sort: null,
+						minPrice: null,
+						maxPrice: null,
+						categoryId: null,
+						tags: null,
+						address: null,
+						latitude: null,
+						longitude: null,
+						radiusKm: null,
 						viewerId: User.FindFirstValue(ClaimTypes.NameIdentifier)
 					));
 			}

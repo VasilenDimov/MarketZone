@@ -1,4 +1,5 @@
 ﻿using MarketZone.Data;
+using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Ad;
 using MarketZone.ViewModels.User;
@@ -10,19 +11,30 @@ namespace MarketZone.Services.Implementations
 	{
 		private readonly ApplicationDbContext context;
 		private readonly IReviewService reviewService;
+		private readonly ICategoryService categoryService;
 
 		public UserService(
 			ApplicationDbContext context,
-			IReviewService reviewService)
+			IReviewService reviewService,
+			ICategoryService categoryService)
 		{
 			this.context = context;
 			this.reviewService = reviewService;
+			this.categoryService = categoryService;
 		}
 
 		public async Task<UserProfileViewModel> GetProfileAsync(
 			string userId,
 			string? search,
 			string? sort,
+			decimal? minPrice,
+			decimal? maxPrice,
+			int? categoryId,
+			string? tags,
+			string? address,
+			double? latitude,
+			double? longitude,
+			double? radiusKm,
 			string? viewerId)
 		{
 			// USER
@@ -34,8 +46,11 @@ namespace MarketZone.Services.Implementations
 				throw new ArgumentException("User not found");
 
 			// ADS
-			var adsQuery = context.Ads
+			IQueryable<Ad> adsQuery = context.Ads
 				.AsNoTracking()
+				.Include(a => a.Category)
+				.Include(a => a.AdTags)
+				.ThenInclude(at => at.Tag)
 				.Where(a => a.UserId == userId);
 
 			if (!string.IsNullOrWhiteSpace(search))
@@ -45,28 +60,100 @@ namespace MarketZone.Services.Implementations
 					a.Description.Contains(search));
 			}
 
-			adsQuery = sort switch
+			// Price range filter
+			if (minPrice.HasValue)
 			{
-				"price_asc" => adsQuery.OrderBy(a => a.Price),
-				"price_desc" => adsQuery.OrderByDescending(a => a.Price),
-				"oldest" => adsQuery.OrderBy(a => a.CreatedOn),
-				_ => adsQuery.OrderByDescending(a => a.CreatedOn)
-			};
+				adsQuery = adsQuery.Where(a => a.Price >= minPrice.Value);
+			}
+			if (maxPrice.HasValue)
+			{
+				adsQuery = adsQuery.Where(a => a.Price <= maxPrice.Value);
+			}
 
-			var ads = await adsQuery
-				.Select(a => new AdListItemViewModel
+			// Category filter (including subcategories)
+			if (categoryId.HasValue && categoryId.Value > 0)
+			{
+				var categoryIds = await GetCategoryWithDescendants(categoryId.Value);
+				adsQuery = adsQuery.Where(a => categoryIds.Contains(a.CategoryId));
+			}
+
+			// Tags filter
+			if (!string.IsNullOrWhiteSpace(tags))
+			{
+				var tagList = tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(t => t.Trim().ToLower())
+					.Take(10)
+					.ToList();
+
+				if (tagList.Any())
 				{
-					Id = a.Id,
-					Title = a.Title,
-					Price = a.Price,
-					Currency = a.Currency,
-					CreatedOn = a.CreatedOn,
-					MainImageUrl = a.Images
-						.OrderBy(i => i.Id)
-						.Select(i => i.ImageUrl)
-						.FirstOrDefault()
-				})
-				.ToListAsync();
+					adsQuery = adsQuery.Where(a => a.AdTags.Any(at =>
+						tagList.Contains(at.Tag.Name.ToLower())));
+				}
+			}
+
+			// Location filter (distance-based)
+			List<AdListItemViewModel> ads;
+			if (latitude.HasValue && longitude.HasValue && radiusKm.HasValue)
+			{
+				var adsList = await adsQuery.ToListAsync();
+
+				adsList = adsList.Where(a =>
+					a.Latitude.HasValue &&
+					a.Longitude.HasValue &&
+					CalculateDistance(latitude.Value, longitude.Value,
+						a.Latitude.Value, a.Longitude.Value) <= radiusKm.Value)
+					.ToList();
+
+				// Apply sorting after filtering
+				adsList = sort switch
+				{
+					"price_asc" => adsList.OrderBy(a => a.Price).ToList(),
+					"price_desc" => adsList.OrderByDescending(a => a.Price).ToList(),
+					"oldest" => adsList.OrderBy(a => a.CreatedOn).ToList(),
+					_ => adsList.OrderByDescending(a => a.CreatedOn).ToList()
+				};
+
+				ads = adsList
+					.Select(a => new AdListItemViewModel
+					{
+						Id = a.Id,
+						Title = a.Title,
+						Price = a.Price,
+						Currency = a.Currency,
+						CreatedOn = a.CreatedOn,
+						MainImageUrl = a.Images
+							.OrderBy(i => i.Id)
+							.Select(i => i.ImageUrl)
+							.FirstOrDefault()
+					})
+					.ToList();
+			}
+			else
+			{
+				adsQuery = sort switch
+				{
+					"price_asc" => adsQuery.OrderBy(a => a.Price),
+					"price_desc" => adsQuery.OrderByDescending(a => a.Price),
+					"oldest" => adsQuery.OrderBy(a => a.CreatedOn),
+					_ => adsQuery.OrderByDescending(a => a.CreatedOn)
+				};
+
+				ads = await adsQuery
+					.Select(a => new AdListItemViewModel
+					{
+						Id = a.Id,
+						Title = a.Title,
+						Price = a.Price,
+						Currency = a.Currency,
+						CreatedOn = a.CreatedOn,
+						MainImageUrl = a.Images
+							.OrderBy(i => i.Id)
+							.Select(i => i.ImageUrl)
+							.FirstOrDefault()
+					})
+					.ToListAsync();
+			}
 
 			// REVIEWS (list)
 			var reviews = await reviewService.GetReviewsForUserAsync(userId);
@@ -102,13 +189,61 @@ namespace MarketZone.Services.Implementations
 
 				SearchTerm = search,
 				Sort = sort,
+				MinPrice = minPrice,
+				MaxPrice = maxPrice,
+				CategoryId = categoryId,
+				Tags = tags,
+				Address = address,
+				Latitude = latitude,
+				Longitude = longitude,
+				RadiusKm = radiusKm,
 
 				Ads = ads,
 				Reviews = reviews,
 				AverageRating = reviewStats?.AverageRating ?? 0,
 				ReviewCount = reviewStats?.ReviewCount ?? 0,
-				CanReview = canReview
+				CanReview = canReview,
+				Categories = await categoryService.GetAllAsync()
 			};
+		}
+
+		// Helper method for category hierarchy
+		private async Task<List<int>> GetCategoryWithDescendants(int categoryId)
+		{
+			var result = new List<int> { categoryId };
+
+			var children = await context.Categories
+				.Where(c => c.ParentCategoryId == categoryId)
+				.Select(c => c.Id)
+				.ToListAsync();
+
+			foreach (var childId in children)
+			{
+				result.AddRange(await GetCategoryWithDescendants(childId));
+			}
+
+			return result;
+		}
+
+		// Haversine formula for distance calculation
+		private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+		{
+			const double R = 6371; // Earth's radius in km
+			var dLat = ToRadians(lat2 - lat1);
+			var dLon = ToRadians(lon2 - lon1);
+
+			var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+					Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+					Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+			var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+			return R * c;
+		}
+
+		private double ToRadians(double degrees)
+		{
+			return degrees * Math.PI / 180;
 		}
 	}
 }

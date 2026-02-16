@@ -17,7 +17,15 @@ namespace MarketZone.Controllers
 		public async Task<IActionResult> Profile(
 			string id,
 			string? search,
-			string? sort)
+			string? sort,
+			decimal? minPrice,
+			decimal? maxPrice,
+			int? categoryId,
+			string? tags,
+			string? address,
+			double? latitude,
+			double? longitude,
+			double? radiusKm)
 		{
 			if (string.IsNullOrWhiteSpace(id))
 			{
@@ -28,7 +36,9 @@ namespace MarketZone.Controllers
 				? User.FindFirstValue(ClaimTypes.NameIdentifier)
 				: null;
 
-			var model = await userService.GetProfileAsync(id, search, sort, viewerId);
+			var model = await userService.GetProfileAsync(
+				id, search, sort, minPrice, maxPrice, categoryId, tags,
+				address, latitude, longitude, radiusKm, viewerId);
 
 			return View(model);
 		}

@@ -10,11 +10,16 @@ namespace MarketZone.Services.Implementations
 	{
 		private readonly ApplicationDbContext context;
 		private readonly IImageService imageService;
+		private readonly ICategoryService categoryService;
 
-		public AdService(ApplicationDbContext context, IImageService imageService)
+		public AdService(
+			ApplicationDbContext context,
+			IImageService imageService,
+			ICategoryService categoryService)
 		{
 			this.context = context;
 			this.imageService = imageService;
+			this.categoryService = categoryService;
 		}
 
 		public async Task<int> CreateAsync(AdCreateModel model, string userId)
@@ -268,29 +273,124 @@ namespace MarketZone.Services.Implementations
 
 			return true;
 		}
-		public async Task<AdSearchViewModel> SearchAsync(string? search, int page, string? userId)
+		public async Task<AdSearchViewModel> SearchAsync(
+			string? search,
+			decimal? minPrice,
+			decimal? maxPrice,
+			int? categoryId,
+			string? tags,
+			string? address,
+			double? latitude,
+			double? longitude,
+			double? radiusKm,
+			int page,
+			string? userId)
 		{
 			const int PageSize = 21;
 
-			var query = context.Ads
-				.AsNoTracking();
+			IQueryable<Ad> query = context.Ads
+				.AsNoTracking()
+				.Include(a => a.Category)
+				.Include(a => a.AdTags)
+				.ThenInclude(at => at.Tag);
 
-			//Exclude user's own ads if logged in
+			// Exclude user's own ads if logged in
 			if (!string.IsNullOrEmpty(userId))
 			{
 				query = query.Where(a => a.UserId != userId);
 			}
 
-			//Search by title
+			// Search by title
 			if (!string.IsNullOrWhiteSpace(search))
 			{
-				query = query.Where(a =>
-					a.Title.Contains(search));
+				query = query.Where(a => a.Title.Contains(search));
 			}
 
-			var totalAds = await query.CountAsync();
+			// Price range filter
+			if (minPrice.HasValue)
+			{
+				query = query.Where(a => a.Price >= minPrice.Value);
+			}
+			if (maxPrice.HasValue)
+			{
+				query = query.Where(a => a.Price <= maxPrice.Value);
+			}
 
-			var ads = await query
+			// Category filter (including subcategories)
+			if (categoryId.HasValue && categoryId.Value > 0)
+			{
+				var categoryIds = await GetCategoryWithDescendants(categoryId.Value);
+				query = query.Where(a => categoryIds.Contains(a.CategoryId));
+			}
+
+			// Tags filter
+			if (!string.IsNullOrWhiteSpace(tags))
+			{
+				var tagList = tags.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(t => t.Trim().ToLower())
+					.Take(10)
+					.ToList();
+
+				if (tagList.Any())
+				{
+					query = query.Where(a => a.AdTags.Any(at =>
+						tagList.Contains(at.Tag.Name.ToLower())));
+				}
+			}
+
+			// Location filter (distance-based)
+			if (latitude.HasValue && longitude.HasValue && radiusKm.HasValue)
+			{
+				var ads = await query.ToListAsync();
+
+				ads = ads.Where(a =>
+					a.Latitude.HasValue &&
+					a.Longitude.HasValue &&
+					CalculateDistance(latitude.Value, longitude.Value,
+						a.Latitude.Value, a.Longitude.Value) <= radiusKm.Value)
+					.ToList();
+
+				var totalAds = ads.Count;
+
+				var paginatedAds = ads
+					.OrderByDescending(a => a.CreatedOn)
+					.Skip((page - 1) * PageSize)
+					.Take(PageSize)
+					.Select(a => new AdListItemViewModel
+					{
+						Id = a.Id,
+						Title = a.Title,
+						Price = a.Price,
+						Currency = a.Currency,
+						CreatedOn = a.CreatedOn,
+						MainImageUrl = a.Images
+							.OrderBy(i => i.Id)
+							.Select(i => i.ImageUrl)
+							.FirstOrDefault()
+					})
+					.ToList();
+
+				return new AdSearchViewModel
+				{
+					SearchTerm = search,
+					MinPrice = minPrice,
+					MaxPrice = maxPrice,
+					CategoryId = categoryId,
+					Tags = tags,
+					Address = address,
+					Latitude = latitude,
+					Longitude = longitude,
+					RadiusKm = radiusKm,
+					CurrentPage = page,
+					TotalPages = (int)Math.Ceiling(totalAds / (double)PageSize),
+					Ads = paginatedAds,
+					Categories = await categoryService.GetAllAsync()
+				};
+			}
+
+			var totalCount = await query.CountAsync();
+
+			var results = await query
 				.OrderByDescending(a => a.CreatedOn)
 				.Skip((page - 1) * PageSize)
 				.Take(PageSize)
@@ -311,10 +411,58 @@ namespace MarketZone.Services.Implementations
 			return new AdSearchViewModel
 			{
 				SearchTerm = search,
+				MinPrice = minPrice,
+				MaxPrice = maxPrice,
+				CategoryId = categoryId,
+				Tags = tags,
+				Address = address,
+				Latitude = latitude,
+				Longitude = longitude,
+				RadiusKm = radiusKm,
 				CurrentPage = page,
-				TotalPages = (int)Math.Ceiling(totalAds / (double)PageSize),
-				Ads = ads
+				TotalPages = (int)Math.Ceiling(totalCount / (double)PageSize),
+				Ads = results,
+				Categories = await categoryService.GetAllAsync()
 			};
+		}
+
+		// Helper method for category hierarchy
+		private async Task<List<int>> GetCategoryWithDescendants(int categoryId)
+		{
+			var result = new List<int> { categoryId };
+
+			var children = await context.Categories
+				.Where(c => c.ParentCategoryId == categoryId)
+				.Select(c => c.Id)
+				.ToListAsync();
+
+			foreach (var childId in children)
+			{
+				result.AddRange(await GetCategoryWithDescendants(childId));
+			}
+
+			return result;
+		}
+
+		// Haversine formula for distance calculation
+		private double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+		{
+			const double R = 6371; // Earth's radius in km
+			var dLat = ToRadians(lat2 - lat1);
+			var dLon = ToRadians(lon2 - lon1);
+
+			var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+					Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+					Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+			var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+
+			return R * c;
+		}
+
+		private double ToRadians(double degrees)
+		{
+			return degrees * Math.PI / 180;
 		}
 
 	}
