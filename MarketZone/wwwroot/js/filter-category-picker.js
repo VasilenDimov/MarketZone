@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const NO_CATEGORY_SELECTED = "0";
+    
     const categoryInput = document.getElementById("filter-category-input");
     const list = document.getElementById("filter-category-list");
     const backBtn = document.getElementById("filter-back-btn");
@@ -54,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
         backBtn.onclick = () => {
             currentParentId = parentStack.pop();
             breadcrumbStack.pop();
-            categoryInput.value = "0";
+            categoryInput.value = NO_CATEGORY_SELECTED;
             [...list.children].forEach(x => x.classList.remove("bg-light"));
             loadCategories(currentParentId);
         };

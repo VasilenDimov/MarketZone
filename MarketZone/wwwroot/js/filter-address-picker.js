@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const DEBOUNCE_DELAY_MS = 400;
+    const MIN_SEARCH_LENGTH = 3;
+    
     const input = document.getElementById("filter-address-input");
     const suggestions = document.getElementById("filter-address-suggestions");
     const loading = document.getElementById("filter-address-loading");
@@ -27,12 +30,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (query.length < 3) {
+        if (query.length < MIN_SEARCH_LENGTH) {
             closeSuggestions();
             return;
         }
 
-        debounceTimer = setTimeout(() => searchAddress(query), 400);
+        debounceTimer = setTimeout(() => searchAddress(query), DEBOUNCE_DELAY_MS);
     });
 
     async function searchAddress(query) {
