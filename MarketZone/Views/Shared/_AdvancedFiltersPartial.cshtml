@@ -1,0 +1,128 @@
+@model MarketZone.ViewModels.Ad.AdSearchViewModel
+
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <button class="btn btn-link text-white text-decoration-none w-100 text-start" 
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#filterCollapse">
+                <i class="bi bi-funnel"></i> Filters
+            </button>
+        </h5>
+    </div>
+    
+    <div class="collapse show" id="filterCollapse">
+        <div class="card-body">
+            <!-- Search Term -->
+            <div class="mb-3">
+                <label class="form-label">Search</label>
+                <input type="text"
+                       name="search"
+                       value="@Model.SearchTerm"
+                       class="form-control"
+                       placeholder="Search by title..." />
+            </div>
+
+            <!-- Price Range -->
+            <div class="mb-3">
+                <label class="form-label">Price Range</label>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <input type="number"
+                               name="minPrice"
+                               value="@Model.MinPrice"
+                               class="form-control"
+                               placeholder="Min"
+                               step="0.01"
+                               min="0" />
+                    </div>
+                    <div class="col-6">
+                        <input type="number"
+                               name="maxPrice"
+                               value="@Model.MaxPrice"
+                               class="form-control"
+                               placeholder="Max"
+                               step="0.01"
+                               min="0" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Picker -->
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                <input type="hidden" id="filter-category-input" name="categoryId" value="@Model.CategoryId" />
+                
+                <div class="border rounded p-2">
+                    <div class="d-flex align-items-center mb-2">
+                        <button type="button"
+                                id="filter-back-btn"
+                                class="btn btn-sm btn-outline-secondary me-2"
+                                style="display:none;">
+                            ← Back
+                        </button>
+                        <span id="filter-breadcrumb" class="text-muted"></span>
+                    </div>
+                    <ul id="filter-category-list" class="list-unstyled mb-0"></ul>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div class="mb-3">
+                <label class="form-label">Tags (comma-separated, max 10)</label>
+                <input type="text"
+                       name="tags"
+                       value="@Model.Tags"
+                       class="form-control"
+                       placeholder="e.g. laptop, gaming, new"
+                       maxlength="200" />
+                <small class="text-muted">Separate tags with commas</small>
+            </div>
+
+            <!-- Address Picker -->
+            <div class="mb-3">
+                <label class="form-label">Location</label>
+                <div class="address-picker-wrapper">
+                    <div class="address-input-wrapper">
+                        <span class="address-icon">📍</span>
+                        <input type="text"
+                               id="filter-address-input"
+                               name="address"
+                               class="form-control"
+                               placeholder="Start typing an address..."
+                               value="@Model.Address"
+                               autocomplete="off" />
+                        <div id="filter-address-loading" class="address-loading"></div>
+                    </div>
+                    <div id="filter-address-suggestions" class="address-suggestions"></div>
+                </div>
+                <input type="hidden" id="filter-latitude" name="latitude" value="@Model.Latitude" />
+                <input type="hidden" id="filter-longitude" name="longitude" value="@Model.Longitude" />
+                
+                <!-- Radius selector -->
+                <div class="mt-2">
+                    <label class="form-label">Radius (km)</label>
+                    <select name="radiusKm" class="form-select">
+                        <option value="5" selected="@(Model.RadiusKm == 5)">5 km</option>
+                        <option value="10" selected="@(Model.RadiusKm == 10)">10 km</option>
+                        <option value="25" selected="@(Model.RadiusKm == 25)">25 km</option>
+                        <option value="50" selected="@(Model.RadiusKm == 50)">50 km</option>
+                        <option value="100" selected="@(Model.RadiusKm == 100)">100 km</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Apply/Reset Buttons -->
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill">
+                    Apply Filters
+                </button>
+                <a href="@(ViewContext.RouteData.Values["controller"])" 
+                   class="btn btn-outline-secondary">
+                    Reset
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

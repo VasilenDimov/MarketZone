@@ -42,54 +42,10 @@
     </div>
 
     <!-- SEARCH + SORT -->
-    <form method="get" class="row mb-4" novalidate>
+    <form method="get" novalidate>
         <input type="hidden" name="id" value="@Model.UserId" />
-
-        <div class="col-md-6 mb-2">
-            <input type="text"
-                   name="search"
-                   value="@Model.SearchTerm"
-                   class="form-control"
-                   placeholder="Search ads..." />
-        </div>
-
-        <div class="col-md-4 mb-2">
-            <select name="sort" class="form-select">
-                <option value="">Newest</option>
-
-                @if (Model.Sort == "oldest")
-                {
-                    <option value="oldest" selected>Oldest</option>
-                }
-                else
-                {
-                    <option value="oldest">Oldest</option>
-                }
-
-                @if (Model.Sort == "price_asc")
-                {
-                    <option value="price_asc" selected>Price ↑</option>
-                }
-                else
-                {
-                    <option value="price_asc">Price ↑</option>
-                }
-
-                @if (Model.Sort == "price_desc")
-                {
-                    <option value="price_desc" selected>Price ↓</option>
-                }
-                else
-                {
-                    <option value="price_desc">Price ↓</option>
-                }
-            </select>
-
-        </div>
-
-        <div class="col-md-2 mb-2">
-            <button type="submit" class="btn btn-primary w-100">Apply</button>
-        </div>
+        
+        <partial name="_UserProfileFiltersPartial" model="Model" />
     </form>
 
     <!-- ADS -->
@@ -231,3 +187,8 @@
     </div>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/filter-category-picker.js"></script>
+    <script src="~/js/filter-address-picker.js"></script>
+}

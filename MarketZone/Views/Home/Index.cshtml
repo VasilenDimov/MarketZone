@@ -1,11 +1,7 @@
 ﻿@model MarketZone.ViewModels.Ad.AdSearchViewModel
 
-<form method="get" class="mb-4">
-    <input type="text"
-           name="search"
-           value="@Model.SearchTerm"
-           class="form-control"
-           placeholder="Search by title..." />
+<form method="get" id="filter-form">
+    <partial name="_AdvancedFiltersPartial" model="Model" />
 </form>
 
 @if (!Model.Ads.Any())
@@ -42,11 +38,16 @@ else
             {
                 <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
                     <a class="page-link"
-                       href="?search=@Model.SearchTerm&page=@i">
+                       href="?search=@Model.SearchTerm&minPrice=@Model.MinPrice&maxPrice=@Model.MaxPrice&categoryId=@Model.CategoryId&tags=@Model.Tags&address=@Model.Address&latitude=@Model.Latitude&longitude=@Model.Longitude&radiusKm=@Model.RadiusKm&page=@i">
                         @i
                     </a>
                 </li>
             }
         </ul>
     </nav>
+}
+
+@section Scripts {
+    <script src="~/js/filter-category-picker.js"></script>
+    <script src="~/js/filter-address-picker.js"></script>
 }
