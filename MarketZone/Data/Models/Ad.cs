@@ -13,7 +13,7 @@ namespace MarketZone.Data.Models
 		[Required, StringLength(100)]
 		public string Title { get; set; } = null!;
 
-		[Required, StringLength(5000)]
+		[Required, StringLength(4000)]
 		public string Description { get; set; } = null!;
 		
 		[Required]

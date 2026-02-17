@@ -15,7 +15,7 @@ namespace MarketZone.ViewModels.Ad
 
 		[Required]
 		[MinLength(40)]
-		[MaxLength(5000)]
+		[MaxLength(4000)]
 		public string Description { get; set; } = null!;
 
 		[Required]

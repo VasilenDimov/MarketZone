@@ -17,17 +17,15 @@ namespace MarketZone.Controllers
 			this.imageService = imageService;
 		}
 
-		public async Task<IActionResult> Chat(int adId)
+		public async Task<IActionResult> Chat(int adId, string otherUserId)
 		{
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+			var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-			var model = await messageService.GetChatAsync(adId, userId);
-			if (model == null)
+			var chat = await messageService.GetChatAsync(adId, currentUserId, otherUserId);
+			if (chat == null)
 				return NotFound();
 
-			model.CurrentUserId = userId;
-
-			return View(model);
+			return View(chat);
 		}
 
 		public async Task<IActionResult> Inbox(string mode = "buying")

@@ -23,7 +23,6 @@ namespace MarketZone.Data
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
-
 			// Message -> Sender
 			builder.Entity<Message>()
 				.HasOne(m => m.Sender)

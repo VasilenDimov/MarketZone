@@ -1,7 +1,7 @@
 ﻿document.addEventListener("DOMContentLoaded", () => {
     if (!window.chatConfig) return;
 
-    const { chatId, adId, currentUserId } = window.chatConfig;
+    const { chatId, adId, currentUserId, otherUserId } = window.chatConfig;
 
     const chatBox = document.getElementById("chat-box");
 
@@ -26,10 +26,10 @@
             const r = new FileReader();
             r.onload = e => {
                 imagePreview.innerHTML += `
-                        <div class="preview-image-wrapper">
-                            <img src="${e.target.result}" />
-                            <span class="remove-image" onclick="removeImage(${i})">✕</span>
-                        </div>`;
+                    <div class="preview-image-wrapper">
+                        <img src="${e.target.result}" />
+                        <span class="remove-image" onclick="removeImage(${i})">✕</span>
+                    </div>`;
             };
             r.readAsDataURL(file);
         });
@@ -60,30 +60,25 @@
         div.className = `chat-message ${mine ? "mine" : "theirs"}`;
 
         div.innerHTML = `
-                ${!mine ? `<img src="/images/default-avatar.png" class="chat-avatar" />` : ""}
-                <div class="chat-bubble">
-                    ${imageUrls.length ? `
-                        <div class="chat-images">
-                            ${imageUrls.map((i, x) =>
-            `<img src="${i}" class="chat-image"
-                                 onclick='openImageGallery(${JSON.stringify(imageUrls)}, ${x})' />`
+            ${!mine ? `<img src="/images/default-avatar.png" class="chat-avatar" />` : ""}
+            <div class="chat-bubble">
+                ${imageUrls.length ? `
+                    <div class="chat-images">
+                        ${imageUrls.map((url, idx) =>
+            `<img src="${url}" class="chat-image"
+                                  onclick='openImageGallery(${JSON.stringify(imageUrls)}, ${idx})' />`
         ).join("")}
-                        </div>` : ""}
-                    ${content ? `<div class="chat-text">${content}</div>` : ""}
-                    <div class="chat-time">${new Date(sentOn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </div>`;
+                    </div>` : ""}
+                ${content ? `<div class="chat-text">${content}</div>` : ""}
+                <div class="chat-time">${new Date(sentOn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>`;
 
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
     sendBtn.addEventListener("click", async () => {
- 
-        if (!isConnected) {
-            console.warn("SignalR not connected yet");
-            return;
-        }
-
+        if (!isConnected) return;
         if (!msgInput.value && !selectedImages.length) return;
 
         try {
@@ -108,6 +103,7 @@
                 "SendMessage",
                 adId,
                 chatId,
+                otherUserId,   
                 msgInput.value,
                 urls
             );
@@ -122,35 +118,44 @@
         }
     });
 
-    /* IMAGE VIEWER */
-    let gallery = [], index = 0;
+    /* image viewer */
+    let gallery = [];
+    let index = 0;
 
-    function openImageGallery(images, i) {
-        gallery = images;
-        index = i;
-        document.getElementById("imageViewer").classList.remove("hidden");
+    window.openImageGallery = function (images, i) {
+        gallery = images || [];
+        index = i || 0;
+
+        const viewer = document.getElementById("imageViewer");
+        if (!viewer) return;
+
+        viewer.classList.remove("hidden");
         updateViewer();
-    }
+    };
 
-    function closeViewer() {
-        document.getElementById("imageViewer").classList.add("hidden");
-    }
+    window.closeViewer = function () {
+        document.getElementById("imageViewer")?.classList.add("hidden");
+    };
 
     function updateViewer() {
-        document.getElementById("viewerImage").src = gallery[index];
-        document.getElementById("imageCounter").textContent = `${index + 1} / ${gallery.length}`;
+        const img = document.getElementById("viewerImage");
+        const counter = document.getElementById("imageCounter");
+        if (!img || !counter || !gallery.length) return;
+
+        img.src = gallery[index];
+        counter.textContent = `${index + 1} / ${gallery.length}`;
     }
 
-    function prevImage() {
+    window.prevImage = function () {
         if (index > 0) { index--; updateViewer(); }
-    }
+    };
 
-    function nextImage() {
+    window.nextImage = function () {
         if (index < gallery.length - 1) { index++; updateViewer(); }
-    }
+    };
 
-    /* DOWNLOAD (ONLY ADDITION) */
-    document.getElementById("downloadBtn").addEventListener("click", () => {
+    // Download current image
+    document.getElementById("downloadBtn")?.addEventListener("click", () => {
         if (!gallery.length) return;
 
         const url = gallery[index];

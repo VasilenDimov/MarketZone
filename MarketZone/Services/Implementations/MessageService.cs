@@ -15,20 +15,37 @@ namespace MarketZone.Services.Implementations
 			this.context = context;
 		}
 
-		public async Task<ChatViewModel?> GetChatAsync(int adId, string userId)
+		public async Task<ChatViewModel?> GetChatAsync(int adId, string currentUserId, string otherUserId)
 		{
+			if (string.IsNullOrWhiteSpace(otherUserId))
+				return null;
+
+			// Load ad + seller
 			var ad = await context.Ads
 				.Include(a => a.User)
 				.Include(a => a.Images)
+				.AsNoTracking()
 				.FirstOrDefaultAsync(a => a.Id == adId);
 
 			if (ad == null)
 				return null;
 
+			// Must be either: (current is seller) or (current is buyer)
+			// And otherUser must be the other side.
+			bool currentIsSeller = ad.UserId == currentUserId;
+			bool otherIsSeller = ad.UserId == otherUserId;
+
+			// Valid pairs:
+			// - currentIsSeller && !otherIsSeller
+			// - !currentIsSeller && otherIsSeller
+			if (currentIsSeller == otherIsSeller)
+				return null;
+
+			// Pull only messages for this exact conversation (two users + ad)
 			var messages = await context.Messages
-				.Where(m =>
-					m.AdId == adId &&
-					(m.SenderId == userId || m.ReceiverId == userId))
+				.Where(m => m.AdId == adId &&
+					((m.SenderId == currentUserId && m.ReceiverId == otherUserId) ||
+					 (m.SenderId == otherUserId && m.ReceiverId == currentUserId)))
 				.Include(m => m.Sender)
 				.Include(m => m.Images)
 				.OrderBy(m => m.SentOn)
@@ -36,33 +53,39 @@ namespace MarketZone.Services.Implementations
 				{
 					SenderId = m.SenderId,
 					SenderName = m.Sender.UserName!,
-					SenderProfileImage = "/images/default-avatar.png",
+					SenderProfileImage = m.Sender.ProfilePictureUrl, // ✅ use real image
 					Content = m.Content,
 					ImageUrls = m.Images.Select(i => i.ImageUrl).ToList(),
 					SentOn = m.SentOn
 				})
+				.AsNoTracking()
 				.ToListAsync();
 
+			// Determine other user's name
 			string otherUserName;
-
-			if (ad.UserId == userId)
-			{
-				otherUserName = messages
-					.Where(m => m.SenderId != userId)
-					.Select(m => m.SenderName)
-					.FirstOrDefault()
-					?? "Unknown user";
-			}
-			else
+			if (otherIsSeller)
 			{
 				otherUserName = ad.User.UserName!;
 			}
+			else
+			{
+				// other is buyer
+				otherUserName = await context.Users
+					.AsNoTracking()
+					.Where(u => u.Id == otherUserId)
+					.Select(u => u.UserName!)
+					.FirstOrDefaultAsync() ?? "Unknown user";
+			}
+
+			var buyerId = currentIsSeller ? otherUserId : currentUserId;
 
 			return new ChatViewModel
 			{
 				AdId = adId,
-				ChatId = $"ad_{adId}",
+				ChatId = $"ad_{adId}_u_{buyerId}",
+				OtherUserId = otherUserId,
 				OtherUserName = otherUserName,
+				CurrentUserId = currentUserId,
 				Messages = messages,
 				AdTitle = ad.Title,
 				AdImageUrl = ad.Images
@@ -70,37 +93,31 @@ namespace MarketZone.Services.Implementations
 					.Select(i => i.ImageUrl)
 					.FirstOrDefault() ?? "/images/no-image.png"
 			};
+
 		}
 
-		public async Task SaveMessageAsync(int adId,string senderId,
-		string? content,List<string> imageUrls)
+		public async Task SaveMessageAsync(int adId, string senderId, string receiverId, string? content, List<string> imageUrls)
 		{
-			var ad = await context.Ads.FindAsync(adId);
-
+			var ad = await context.Ads.AsNoTracking().FirstOrDefaultAsync(a => a.Id == adId);
 			if (ad == null)
 				throw new InvalidOperationException("Ad not found.");
 
-			string receiverId;
+			if (string.IsNullOrWhiteSpace(senderId) || string.IsNullOrWhiteSpace(receiverId))
+				throw new InvalidOperationException("Invalid sender/receiver.");
 
-			if (senderId == ad.UserId)
-			{
-				receiverId = await context.Messages
-					.Where(m => m.AdId == adId)
-					.Select(m => m.SenderId)
-					.FirstOrDefaultAsync(id => id != senderId)
-					?? throw new InvalidOperationException("Receiver not found.");
-			}
-			else
-			{
-				receiverId = ad.UserId;
-			}
+			// Validate that this receiver makes sense for this ad
+			// One must be seller (ad owner), the other must be non-seller.
+			bool senderIsSeller = ad.UserId == senderId;
+			bool receiverIsSeller = ad.UserId == receiverId;
+			if (senderIsSeller == receiverIsSeller)
+				throw new InvalidOperationException("Invalid conversation participants.");
 
 			if (string.IsNullOrWhiteSpace(content) && !imageUrls.Any())
 				throw new InvalidOperationException("Message must contain text or images.");
 
 			var message = new Message
 			{
-				AdId = adId,
+				AdId = adId,	
 				SenderId = senderId,
 				ReceiverId = receiverId,
 				Content = content ?? string.Empty,
@@ -124,40 +141,68 @@ namespace MarketZone.Services.Implementations
 				await context.SaveChangesAsync();
 			}
 		}
+
 		public async Task<InboxViewModel> GetInboxAsync(string userId, string mode)
 		{
-			var messagesQuery = context.Messages
+			mode = (mode ?? "buying").ToLowerInvariant();
+
+			// 1) Base query WITHOUT Include (important!)
+			IQueryable<Message> baseQuery = context.Messages
+				.AsNoTracking()
 				.Where(m => m.SenderId == userId || m.ReceiverId == userId);
 
+			// selling = chats for ads I own, buying = chats for ads I don't own
 			if (mode == "selling")
-				messagesQuery = messagesQuery.Where(m => m.Ad.UserId == userId);
+				baseQuery = baseQuery.Where(m => m.Ad.UserId == userId);
 			else
-				messagesQuery = messagesQuery.Where(m => m.Ad.UserId != userId);
+				baseQuery = baseQuery.Where(m => m.Ad.UserId != userId);
 
-			var latestMessageIds = await messagesQuery
-				.GroupBy(m => m.AdId)
-				.Select(g => g.OrderByDescending(m => m.SentOn)
-							  .Select(m => m.Id)
-							  .First())
-				.ToListAsync(); 
+			// 2) Get only the latest message Id per Ad (still NO Include)
+			// ✅ Group by (AdId + OtherUserId) so seller gets one thread per buyer per ad
+			var latestMessageIds = await baseQuery
+				.Select(m => new
+				{
+					m.Id,
+					m.AdId,
+					m.SentOn,
+					OtherUserId = (m.SenderId == userId) ? m.ReceiverId : m.SenderId
+				})
+				.GroupBy(x => new { x.AdId, x.OtherUserId })
+				.Select(g => g
+					.OrderByDescending(x => x.SentOn)
+					.Select(x => x.Id)
+					.First())
+				.ToListAsync();
 
+			// 3) Now load the message rows we need WITH Include
 			var chats = await context.Messages
+				.AsNoTracking()
 				.Where(m => latestMessageIds.Contains(m.Id))
+				.Include(m => m.Ad)
+				.Include(m => m.Sender)
+				.Include(m => m.Receiver)
 				.Select(m => new InboxChatItemViewModel
 				{
 					AdId = m.AdId,
 					AdTitle = m.Ad.Title,
+
+					// if I'm sender -> other is receiver, else other is sender
+					OtherUserId = m.SenderId == userId ? m.ReceiverId : m.SenderId,
 					OtherUserName = m.SenderId == userId
 						? m.Receiver.UserName!
 						: m.Sender.UserName!,
+
 					LastMessage = m.Content,
 					LastMessageTime = m.SentOn
 				})
 				.OrderByDescending(c => c.LastMessageTime)
 				.ToListAsync();
 
-			return new InboxViewModel { Mode = mode, Chats = chats };
+			return new InboxViewModel
+			{
+				Mode = mode,
+				Chats = chats
+			};
 		}
-
 	}
 }

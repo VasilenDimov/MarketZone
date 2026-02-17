@@ -18,19 +18,17 @@ public class ChatHub : Hub
 		await Groups.AddToGroupAsync(Context.ConnectionId, chatId);
 	}
 
-	public async Task SendMessage(int adId,string chatId,string? content,
-	    List<string> imageUrls)
-    {
+	public async Task SendMessage(int adId, string chatId, string receiverId, string? content, List<string> imageUrls)
+	{
 		if (string.IsNullOrWhiteSpace(content) && !imageUrls.Any())
-		{
 			return;
-		}
 
 		var senderId = Context.UserIdentifier!;
 
 		await messageService.SaveMessageAsync(
 			adId,
 			senderId,
+			receiverId,
 			content,
 			imageUrls
 		);
@@ -43,4 +41,5 @@ public class ChatHub : Hub
 			DateTime.UtcNow.ToString("O")
 		);
 	}
+
 }
