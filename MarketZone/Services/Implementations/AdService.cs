@@ -10,11 +10,14 @@ namespace MarketZone.Services.Implementations
 	{
 		private readonly ApplicationDbContext context;
 		private readonly IImageService imageService;
+		private readonly ICategoryHierarchyService categoryHierarchyService;
 
-		public AdService(ApplicationDbContext context, IImageService imageService)
+		public AdService(ApplicationDbContext context, IImageService imageService,
+			ICategoryHierarchyService categoryHierarchyService)
 		{
 			this.context = context;
 			this.imageService = imageService;
+			this.categoryHierarchyService = categoryHierarchyService;
 		}
 
 		public async Task<int> CreateAsync(AdCreateModel model, string userId)
@@ -268,30 +271,82 @@ namespace MarketZone.Services.Implementations
 
 			return true;
 		}
-		public async Task<AdSearchViewModel> SearchAsync(string? search, int page, string? userId)
+		public async Task<AdSearchViewModel> SearchAsync(string? search,
+	    string? address,int? categoryId, decimal? minPrice, decimal? maxPrice,
+		string? tags,string? sort, int page, string? userId)
 		{
 			const int PageSize = 21;
 
-			var query = context.Ads
-				.AsNoTracking();
+			var query = context.Ads.AsNoTracking().AsQueryable();
 
-			//Exclude user's own ads if logged in
+			// Exclude user's own ads
 			if (!string.IsNullOrEmpty(userId))
-			{
 				query = query.Where(a => a.UserId != userId);
+
+			// Search (title)
+			if (!string.IsNullOrWhiteSpace(search))
+				query = query.Where(a => a.Title.Contains(search));
+
+			// Address scaling: split into tokens and require all tokens to be present (order independent)
+			if (!string.IsNullOrWhiteSpace(address))
+			{
+				var tokens = address
+					.ToLower()
+					.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+					.Distinct()
+					.ToList();
+
+				foreach (var t in tokens)
+				{
+					var token = t;
+					query = query.Where(a => a.Address.ToLower().Contains(token));
+				}
 			}
 
-			//Search by title
-			if (!string.IsNullOrWhiteSpace(search))
+			// Category: include selected + all descendants
+			if (categoryId.HasValue)
 			{
-				query = query.Where(a =>
-					a.Title.Contains(search));
+				var allowedCategoryIds = await categoryHierarchyService
+				.GetDescendantCategoryIdsAsync(categoryId.Value);
+				query = query.Where(a => allowedCategoryIds.Contains(a.CategoryId));
 			}
+
+			// Price
+			if (minPrice.HasValue)
+				query = query.Where(a => a.Price >= minPrice.Value);
+
+			if (maxPrice.HasValue)
+				query = query.Where(a => a.Price <= maxPrice.Value);
+
+			// Tags (up to 10, OR match): AdTags -> Tag.Name
+			if (!string.IsNullOrWhiteSpace(tags))
+			{
+				var tagList = tags
+					.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(t => t.Trim().ToLower())
+					.Where(t => !string.IsNullOrWhiteSpace(t))
+					.Distinct()
+					.Take(10)
+					.ToList();
+
+				if (tagList.Count > 0)
+				{
+					query = query.Where(a => a.AdTags.Any(at => tagList.Contains(at.Tag.Name.ToLower())));
+				}
+			}
+
+			// Sorting
+			query = sort switch
+			{
+				"oldest" => query.OrderBy(a => a.CreatedOn),
+				"price_asc" => query.OrderBy(a => a.Price),
+				"price_desc" => query.OrderByDescending(a => a.Price),
+				_ => query.OrderByDescending(a => a.CreatedOn)
+			};
 
 			var totalAds = await query.CountAsync();
 
 			var ads = await query
-				.OrderByDescending(a => a.CreatedOn)
 				.Skip((page - 1) * PageSize)
 				.Take(PageSize)
 				.Select(a => new AdListItemViewModel
@@ -308,14 +363,30 @@ namespace MarketZone.Services.Implementations
 				})
 				.ToListAsync();
 
+			string? categoryName = null;
+			if (categoryId.HasValue)
+			{
+				categoryName = await context.Categories
+					.AsNoTracking()
+					.Where(c => c.Id == categoryId.Value)
+					.Select(c => c.Name)
+					.FirstOrDefaultAsync();
+			}
+
 			return new AdSearchViewModel
 			{
 				SearchTerm = search,
+				Address = address,
+				CategoryId = categoryId,
+				CategoryName = categoryName,
+				MinPrice = minPrice,
+				MaxPrice = maxPrice,
+				Tags = tags,
+				Sort = sort,
 				CurrentPage = page,
 				TotalPages = (int)Math.Ceiling(totalAds / (double)PageSize),
 				Ads = ads
 			};
 		}
-
 	}
 }

@@ -73,6 +73,7 @@ namespace MarketZone.Controllers
 		}
 		// GET: /Ad/GetChildren
 		[HttpGet]
+		[AllowAnonymous]
 		public async Task<IActionResult> GetChildren(int? parentId)
 		{
 			var categories = await categoryService.GetChildrenAsync(parentId);

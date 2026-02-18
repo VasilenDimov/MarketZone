@@ -47,6 +47,7 @@ builder.Services.AddRazorPages();
 // Application services
 builder.Services.AddScoped<IAdService, AdService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryHierarchyService, CategoryHierarchyService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IMessageService, MessageService>();

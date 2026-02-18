@@ -10,22 +10,24 @@ namespace MarketZone.Services.Implementations
 	{
 		private readonly ApplicationDbContext context;
 		private readonly IReviewService reviewService;
+		private readonly ICategoryHierarchyService categoryHierarchyService;
 
 		public UserService(
 			ApplicationDbContext context,
-			IReviewService reviewService)
+			IReviewService reviewService,
+			ICategoryHierarchyService categoryHierarchyService)
 		{
 			this.context = context;
 			this.reviewService = reviewService;
+			this.categoryHierarchyService = categoryHierarchyService;
 		}
 
-		public async Task<UserProfileViewModel> GetProfileAsync(
-			string userId,
-			string? search,
-			string? sort,
-			string? viewerId)
+		public async Task<UserProfileViewModel> GetProfileAsync(string userId,
+		string? search, string? address,int? categoryId, decimal? minPrice,
+		decimal? maxPrice, string? tags,string? sort, int page, string? viewerId)
 		{
-			// USER
+			const int PageSize = 21;
+
 			var user = await context.Users
 				.AsNoTracking()
 				.FirstOrDefaultAsync(u => u.Id == userId);
@@ -33,18 +35,70 @@ namespace MarketZone.Services.Implementations
 			if (user == null)
 				throw new ArgumentException("User not found");
 
-			// ADS
 			var adsQuery = context.Ads
 				.AsNoTracking()
-				.Where(a => a.UserId == userId);
+				.Where(a => a.UserId == userId)
+				.AsQueryable();
 
+			// Search (title + description)
 			if (!string.IsNullOrWhiteSpace(search))
-			{
 				adsQuery = adsQuery.Where(a =>
 					a.Title.Contains(search) ||
 					a.Description.Contains(search));
+
+			// Address scaling (token-based matching)
+			if (!string.IsNullOrWhiteSpace(address))
+			{
+				var tokens = address
+					.ToLower()
+					.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+					.Distinct()
+					.ToList();
+
+				foreach (var t in tokens)
+				{
+					var token = t;
+					adsQuery = adsQuery.Where(a =>
+						a.Address.ToLower().Contains(token));
+				}
 			}
 
+			// Category (selected + descendants)
+			if (categoryId.HasValue)
+			{
+				var allowedCategoryIds = await categoryHierarchyService
+				.GetDescendantCategoryIdsAsync(categoryId.Value);
+
+				adsQuery = adsQuery.Where(a => allowedCategoryIds.Contains(a.CategoryId));
+			}
+
+			// Price
+			if (minPrice.HasValue)
+				adsQuery = adsQuery.Where(a => a.Price >= minPrice.Value);
+
+			if (maxPrice.HasValue)
+				adsQuery = adsQuery.Where(a => a.Price <= maxPrice.Value);
+
+			// Tags (max 10)
+			if (!string.IsNullOrWhiteSpace(tags))
+			{
+				var tagList = tags
+					.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(t => t.Trim().ToLower())
+					.Where(t => !string.IsNullOrWhiteSpace(t))
+					.Distinct()
+					.Take(10)
+					.ToList();
+
+				if (tagList.Count > 0)
+				{
+					adsQuery = adsQuery.Where(a =>
+						a.AdTags.Any(at =>
+							tagList.Contains(at.Tag.Name.ToLower())));
+				}
+			}
+
+			// Sorting
 			adsQuery = sort switch
 			{
 				"price_asc" => adsQuery.OrderBy(a => a.Price),
@@ -53,7 +107,11 @@ namespace MarketZone.Services.Implementations
 				_ => adsQuery.OrderByDescending(a => a.CreatedOn)
 			};
 
+			var totalAds = await adsQuery.CountAsync();
+
 			var ads = await adsQuery
+				.Skip((page - 1) * PageSize)
+				.Take(PageSize)
 				.Select(a => new AdListItemViewModel
 				{
 					Id = a.Id,
@@ -68,10 +126,8 @@ namespace MarketZone.Services.Implementations
 				})
 				.ToListAsync();
 
-			// REVIEWS (list)
 			var reviews = await reviewService.GetReviewsForUserAsync(userId);
 
-			// REVIEW STATS (ONE QUERY, SAFE)
 			var reviewStats = await context.Reviews
 				.AsNoTracking()
 				.Where(r => r.ReviewedUserId == userId)
@@ -83,11 +139,19 @@ namespace MarketZone.Services.Implementations
 				})
 				.FirstOrDefaultAsync();
 
-			// CAN REVIEW
 			bool canReview = false;
+
 			if (!string.IsNullOrWhiteSpace(viewerId))
-			{
 				canReview = await reviewService.CanReviewAsync(viewerId, userId);
+
+			string? categoryName = null;
+			if (categoryId.HasValue)
+			{
+				categoryName = await context.Categories
+					.AsNoTracking()
+					.Where(c => c.Id == categoryId.Value)
+					.Select(c => c.Name)
+					.FirstOrDefaultAsync();
 			}
 
 			return new UserProfileViewModel
@@ -96,12 +160,20 @@ namespace MarketZone.Services.Implementations
 				UserName = user.UserName!,
 				Email = user.Email!,
 				ProfilePictureUrl = user.ProfilePictureUrl,
-
 				CreatedOn = user.CreatedOn,
 				LastOnlineOn = user.LastOnlineOn,
 
 				SearchTerm = search,
+				Address = address,
+				CategoryId = categoryId,
+				CategoryName = categoryName,
+				MinPrice = minPrice,
+				MaxPrice = maxPrice,
+				Tags = tags,
 				Sort = sort,
+
+				CurrentPage = page,
+				TotalPages = (int)Math.Ceiling(totalAds / (double)PageSize),
 
 				Ads = ads,
 				Reviews = reviews,

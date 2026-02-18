@@ -3,7 +3,7 @@ using MarketZone.ViewModels.Review;
 
 namespace MarketZone.ViewModels.User
 {
-	public class UserProfileViewModel
+	public class UserProfileViewModel : SearchFiltersBaseViewModel
 	{
 		// User info
 		public string UserId { get; set; } = null!;
@@ -18,9 +18,6 @@ namespace MarketZone.ViewModels.User
 		public IEnumerable<AdListItemViewModel> Ads { get; set; }
 			= new List<AdListItemViewModel>();
 
-		// Search & sort
-		public string? SearchTerm { get; set; }
-		public string? Sort { get; set; }
 		//Reviews
 		public IEnumerable<ReviewViewModel> Reviews { get; set; }
 			= new List<ReviewViewModel>();

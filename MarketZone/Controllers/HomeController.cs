@@ -17,16 +17,22 @@ namespace MarketZone.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> Index(string? search, int page = 1)
+		public async Task<IActionResult> Index(string? search,string? address,
+	    int? categoryId,decimal? minPrice,decimal? maxPrice,string? tags,
+	    string? sort,int page = 1)
 		{
-			var userId = User.Identity?.IsAuthenticated == true
+			string? userId = User.Identity?.IsAuthenticated == true
 				? User.FindFirstValue(ClaimTypes.NameIdentifier)
 				: null;
 
-			var model = await adService.SearchAsync(search, page, userId);
+			var model = await adService.SearchAsync(search,address,categoryId,
+			minPrice,maxPrice,tags,sort,page,userId
+			);
 
 			return View(model);
 		}
+
+
 		[AllowAnonymous]
 		public IActionResult Error(string? message)
 		{

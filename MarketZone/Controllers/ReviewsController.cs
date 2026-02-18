@@ -81,19 +81,27 @@ namespace MarketZone.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(ReviewCreateViewModel model)
 		{
+			var viewerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
 			if (!ModelState.IsValid)
 			{
 				return View(
 					"~/Views/User/Profile.cshtml",
 					await userService.GetProfileAsync(
-						model.ReviewedUserId,
+						userId: model.ReviewedUserId,
 						search: null,
+						address: null,
+						categoryId: null,
+						minPrice: null,
+						maxPrice: null,
+						tags: null,
 						sort: null,
-						viewerId: User.FindFirstValue(ClaimTypes.NameIdentifier)
+						page: 1,
+						viewerId: viewerId
 					));
 			}
 
-			var reviewerId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+			var reviewerId = viewerId!;
 
 			await reviewService.AddReviewAsync(reviewerId, model);
 

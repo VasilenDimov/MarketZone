@@ -41,55 +41,9 @@
         </div>
     </div>
 
-    <!-- SEARCH + SORT -->
-    <form method="get" class="row mb-4" novalidate>
+    <form method="get" class="mb-3" novalidate>
         <input type="hidden" name="id" value="@Model.UserId" />
-
-        <div class="col-md-6 mb-2">
-            <input type="text"
-                   name="search"
-                   value="@Model.SearchTerm"
-                   class="form-control"
-                   placeholder="Search ads..." />
-        </div>
-
-        <div class="col-md-4 mb-2">
-            <select name="sort" class="form-select">
-                <option value="">Newest</option>
-
-                @if (Model.Sort == "oldest")
-                {
-                    <option value="oldest" selected>Oldest</option>
-                }
-                else
-                {
-                    <option value="oldest">Oldest</option>
-                }
-
-                @if (Model.Sort == "price_asc")
-                {
-                    <option value="price_asc" selected>Price ↑</option>
-                }
-                else
-                {
-                    <option value="price_asc">Price ↑</option>
-                }
-
-                @if (Model.Sort == "price_desc")
-                {
-                    <option value="price_desc" selected>Price ↓</option>
-                }
-                else
-                {
-                    <option value="price_desc">Price ↓</option>
-                }
-            </select>
-
-        </div>
-
-        <div class="col-md-2 mb-2">
-            <button type="submit" class="btn btn-primary w-100">Apply</button>
-        </div>
+        <partial name="_SearchFilters" model="Model" />
     </form>
 
     <!-- ADS -->
@@ -118,7 +72,30 @@
             }
         </div>
     }
-
+    @if (Model.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link"
+                           href="?id=@Model.UserId
+                                      &search=@Model.SearchTerm
+                                      &address=@Model.Address
+                                      &categoryId=@Model.CategoryId
+                                      &minPrice=@Model.MinPrice
+                                      &maxPrice=@Model.MaxPrice
+                                      &tags=@Model.Tags
+                                      &sort=@Model.Sort
+                                      &page=@i">
+                            @i
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
     <!-- REVIEWS -->
     <div class="card mt-4" id="reviews">
         <div class="card-body">
@@ -231,3 +208,10 @@
     </div>
 
 </div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/filters.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/search-filters.js" asp-append-version="true"></script>
+}

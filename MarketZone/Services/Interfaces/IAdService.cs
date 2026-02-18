@@ -10,6 +10,9 @@ namespace MarketZone.Services.Interfaces
 		Task<AdCreateModel?> GetEditModelAsync(int adId, string userId);
 		Task<bool> UpdateAsync(AdCreateModel model, string userId);	
         Task<bool> DeleteAsync(int adId, string userId);
-		Task<AdSearchViewModel> SearchAsync(string? search, int page, string? userId);
+		Task<AdSearchViewModel> SearchAsync(string? search,string? address,
+	    int? categoryId,decimal? minPrice,decimal? maxPrice,string? tags,
+	    string? sort,int page,string? userId);
+
 	}
 }

@@ -14,23 +14,20 @@ namespace MarketZone.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> Profile(
-			string id,
-			string? search,
-			string? sort)
+		public async Task<IActionResult> Profile(string id, string? search,
+		string? address,int? categoryId, decimal? minPrice, decimal? maxPrice,
+		string? tags, string? sort,int page = 1)
 		{
-			if (string.IsNullOrWhiteSpace(id))
-			{
-				return NotFound();
-			}
-
 			var viewerId = User.Identity?.IsAuthenticated == true
 				? User.FindFirstValue(ClaimTypes.NameIdentifier)
 				: null;
 
-			var model = await userService.GetProfileAsync(id, search, sort, viewerId);
+			var model = await userService.GetProfileAsync(
+				id, search, address, categoryId, minPrice, maxPrice, tags, sort,page,
+				viewerId);
 
 			return View(model);
 		}
+
 	}
 }

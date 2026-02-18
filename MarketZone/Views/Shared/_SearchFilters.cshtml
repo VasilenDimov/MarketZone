@@ -1,1 +1,141 @@
-﻿
+﻿@model MarketZone.ViewModels.Ad.SearchFiltersBaseViewModel
+
+@{
+    string searchTerm = Model.SearchTerm ?? "";
+    string address = Model.Address ?? "";
+    int? categoryId = Model.CategoryId;
+    string categoryName = Model.CategoryName ?? "";
+    decimal? minPrice = Model.MinPrice;
+    decimal? maxPrice = Model.MaxPrice;
+    string tags = Model.Tags ?? "";
+    string sort = Model.Sort ?? "";
+}
+
+<div class="search-container">
+    <!-- Row 1: Search + Address + Button -->
+    <div class="search-main-row">
+
+        <!-- Search Term -->
+        <div class="search-input-group">
+            <input type="text" name="search"
+                   class="search-input search-term-input"
+                   placeholder="Search"
+                   value="@searchTerm" />
+        </div>
+
+        <!-- Address -->
+        <div class="location-input-group" style="position:relative;">
+            <input type="text"
+                   id="filter-address-input"
+                   name="address"
+                   class="search-input search-location-input"
+                   placeholder="Whole country"
+                   value="@address"
+                   autocomplete="off" />
+            <div id="filter-address-suggestions" class="address-suggestions"></div>
+        </div>
+
+        <button type="submit" class="btn-search">
+            Search
+        </button>
+    </div>
+
+    <!-- Row 2: Filters -->
+    <div class="filters-row">
+
+        <!-- Category Picker -->
+        <div class="filter-item" style="position: relative; cursor: pointer;" id="category-picker-container">
+            <label class="filter-label">Category</label>
+
+            <div id="category-display" class="d-flex justify-content-between align-items-center w-100">
+                <span id="selected-category-name" class="text-truncate" style="max-width: 130px; font-size: 14px; font-weight: 500;">
+                    @(string.IsNullOrEmpty(categoryName) ? "All Categories" : categoryName)
+                </span>
+                <span class="small text-muted">▼</span>
+            </div>
+
+            <input type="hidden" name="categoryId" id="filter-category-id" value="@categoryId" />
+
+            <div id="category-dropdown-menu" class="category-dropdown-menu">
+                <div class="p-2 border-bottom d-flex align-items-center bg-light">
+                    <button type="button" id="cat-back-btn" class="btn btn-sm btn-link text-decoration-none p-0 me-2" style="display:none;">
+                        ← Back
+                    </button>
+                    <span id="cat-breadcrumb" class="small text-muted text-truncate">All Categories</span>
+                </div>
+
+                <ul id="filter-category-list" class="list-unstyled mb-0">
+                    <li class="p-3 text-center text-muted">
+                        <span class="spinner-border spinner-border-sm"></span> Loading...
+                    </li>
+                </ul>
+
+                <div class="p-2 border-top text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100" id="clear-category-btn">
+                        Clear Category
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price -->
+        <div class="filter-item">
+            <label class="filter-label">Price</label>
+            <div class="price-range-container">
+                <input type="number" name="minPrice" class="price-input" placeholder="From" value="@minPrice" />
+                <span class="text-muted">-</span>
+                <input type="number" name="maxPrice" class="price-input" placeholder="To" value="@maxPrice" />
+            </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="filter-item flex-grow-1">
+            <label class="filter-label">Tags (comma separated)</label>
+            <input type="text" name="tags" class="filter-control"
+                   placeholder="e.g. urgent, new" value="@tags" />
+        </div>
+
+        <!-- Sort -->
+        <div class="filter-item">
+            <label class="filter-label">Sort By</label>
+
+            <select name="sort" class="filter-control">
+                @if (string.IsNullOrEmpty(sort))
+                {
+                    <option value="" selected>Newest</option>
+                }
+                else
+                {
+                    <option value="">Newest</option>
+                }
+
+                @if (sort == "oldest")
+                {
+                    <option value="oldest" selected>Oldest</option>
+                }
+                else
+                {
+                    <option value="oldest">Oldest</option>
+                }
+
+                @if (sort == "price_asc")
+                {
+                    <option value="price_asc" selected>Price Lowest</option>
+                }
+                else
+                {
+                    <option value="price_asc">Price Lowest</option>
+                }
+
+                @if (sort == "price_desc")
+                {
+                    <option value="price_desc" selected>Price Highest</option>
+                }
+                else
+                {
+                    <option value="price_desc">Price Highest</option>
+                }
+            </select>
+        </div>
+    </div>
+</div>

@@ -1,11 +1,7 @@
 ﻿@model MarketZone.ViewModels.Ad.AdSearchViewModel
 
-<form method="get" class="mb-4">
-    <input type="text"
-           name="search"
-           value="@Model.SearchTerm"
-           class="form-control"
-           placeholder="Search by title..." />
+<form method="get" class="mb-3">
+    <partial name="_SearchFilters" model="Model" />
 </form>
 
 @if (!Model.Ads.Any())
@@ -19,9 +15,7 @@ else
         {
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-
                     <partial name="_AdCardPartial" model="ad" />
-
                     <div class="card-footer bg-white border-0">
                         <a asp-controller="Ad"
                            asp-action="Details"
@@ -30,7 +24,6 @@ else
                             View
                         </a>
                     </div>
-
                 </div>
             </div>
         }
@@ -42,11 +35,27 @@ else
             {
                 <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
                     <a class="page-link"
-                       href="?search=@Model.SearchTerm&page=@i">
+                       href="?search=@Model.SearchTerm
+                 &address=@Model.Address
+                 &categoryId=@Model.CategoryId
+                 &minPrice=@Model.MinPrice
+                 &maxPrice=@Model.MaxPrice
+                 &tags=@Model.Tags
+                 &sort=@Model.Sort
+                 &page=@i">
                         @i
                     </a>
+
                 </li>
             }
         </ul>
     </nav>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/filters.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/search-filters.js" asp-append-version="true"></script>
 }
