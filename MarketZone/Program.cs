@@ -4,10 +4,12 @@ using MarketZone.Infrastructure.SignalR;
 using MarketZone.Middlewares;
 using MarketZone.Services.Implementations;
 using MarketZone.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,33 @@ builder.Services
 	})
 	.AddRoles<IdentityRole>()
 	.AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddAuthentication()
+	.AddGoogle(options =>
+	{
+		options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+		options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+
+		options.Events = new OAuthEvents
+		{
+			OnRedirectToAuthorizationEndpoint = context =>
+			{
+				// Remove any existing "prompt" to avoid duplicates
+				var uri = new Uri(context.RedirectUri);
+				var query = HttpUtility.ParseQueryString(uri.Query);
+
+				query.Remove("prompt");
+				query.Add("prompt", "select_account");
+
+				var newUrl =
+					$"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}?{query}";
+
+				context.Response.Redirect(newUrl);
+				return Task.CompletedTask;
+			}
+		};
+	});
+
 
 // SignalR (ONLY ONCE)
 builder.Services.AddSignalR(options =>
@@ -83,4 +112,4 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-app.Run();
+	app.Run();

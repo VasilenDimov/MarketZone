@@ -16,16 +16,16 @@
     let debounceTimer = null;
     let activeIndex = -1;
     let currentResults = [];
-    let addressConfirmed = false;
 
     // ── Debounced search ──
     input.addEventListener("input", () => {
         const query = input.value.trim();
+
         window.addressConfirmed = false;
         window.validateAll?.();
 
         clearTimeout(debounceTimer);
-        confirmedBadge.classList.remove("show");
+        confirmedBadge?.classList.remove("show");
 
         // Clear lat/lng when user types again
         if (hiddenLat) hiddenLat.value = "";
@@ -47,7 +47,7 @@
     });
 
     async function searchAddress(query) {
-        loading.classList.add("show");
+        loading?.classList.add("show");
         closeSuggestions();
 
         try {
@@ -56,17 +56,20 @@
                 `q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`,
                 { headers: { "Accept-Language": "en" } }
             );
+
             const data = await res.json();
             currentResults = data;
             renderSuggestions(data);
         } catch {
             closeSuggestions();
         } finally {
-            loading.classList.remove("show");
+            loading?.classList.remove("show");
         }
     }
 
     function renderSuggestions(results) {
+        if (!suggestions) return;
+
         suggestions.innerHTML = "";
         activeIndex = -1;
 
@@ -79,8 +82,8 @@
             return;
         }
 
-        results.forEach((r, i) => {
-            const parts = r.display_name.split(", ");
+        results.forEach((r) => {
+            const parts = (r.display_name || "").split(", ");
             const main = parts.slice(0, 2).join(", ");
             const sub = parts.slice(2).join(", ");
 
@@ -89,8 +92,8 @@
             item.innerHTML = `
                 <span class="suggestion-icon">📍</span>
                 <div>
-                    <div class="suggestion-main">${main}</div>
-                    <div class="suggestion-sub">${sub}</div>
+                    <div class="suggestion-main">${escapeHtml(main)}</div>
+                    <div class="suggestion-sub">${escapeHtml(sub)}</div>
                 </div>`;
 
             item.addEventListener("mousedown", (e) => {
@@ -107,24 +110,29 @@
     function selectResult(result) {
         const lat = parseFloat(result.lat);
         const lng = parseFloat(result.lon);
-        const displayName = result.display_name;
+        const displayName = result.display_name || "";
 
-        // Write directly into the asp-for bound input
         input.value = displayName;
-        if (hiddenLat) hiddenLat.value = lat;
-        if (hiddenLng) hiddenLng.value = lng;
+        if (hiddenLat) hiddenLat.value = String(lat);
+        if (hiddenLng) hiddenLng.value = String(lng);
 
         closeSuggestions();
         showMap(lat, lng);
+
         window.addressConfirmed = true;
-        confirmedBadge.classList.add("show");
+        confirmedBadge?.classList.add("show");
         window.validateAll?.();
     }
 
     function showMap(lat, lng) {
+        if (!mapContainer) return;
+
         mapContainer.classList.add("show");
 
         if (!map) {
+            // Leaflet must be loaded
+            if (typeof L === "undefined") return;
+
             map = L.map("address-map", { zoomControl: true, scrollWheelZoom: false });
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: "© OpenStreetMap contributors"
@@ -136,11 +144,11 @@
         map.setView([lat, lng], 14);
 
         // Fix Leaflet tile rendering inside hidden containers
-        setTimeout(() => map.invalidateSize(), 100);
+        setTimeout(() => map && map.invalidateSize(), 100);
     }
 
     function hideMap() {
-        mapContainer.classList.remove("show");
+        mapContainer?.classList.remove("show");
         if (marker && map) {
             map.removeLayer(marker);
             marker = null;
@@ -148,6 +156,7 @@
     }
 
     function closeSuggestions() {
+        if (!suggestions) return;
         suggestions.classList.remove("show");
         suggestions.innerHTML = "";
         activeIndex = -1;
@@ -155,7 +164,7 @@
 
     // ── Keyboard navigation ──
     input.addEventListener("keydown", (e) => {
-        const items = suggestions.querySelectorAll(".suggestion-item");
+        const items = suggestions?.querySelectorAll(".suggestion-item") || [];
 
         if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -183,7 +192,8 @@
 
     // Close on outside click
     document.addEventListener("click", (e) => {
-        if (!input.closest(".address-picker-wrapper").contains(e.target)) {
+        const wrapper = input.closest(".address-picker-wrapper");
+        if (wrapper && !wrapper.contains(e.target)) {
             closeSuggestions();
         }
     });
@@ -194,6 +204,19 @@
 
     if (existingLat && existingLng && input.value) {
         showMap(parseFloat(existingLat), parseFloat(existingLng));
-        confirmedBadge.classList.add("show");
+        confirmedBadge?.classList.add("show");
+
+        // THIS is the key for your submit button validation on Edit
+        window.addressConfirmed = true;
+        window.validateAll?.();
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 });

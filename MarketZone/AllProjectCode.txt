@@ -1,5 +1,156 @@
 ﻿
 
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\Manage\ManageNavPages.cs ================
+
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+#nullable disable
+
+using System;
+using Microsoft.AspNetCore.Mvc.Rendering;
+
+namespace  MarketZone.Areas.Identity.Pages.Account.Manage
+{
+    /// <summary>
+    ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+    ///     directly from your code. This API may change or be removed in future releases.
+    /// </summary>
+    public static class ManageNavPages
+    {
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string Index => "Index";
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string Email => "Email";
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string ChangePassword => "ChangePassword";
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string DownloadPersonalData => "DownloadPersonalData";
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string DeletePersonalData => "DeletePersonalData";
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string ExternalLogins => "ExternalLogins";
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string PersonalData => "PersonalData";
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string TwoFactorAuthentication => "TwoFactorAuthentication";
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string IndexNavClass(ViewContext viewContext) => PageNavClass(viewContext, Index);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string EmailNavClass(ViewContext viewContext) => PageNavClass(viewContext, Email);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string ChangePasswordNavClass(ViewContext viewContext) => PageNavClass(viewContext, ChangePassword);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string DownloadPersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, DownloadPersonalData);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string DeletePersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, DeletePersonalData);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string ExternalLoginsNavClass(ViewContext viewContext) => PageNavClass(viewContext, ExternalLogins);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string PersonalDataNavClass(ViewContext viewContext) => PageNavClass(viewContext, PersonalData);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string TwoFactorAuthenticationNavClass(ViewContext viewContext) => PageNavClass(viewContext, TwoFactorAuthentication);
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public static string PageNavClass(ViewContext viewContext, string page)
+        {
+            var activePage = viewContext.ViewData["ActivePage"] as string
+                ?? System.IO.Path.GetFileNameWithoutExtension(viewContext.ActionDescriptor.DisplayName);
+            return string.Equals(activePage, page, StringComparison.OrdinalIgnoreCase) ? "active" : null;
+        }
+    }
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\Manage\_ManageNav.cshtml ================
+
+@inject SignInManager<User> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+}
+<ul class="nav nav-pills flex-column">
+    <li class="nav-item"><a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Profile</a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">Email</a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">Password</a></li>
+    @if (hasExternalLogins)
+    {
+        <li id="external-logins" class="nav-item"><a id="external-login" class="nav-link @ManageNavPages.ExternalLoginsNavClass(ViewContext)" asp-page="./ExternalLogins">External logins</a></li>
+    }
+    <li class="nav-item"><a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">Two-factor authentication</a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">Personal data</a></li>
+</ul>
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\Manage\_ViewImports.cshtml ================
+
+@using MarketZone.Areas.Identity.Pages.Account.Manage
+
+
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\ConfirmEmail.cshtml ================
 
 @page
@@ -63,6 +214,295 @@ namespace MarketZone.Areas.Identity.Pages.Account
             var result = await _userManager.ConfirmEmailAsync(user, code);
             StatusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
             return Page();
+        }
+    }
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\ExternalLogin.cshtml ================
+
+@page
+@model ExternalLoginModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+<h1>@ViewData["Title"]</h1>
+<h2 id="external-login-title">Associate your @Model.ProviderDisplayName account.</h2>
+<hr />
+
+<p id="external-login-description" class="text-info">
+    You've successfully authenticated with <strong>@Model.ProviderDisplayName</strong>.
+    Please enter an email address for this site below and click the Register button to finish
+    logging in.
+</p>
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-page-handler="Confirmation" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email."/>
+                <label asp-for="Input.Email" class="form-label"></label>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\ExternalLogin.cshtml.cs ================
+
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+#nullable disable
+
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
+using MarketZone.Data.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
+
+namespace MarketZone.Areas.Identity.Pages.Account
+{
+    [AllowAnonymous]
+    public class ExternalLoginModel : PageModel
+    {
+        private readonly SignInManager<User> _signInManager;
+        private readonly UserManager<User> _userManager;
+        private readonly IUserStore<User> _userStore;
+        private readonly IUserEmailStore<User> _emailStore;
+        private readonly IEmailSender _emailSender;
+        private readonly ILogger<ExternalLoginModel> _logger;
+
+        public ExternalLoginModel(
+            SignInManager<User> signInManager,
+            UserManager<User> userManager,
+            IUserStore<User> userStore,
+            ILogger<ExternalLoginModel> logger,
+            IEmailSender emailSender)
+        {
+            _signInManager = signInManager;
+            _userManager = userManager;
+            _userStore = userStore;
+            _emailStore = GetEmailStore();
+            _logger = logger;
+            _emailSender = emailSender;
+        }
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        [BindProperty]
+        public InputModel Input { get; set; }
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public string ProviderDisplayName { get; set; }
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public string ReturnUrl { get; set; }
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        [TempData]
+        public string ErrorMessage { get; set; }
+
+        /// <summary>
+        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+        ///     directly from your code. This API may change or be removed in future releases.
+        /// </summary>
+        public class InputModel
+        {
+            /// <summary>
+            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
+            ///     directly from your code. This API may change or be removed in future releases.
+            /// </summary>
+            [Required]
+            [EmailAddress]
+            public string Email { get; set; }
+        }
+        
+        public IActionResult OnGet() => RedirectToPage("./Login");
+
+        public IActionResult OnPost(string provider, string returnUrl = null)
+        {
+            // Request a redirect to the external login provider.
+            var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return new ChallengeResult(provider, properties);
+        }
+
+		public async Task<IActionResult> OnGetCallbackAsync(string returnUrl = null, string remoteError = null)
+		{
+			returnUrl ??= Url.Content("~/");
+
+			if (remoteError != null)
+			{
+				ErrorMessage = $"Error from external provider: {remoteError}";
+				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+			}
+
+			var info = await _signInManager.GetExternalLoginInfoAsync();
+			if (info == null)
+			{
+				ErrorMessage = "Error loading external login information.";
+				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+			}
+
+			// If the user already has this external login linked -> normal sign in
+			var result = await _signInManager.ExternalLoginSignInAsync(
+				info.LoginProvider,
+				info.ProviderKey,
+				isPersistent: false,
+				bypassTwoFactor: true);
+
+			if (result.Succeeded)
+			{
+				_logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity?.Name, info.LoginProvider);
+				return LocalRedirect(returnUrl);
+			}
+
+			if (result.IsLockedOut)
+				return RedirectToPage("./Lockout");
+
+			// ✅ NEW: if a local user with the same email already exists -> do NOT link
+			var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+			if (!string.IsNullOrWhiteSpace(email))
+			{
+				var existingUser = await _userManager.FindByEmailAsync(email);
+				if (existingUser != null)
+				{
+					if (!existingUser.EmailConfirmed)
+					{
+						ErrorMessage = "An account with this email already exists but it is not confirmed. Please confirm your email first, then log in.";
+						return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+					}
+
+					ErrorMessage = "An account with this email already exists. Please log in to your account.";
+					return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+				}
+			}
+
+			// Otherwise continue to the external confirmation page (new account creation)
+			ReturnUrl = returnUrl;
+			ProviderDisplayName = info.ProviderDisplayName;
+
+			if (!string.IsNullOrWhiteSpace(email))
+			{
+				Input = new InputModel
+				{
+					Email = email
+				};
+			}
+
+			return Page();
+		}
+
+		public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
+        {
+            returnUrl = returnUrl ?? Url.Content("~/");
+            // Get the information about the user from the external login provider
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                ErrorMessage = "Error loading external login information during confirmation.";
+                return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+            }
+
+            if (ModelState.IsValid)
+            {
+                var user = CreateUser();
+
+                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+                var result = await _userManager.CreateAsync(user);
+                if (result.Succeeded)
+                {
+                    result = await _userManager.AddLoginAsync(user, info);
+                    if (result.Succeeded)
+                    {
+                        _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+
+                        var userId = await _userManager.GetUserIdAsync(user);
+                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                        var callbackUrl = Url.Page(
+                            "/Account/ConfirmEmail",
+                            pageHandler: null,
+                            values: new { area = "Identity", userId = userId, code = code },
+                            protocol: Request.Scheme);
+
+                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+                        // If account confirmation is required, we need to show the link if we don't have a real email sender
+                        if (_userManager.Options.SignIn.RequireConfirmedAccount)
+                        {
+                            return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });
+                        }
+
+                        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+                        return LocalRedirect(returnUrl);
+                    }
+                }
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+            }
+
+            ProviderDisplayName = info.ProviderDisplayName;
+            ReturnUrl = returnUrl;
+            return Page();
+        }
+
+        private User CreateUser()
+        {
+            try
+            {
+                return Activator.CreateInstance<User>();
+            }
+            catch
+            {
+                throw new InvalidOperationException($"Can't create an instance of '{nameof(User)}'. " +
+                    $"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor, or alternatively " +
+                    $"override the external login page in /Areas/Identity/Pages/Account/ExternalLogin.cshtml");
+            }
+        }
+
+        private IUserEmailStore<User> GetEmailStore()
+        {
+            if (!_userManager.SupportsUserEmail)
+            {
+                throw new NotSupportedException("The default UI requires a user store with email support.");
+            }
+            return (IUserEmailStore<User>)_userStore;
         }
     }
 }
@@ -1114,6 +1554,7 @@ namespace MarketZone.Controllers
 		}
 		// GET: /Ad/GetChildren
 		[HttpGet]
+		[AllowAnonymous]
 		public async Task<IActionResult> GetChildren(int? parentId)
 		{
 			var categories = await categoryService.GetChildrenAsync(parentId);
@@ -1239,16 +1680,22 @@ namespace MarketZone.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> Index(string? search, int page = 1)
+		public async Task<IActionResult> Index(string? search,string? address,
+	    int? categoryId,decimal? minPrice,decimal? maxPrice,string? tags,
+	    string? sort,int page = 1)
 		{
-			var userId = User.Identity?.IsAuthenticated == true
+			string? userId = User.Identity?.IsAuthenticated == true
 				? User.FindFirstValue(ClaimTypes.NameIdentifier)
 				: null;
 
-			var model = await adService.SearchAsync(search, page, userId);
+			var model = await adService.SearchAsync(search,address,categoryId,
+			minPrice,maxPrice,tags,sort,page,userId
+			);
 
 			return View(model);
 		}
+
+
 		[AllowAnonymous]
 		public IActionResult Error(string? message)
 		{
@@ -1285,17 +1732,15 @@ namespace MarketZone.Controllers
 			this.imageService = imageService;
 		}
 
-		public async Task<IActionResult> Chat(int adId)
+		public async Task<IActionResult> Chat(int adId, string otherUserId)
 		{
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+			var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-			var model = await messageService.GetChatAsync(adId, userId);
-			if (model == null)
+			var chat = await messageService.GetChatAsync(adId, currentUserId, otherUserId);
+			if (chat == null)
 				return NotFound();
 
-			model.CurrentUserId = userId;
-
-			return View(model);
+			return View(chat);
 		}
 
 		public async Task<IActionResult> Inbox(string mode = "buying")
@@ -1401,19 +1846,27 @@ namespace MarketZone.Controllers
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(ReviewCreateViewModel model)
 		{
+			var viewerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
 			if (!ModelState.IsValid)
 			{
 				return View(
 					"~/Views/User/Profile.cshtml",
 					await userService.GetProfileAsync(
-						model.ReviewedUserId,
+						userId: model.ReviewedUserId,
 						search: null,
+						address: null,
+						categoryId: null,
+						minPrice: null,
+						maxPrice: null,
+						tags: null,
 						sort: null,
-						viewerId: User.FindFirstValue(ClaimTypes.NameIdentifier)
+						page: 1,
+						viewerId: viewerId
 					));
 			}
 
-			var reviewerId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+			var reviewerId = viewerId!;
 
 			await reviewService.AddReviewAsync(reviewerId, model);
 
@@ -1444,24 +1897,21 @@ namespace MarketZone.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> Profile(
-			string id,
-			string? search,
-			string? sort)
+		public async Task<IActionResult> Profile(string id, string? search,
+		string? address,int? categoryId, decimal? minPrice, decimal? maxPrice,
+		string? tags, string? sort,int page = 1)
 		{
-			if (string.IsNullOrWhiteSpace(id))
-			{
-				return NotFound();
-			}
-
 			var viewerId = User.Identity?.IsAuthenticated == true
 				? User.FindFirstValue(ClaimTypes.NameIdentifier)
 				: null;
 
-			var model = await userService.GetProfileAsync(id, search, sort, viewerId);
+			var model = await userService.GetProfileAsync(
+				id, search, address, categoryId, minPrice, maxPrice, tags, sort,page,
+				viewerId);
 
 			return View(model);
 		}
+
 	}
 }
 
@@ -14909,7 +15359,49 @@ namespace MarketZone.Data.Migrations
 }
 
 
-================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\ApplicationDbContextModelSnapshot.cs ================
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\20260217230459_SetAdDescriptionTo4000.cs ================
+
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace MarketZone.Data.Migrations
+{
+    /// <inheritdoc />
+    public partial class SetAdDescriptionTo4000 : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<string>(
+                name: "Description",
+                table: "Ads",
+                type: "nvarchar(4000)",
+                maxLength: 4000,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(max)",
+                oldMaxLength: 5000);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<string>(
+                name: "Description",
+                table: "Ads",
+                type: "nvarchar(max)",
+                maxLength: 5000,
+                nullable: false,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(4000)",
+                oldMaxLength: 4000);
+        }
+    }
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\20260217230459_SetAdDescriptionTo4000.Designer.cs ================
 
 // <auto-generated />
 using System;
@@ -14917,6 +15409,7 @@ using MarketZone.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -14924,9 +15417,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MarketZone.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260217230459_SetAdDescriptionTo4000")]
+    partial class SetAdDescriptionTo4000
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -14934,89 +15429,6 @@ namespace MarketZone.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Category", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int?>("ParentCategoryId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ParentCategoryId");
-
-                    b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "Real Estate"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Sales",
-                            ParentCategoryId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Rentals",
-                            ParentCategoryId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "Apartments",
-                            ParentCategoryId = 2
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Name = "Houses",
-                            ParentCategoryId = 2
-                        });
-                });
-
-            modelBuilder.Entity("EmailVerificationCode", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("EmailVerificationCodes");
-                });
 
             modelBuilder.Entity("MarketZone.Data.Models.Ad", b =>
                 {
@@ -15045,8 +15457,8 @@ namespace MarketZone.Data.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(5000)
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<double?>("Latitude")
                         .HasColumnType("float");
@@ -15111,6 +15523,89 @@ namespace MarketZone.Data.Migrations
                     b.HasIndex("TagId");
 
                     b.ToTable("AdTags");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("ParentCategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentCategoryId");
+
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Real Estate"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Sales",
+                            ParentCategoryId = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Rentals",
+                            ParentCategoryId = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Apartments",
+                            ParentCategoryId = 2
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Houses",
+                            ParentCategoryId = 2
+                        });
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.EmailVerificationCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmailVerificationCodes");
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.Favorite", b =>
@@ -15224,6 +15719,24 @@ namespace MarketZone.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.User", b =>
@@ -15438,47 +15951,9 @@ namespace MarketZone.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Tag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("Category", b =>
-                {
-                    b.HasOne("Category", "ParentCategory")
-                        .WithMany("SubCategories")
-                        .HasForeignKey("ParentCategoryId");
-
-                    b.Navigation("ParentCategory");
-                });
-
-            modelBuilder.Entity("EmailVerificationCode", b =>
-                {
-                    b.HasOne("MarketZone.Data.Models.User", "User")
-                        .WithMany("EmailVerificationCodes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("MarketZone.Data.Models.Ad", b =>
                 {
-                    b.HasOne("Category", "Category")
+                    b.HasOne("MarketZone.Data.Models.Category", "Category")
                         .WithMany("Ads")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -15514,7 +15989,7 @@ namespace MarketZone.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tag", "Tag")
+                    b.HasOne("MarketZone.Data.Models.Tag", "Tag")
                         .WithMany("AdTags")
                         .HasForeignKey("TagId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -15523,6 +15998,26 @@ namespace MarketZone.Data.Migrations
                     b.Navigation("Ad");
 
                     b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Category", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.Category", "ParentCategory")
+                        .WithMany("SubCategories")
+                        .HasForeignKey("ParentCategoryId");
+
+                    b.Navigation("ParentCategory");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.EmailVerificationCode", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.User", "User")
+                        .WithMany("EmailVerificationCodes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.Message", b =>
@@ -15633,13 +16128,6 @@ namespace MarketZone.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Category", b =>
-                {
-                    b.Navigation("Ads");
-
-                    b.Navigation("SubCategories");
-                });
-
             modelBuilder.Entity("MarketZone.Data.Models.Ad", b =>
                 {
                     b.Navigation("AdTags");
@@ -15649,9 +16137,21 @@ namespace MarketZone.Data.Migrations
                     b.Navigation("Messages");
                 });
 
+            modelBuilder.Entity("MarketZone.Data.Models.Category", b =>
+                {
+                    b.Navigation("Ads");
+
+                    b.Navigation("SubCategories");
+                });
+
             modelBuilder.Entity("MarketZone.Data.Models.Message", b =>
                 {
                     b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Tag", b =>
+                {
+                    b.Navigation("AdTags");
                 });
 
             modelBuilder.Entity("MarketZone.Data.Models.User", b =>
@@ -15668,10 +16168,775 @@ namespace MarketZone.Data.Migrations
 
                     b.Navigation("SentMessages");
                 });
+#pragma warning restore 612, 618
+        }
+    }
+}
 
-            modelBuilder.Entity("Tag", b =>
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\ApplicationDbContextModelSnapshot.cs ================
+
+// <auto-generated />
+using System;
+using MarketZone.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace MarketZone.Data.Migrations
+{
+    [DbContext(typeof(ApplicationDbContext))]
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    {
+        protected override void BuildModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder
+                .HasAnnotation("ProductVersion", "10.0.1")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("MarketZone.Data.Models.Ad", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Condition")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Currency")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Ads");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.AdImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AdId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdId");
+
+                    b.ToTable("AdImages");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.AdTag", b =>
+                {
+                    b.Property<int>("AdId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("int");
+
+                    b.HasKey("AdId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("AdTags");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("ParentCategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParentCategoryId");
+
+                    b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Real Estate"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Sales",
+                            ParentCategoryId = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Rentals",
+                            ParentCategoryId = 1
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Apartments",
+                            ParentCategoryId = 2
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Houses",
+                            ParentCategoryId = 2
+                        });
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.EmailVerificationCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("EmailVerificationCodes");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Favorite", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AdId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("UserId", "AdId");
+
+                    b.ToTable("Favorites");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AdId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ReceiverId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("SentOn")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdId");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.MessageImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("MessageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MessageId");
+
+                    b.ToTable("MessageImages");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Review", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Comment")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReviewedUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ReviewerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewedUserId");
+
+                    b.HasIndex("ReviewerId", "ReviewedUserId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Tags");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.User", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastOnlineOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ProfilePictureUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RoleId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("RoleId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("LoginProvider")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Ad", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.Category", "Category")
+                        .WithMany("Ads")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MarketZone.Data.Models.User", "User")
+                        .WithMany("Ads")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.AdImage", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.Ad", "Ad")
+                        .WithMany("Images")
+                        .HasForeignKey("AdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ad");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.AdTag", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.Ad", "Ad")
+                        .WithMany("AdTags")
+                        .HasForeignKey("AdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MarketZone.Data.Models.Tag", "Tag")
+                        .WithMany("AdTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ad");
+
+                    b.Navigation("Tag");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Category", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.Category", "ParentCategory")
+                        .WithMany("SubCategories")
+                        .HasForeignKey("ParentCategoryId");
+
+                    b.Navigation("ParentCategory");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.EmailVerificationCode", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.User", "User")
+                        .WithMany("EmailVerificationCodes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Message", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.Ad", "Ad")
+                        .WithMany("Messages")
+                        .HasForeignKey("AdId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MarketZone.Data.Models.User", "Receiver")
+                        .WithMany("ReceivedMessages")
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MarketZone.Data.Models.User", "Sender")
+                        .WithMany("SentMessages")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Ad");
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.MessageImage", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.Message", "Message")
+                        .WithMany("Images")
+                        .HasForeignKey("MessageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Message");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Review", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.User", "ReviewedUser")
+                        .WithMany("ReviewsReceived")
+                        .HasForeignKey("ReviewedUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MarketZone.Data.Models.User", "Reviewer")
+                        .WithMany("ReviewsWritten")
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ReviewedUser");
+
+                    b.Navigation("Reviewer");
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MarketZone.Data.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("MarketZone.Data.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Ad", b =>
                 {
                     b.Navigation("AdTags");
+
+                    b.Navigation("Images");
+
+                    b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Category", b =>
+                {
+                    b.Navigation("Ads");
+
+                    b.Navigation("SubCategories");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Message", b =>
+                {
+                    b.Navigation("Images");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.Tag", b =>
+                {
+                    b.Navigation("AdTags");
+                });
+
+            modelBuilder.Entity("MarketZone.Data.Models.User", b =>
+                {
+                    b.Navigation("Ads");
+
+                    b.Navigation("EmailVerificationCodes");
+
+                    b.Navigation("ReceivedMessages");
+
+                    b.Navigation("ReviewsReceived");
+
+                    b.Navigation("ReviewsWritten");
+
+                    b.Navigation("SentMessages");
                 });
 #pragma warning restore 612, 618
         }
@@ -15696,7 +16961,7 @@ namespace MarketZone.Data.Models
 		[Required, StringLength(100)]
 		public string Title { get; set; } = null!;
 
-		[Required, StringLength(5000)]
+		[Required, StringLength(4000)]
 		public string Description { get; set; } = null!;
 		
 		[Required]
@@ -15784,24 +17049,27 @@ using MarketZone.Data.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-public class Category
+namespace MarketZone.Data.Models
 {
-	public int Id { get; set; }
+	public class Category
+	{
+		public int Id { get; set; }
 
-	[Required]
-	[StringLength(100)]
-	public string Name { get; set; } = null!;
+		[Required]
+		[StringLength(100)]
+		public string Name { get; set; } = null!;
 
-	public int? ParentCategoryId { get; set; }
+		public int? ParentCategoryId { get; set; }
 
-	[ForeignKey(nameof(ParentCategoryId))]
-	public Category? ParentCategory { get; set; }
+		[ForeignKey(nameof(ParentCategoryId))]
+		public Category? ParentCategory { get; set; }
 
-	public ICollection<Category> SubCategories { get; set; }
-		= new List<Category>();
+		public ICollection<Category> SubCategories { get; set; }
+			= new List<Category>();
 
-	public ICollection<Ad> Ads { get; set; }
-		= new List<Ad>();
+		public ICollection<Ad> Ads { get; set; }
+			= new List<Ad>();
+	}
 }
 
 
@@ -15809,15 +17077,18 @@ public class Category
 
 using MarketZone.Data.Models;
 
-public class EmailVerificationCode
+namespace MarketZone.Data.Models
 {
-	public int Id { get; set; }
-	public string Code { get; set; } = null!;
-	public DateTime CreatedAt { get; set; }
-	public DateTime ExpiresAt { get; set; }
+	public class EmailVerificationCode
+	{
+		public int Id { get; set; }
+		public string Code { get; set; } = null!;
+		public DateTime CreatedAt { get; set; }
+		public DateTime ExpiresAt { get; set; }
 
-	public string UserId { get; set; } = null!;
-	public User User { get; set; } = null!;
+		public string UserId { get; set; } = null!;
+		public User User { get; set; } = null!;
+	}
 }
 
 
@@ -15948,14 +17219,17 @@ namespace MarketZone.Data.Models
 using MarketZone.Data.Models;
 using System.ComponentModel.DataAnnotations;
 
-public class Tag
+namespace MarketZone.Data.Models
 {
-	public int Id { get; set; }
+	public class Tag
+	{
+		public int Id { get; set; }
 
-	[Required, StringLength(100)]
-	public string Name { get; set; } = null!;
+		[Required, StringLength(100)]
+		public string Name { get; set; } = null!;
 
-	public ICollection<AdTag> AdTags { get; set; } = new List<AdTag>();
+		public ICollection<AdTag> AdTags { get; set; } = new List<AdTag>();
+	}
 }
 
 
@@ -16011,7 +17285,6 @@ namespace MarketZone.Data
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
 			base.OnModelCreating(builder);
-
 			// Message -> Sender
 			builder.Entity<Message>()
 				.HasOne(m => m.Sender)
@@ -16100,19 +17373,17 @@ public class ChatHub : Hub
 		await Groups.AddToGroupAsync(Context.ConnectionId, chatId);
 	}
 
-	public async Task SendMessage(int adId,string chatId,string? content,
-	    List<string> imageUrls)
-    {
+	public async Task SendMessage(int adId, string chatId, string receiverId, string? content, List<string> imageUrls)
+	{
 		if (string.IsNullOrWhiteSpace(content) && !imageUrls.Any())
-		{
 			return;
-		}
 
 		var senderId = Context.UserIdentifier!;
 
 		await messageService.SaveMessageAsync(
 			adId,
 			senderId,
+			receiverId,
 			content,
 			imageUrls
 		);
@@ -16125,6 +17396,7 @@ public class ChatHub : Hub
 			DateTime.UtcNow.ToString("O")
 		);
 	}
+
 }
 
 
@@ -16359,11 +17631,14 @@ namespace MarketZone.Services.Implementations
 	{
 		private readonly ApplicationDbContext context;
 		private readonly IImageService imageService;
+		private readonly ICategoryHierarchyService categoryHierarchyService;
 
-		public AdService(ApplicationDbContext context, IImageService imageService)
+		public AdService(ApplicationDbContext context, IImageService imageService,
+			ICategoryHierarchyService categoryHierarchyService)
 		{
 			this.context = context;
 			this.imageService = imageService;
+			this.categoryHierarchyService = categoryHierarchyService;
 		}
 
 		public async Task<int> CreateAsync(AdCreateModel model, string userId)
@@ -16617,30 +17892,82 @@ namespace MarketZone.Services.Implementations
 
 			return true;
 		}
-		public async Task<AdSearchViewModel> SearchAsync(string? search, int page, string? userId)
+		public async Task<AdSearchViewModel> SearchAsync(string? search,
+	    string? address,int? categoryId, decimal? minPrice, decimal? maxPrice,
+		string? tags,string? sort, int page, string? userId)
 		{
 			const int PageSize = 21;
 
-			var query = context.Ads
-				.AsNoTracking();
+			var query = context.Ads.AsNoTracking().AsQueryable();
 
-			//Exclude user's own ads if logged in
+			// Exclude user's own ads
 			if (!string.IsNullOrEmpty(userId))
-			{
 				query = query.Where(a => a.UserId != userId);
+
+			// Search (title)
+			if (!string.IsNullOrWhiteSpace(search))
+				query = query.Where(a => a.Title.Contains(search));
+
+			// Address scaling: split into tokens and require all tokens to be present (order independent)
+			if (!string.IsNullOrWhiteSpace(address))
+			{
+				var tokens = address
+					.ToLower()
+					.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+					.Distinct()
+					.ToList();
+
+				foreach (var t in tokens)
+				{
+					var token = t;
+					query = query.Where(a => a.Address.ToLower().Contains(token));
+				}
 			}
 
-			//Search by title
-			if (!string.IsNullOrWhiteSpace(search))
+			// Category: include selected + all descendants
+			if (categoryId.HasValue)
 			{
-				query = query.Where(a =>
-					a.Title.Contains(search));
+				var allowedCategoryIds = await categoryHierarchyService
+				.GetDescendantCategoryIdsAsync(categoryId.Value);
+				query = query.Where(a => allowedCategoryIds.Contains(a.CategoryId));
 			}
+
+			// Price
+			if (minPrice.HasValue)
+				query = query.Where(a => a.Price >= minPrice.Value);
+
+			if (maxPrice.HasValue)
+				query = query.Where(a => a.Price <= maxPrice.Value);
+
+			// Tags (up to 10, OR match): AdTags -> Tag.Name
+			if (!string.IsNullOrWhiteSpace(tags))
+			{
+				var tagList = tags
+					.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(t => t.Trim().ToLower())
+					.Where(t => !string.IsNullOrWhiteSpace(t))
+					.Distinct()
+					.Take(10)
+					.ToList();
+
+				if (tagList.Count > 0)
+				{
+					query = query.Where(a => a.AdTags.Any(at => tagList.Contains(at.Tag.Name.ToLower())));
+				}
+			}
+
+			// Sorting
+			query = sort switch
+			{
+				"oldest" => query.OrderBy(a => a.CreatedOn),
+				"price_asc" => query.OrderBy(a => a.Price),
+				"price_desc" => query.OrderByDescending(a => a.Price),
+				_ => query.OrderByDescending(a => a.CreatedOn)
+			};
 
 			var totalAds = await query.CountAsync();
 
 			var ads = await query
-				.OrderByDescending(a => a.CreatedOn)
 				.Skip((page - 1) * PageSize)
 				.Take(PageSize)
 				.Select(a => new AdListItemViewModel
@@ -16657,15 +17984,82 @@ namespace MarketZone.Services.Implementations
 				})
 				.ToListAsync();
 
+			string? categoryName = null;
+			if (categoryId.HasValue)
+			{
+				categoryName = await context.Categories
+					.AsNoTracking()
+					.Where(c => c.Id == categoryId.Value)
+					.Select(c => c.Name)
+					.FirstOrDefaultAsync();
+			}
+
 			return new AdSearchViewModel
 			{
 				SearchTerm = search,
+				Address = address,
+				CategoryId = categoryId,
+				CategoryName = categoryName,
+				MinPrice = minPrice,
+				MaxPrice = maxPrice,
+				Tags = tags,
+				Sort = sort,
 				CurrentPage = page,
 				TotalPages = (int)Math.Ceiling(totalAds / (double)PageSize),
 				Ads = ads
 			};
 		}
+	}
+}
 
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Services\Implementations\CategoryHierarchyService.cs ================
+
+using MarketZone.Data;
+using MarketZone.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace MarketZone.Services.Implementations
+{
+	public class CategoryHierarchyService : ICategoryHierarchyService
+	{
+		private readonly ApplicationDbContext context;
+
+		public CategoryHierarchyService(ApplicationDbContext context)
+		{
+			this.context = context;
+		}
+
+		public async Task<List<int>> GetDescendantCategoryIdsAsync(int rootId)
+		{
+			var categories = await context.Categories
+				.AsNoTracking()
+				.Select(c => new { c.Id, c.ParentCategoryId })
+				.ToListAsync();
+
+			var result = new HashSet<int>();
+			var queue = new Queue<int>();
+
+			queue.Enqueue(rootId);
+			result.Add(rootId);
+
+			while (queue.Count > 0)
+			{
+				var current = queue.Dequeue();
+
+				var children = categories
+					.Where(c => c.ParentCategoryId == current)
+					.Select(c => c.Id);
+
+				foreach (var child in children)
+				{
+					if (result.Add(child))
+						queue.Enqueue(child);
+				}
+			}
+
+			return result.ToList();
+		}
 	}
 }
 
@@ -16900,20 +18294,37 @@ namespace MarketZone.Services.Implementations
 			this.context = context;
 		}
 
-		public async Task<ChatViewModel?> GetChatAsync(int adId, string userId)
+		public async Task<ChatViewModel?> GetChatAsync(int adId, string currentUserId, string otherUserId)
 		{
+			if (string.IsNullOrWhiteSpace(otherUserId))
+				return null;
+
+			// Load ad + seller
 			var ad = await context.Ads
 				.Include(a => a.User)
 				.Include(a => a.Images)
+				.AsNoTracking()
 				.FirstOrDefaultAsync(a => a.Id == adId);
 
 			if (ad == null)
 				return null;
 
+			// Must be either: (current is seller) or (current is buyer)
+			// And otherUser must be the other side.
+			bool currentIsSeller = ad.UserId == currentUserId;
+			bool otherIsSeller = ad.UserId == otherUserId;
+
+			// Valid pairs:
+			// - currentIsSeller && !otherIsSeller
+			// - !currentIsSeller && otherIsSeller
+			if (currentIsSeller == otherIsSeller)
+				return null;
+
+			// Pull only messages for this exact conversation (two users + ad)
 			var messages = await context.Messages
-				.Where(m =>
-					m.AdId == adId &&
-					(m.SenderId == userId || m.ReceiverId == userId))
+				.Where(m => m.AdId == adId &&
+					((m.SenderId == currentUserId && m.ReceiverId == otherUserId) ||
+					 (m.SenderId == otherUserId && m.ReceiverId == currentUserId)))
 				.Include(m => m.Sender)
 				.Include(m => m.Images)
 				.OrderBy(m => m.SentOn)
@@ -16921,33 +18332,39 @@ namespace MarketZone.Services.Implementations
 				{
 					SenderId = m.SenderId,
 					SenderName = m.Sender.UserName!,
-					SenderProfileImage = "/images/default-avatar.png",
+					SenderProfileImage = m.Sender.ProfilePictureUrl, // ✅ use real image
 					Content = m.Content,
 					ImageUrls = m.Images.Select(i => i.ImageUrl).ToList(),
 					SentOn = m.SentOn
 				})
+				.AsNoTracking()
 				.ToListAsync();
 
+			// Determine other user's name
 			string otherUserName;
-
-			if (ad.UserId == userId)
-			{
-				otherUserName = messages
-					.Where(m => m.SenderId != userId)
-					.Select(m => m.SenderName)
-					.FirstOrDefault()
-					?? "Unknown user";
-			}
-			else
+			if (otherIsSeller)
 			{
 				otherUserName = ad.User.UserName!;
 			}
+			else
+			{
+				// other is buyer
+				otherUserName = await context.Users
+					.AsNoTracking()
+					.Where(u => u.Id == otherUserId)
+					.Select(u => u.UserName!)
+					.FirstOrDefaultAsync() ?? "Unknown user";
+			}
+
+			var buyerId = currentIsSeller ? otherUserId : currentUserId;
 
 			return new ChatViewModel
 			{
 				AdId = adId,
-				ChatId = $"ad_{adId}",
+				ChatId = $"ad_{adId}_u_{buyerId}",
+				OtherUserId = otherUserId,
 				OtherUserName = otherUserName,
+				CurrentUserId = currentUserId,
 				Messages = messages,
 				AdTitle = ad.Title,
 				AdImageUrl = ad.Images
@@ -16955,37 +18372,31 @@ namespace MarketZone.Services.Implementations
 					.Select(i => i.ImageUrl)
 					.FirstOrDefault() ?? "/images/no-image.png"
 			};
+
 		}
 
-		public async Task SaveMessageAsync(int adId,string senderId,
-		string? content,List<string> imageUrls)
+		public async Task SaveMessageAsync(int adId, string senderId, string receiverId, string? content, List<string> imageUrls)
 		{
-			var ad = await context.Ads.FindAsync(adId);
-
+			var ad = await context.Ads.AsNoTracking().FirstOrDefaultAsync(a => a.Id == adId);
 			if (ad == null)
 				throw new InvalidOperationException("Ad not found.");
 
-			string receiverId;
+			if (string.IsNullOrWhiteSpace(senderId) || string.IsNullOrWhiteSpace(receiverId))
+				throw new InvalidOperationException("Invalid sender/receiver.");
 
-			if (senderId == ad.UserId)
-			{
-				receiverId = await context.Messages
-					.Where(m => m.AdId == adId)
-					.Select(m => m.SenderId)
-					.FirstOrDefaultAsync(id => id != senderId)
-					?? throw new InvalidOperationException("Receiver not found.");
-			}
-			else
-			{
-				receiverId = ad.UserId;
-			}
+			// Validate that this receiver makes sense for this ad
+			// One must be seller (ad owner), the other must be non-seller.
+			bool senderIsSeller = ad.UserId == senderId;
+			bool receiverIsSeller = ad.UserId == receiverId;
+			if (senderIsSeller == receiverIsSeller)
+				throw new InvalidOperationException("Invalid conversation participants.");
 
 			if (string.IsNullOrWhiteSpace(content) && !imageUrls.Any())
 				throw new InvalidOperationException("Message must contain text or images.");
 
 			var message = new Message
 			{
-				AdId = adId,
+				AdId = adId,	
 				SenderId = senderId,
 				ReceiverId = receiverId,
 				Content = content ?? string.Empty,
@@ -17009,41 +18420,69 @@ namespace MarketZone.Services.Implementations
 				await context.SaveChangesAsync();
 			}
 		}
+
 		public async Task<InboxViewModel> GetInboxAsync(string userId, string mode)
 		{
-			var messagesQuery = context.Messages
+			mode = (mode ?? "buying").ToLowerInvariant();
+
+			// 1) Base query WITHOUT Include (important!)
+			IQueryable<Message> baseQuery = context.Messages
+				.AsNoTracking()
 				.Where(m => m.SenderId == userId || m.ReceiverId == userId);
 
+			// selling = chats for ads I own, buying = chats for ads I don't own
 			if (mode == "selling")
-				messagesQuery = messagesQuery.Where(m => m.Ad.UserId == userId);
+				baseQuery = baseQuery.Where(m => m.Ad.UserId == userId);
 			else
-				messagesQuery = messagesQuery.Where(m => m.Ad.UserId != userId);
+				baseQuery = baseQuery.Where(m => m.Ad.UserId != userId);
 
-			var latestMessageIds = await messagesQuery
-				.GroupBy(m => m.AdId)
-				.Select(g => g.OrderByDescending(m => m.SentOn)
-							  .Select(m => m.Id)
-							  .First())
-				.ToListAsync(); 
+			// 2) Get only the latest message Id per Ad (still NO Include)
+			// ✅ Group by (AdId + OtherUserId) so seller gets one thread per buyer per ad
+			var latestMessageIds = await baseQuery
+				.Select(m => new
+				{
+					m.Id,
+					m.AdId,
+					m.SentOn,
+					OtherUserId = (m.SenderId == userId) ? m.ReceiverId : m.SenderId
+				})
+				.GroupBy(x => new { x.AdId, x.OtherUserId })
+				.Select(g => g
+					.OrderByDescending(x => x.SentOn)
+					.Select(x => x.Id)
+					.First())
+				.ToListAsync();
 
+			// 3) Now load the message rows we need WITH Include
 			var chats = await context.Messages
+				.AsNoTracking()
 				.Where(m => latestMessageIds.Contains(m.Id))
+				.Include(m => m.Ad)
+				.Include(m => m.Sender)
+				.Include(m => m.Receiver)
 				.Select(m => new InboxChatItemViewModel
 				{
 					AdId = m.AdId,
 					AdTitle = m.Ad.Title,
+
+					// if I'm sender -> other is receiver, else other is sender
+					OtherUserId = m.SenderId == userId ? m.ReceiverId : m.SenderId,
 					OtherUserName = m.SenderId == userId
 						? m.Receiver.UserName!
 						: m.Sender.UserName!,
+
 					LastMessage = m.Content,
 					LastMessageTime = m.SentOn
 				})
 				.OrderByDescending(c => c.LastMessageTime)
 				.ToListAsync();
 
-			return new InboxViewModel { Mode = mode, Chats = chats };
+			return new InboxViewModel
+			{
+				Mode = mode,
+				Chats = chats
+			};
 		}
-
 	}
 }
 
@@ -17207,22 +18646,24 @@ namespace MarketZone.Services.Implementations
 	{
 		private readonly ApplicationDbContext context;
 		private readonly IReviewService reviewService;
+		private readonly ICategoryHierarchyService categoryHierarchyService;
 
 		public UserService(
 			ApplicationDbContext context,
-			IReviewService reviewService)
+			IReviewService reviewService,
+			ICategoryHierarchyService categoryHierarchyService)
 		{
 			this.context = context;
 			this.reviewService = reviewService;
+			this.categoryHierarchyService = categoryHierarchyService;
 		}
 
-		public async Task<UserProfileViewModel> GetProfileAsync(
-			string userId,
-			string? search,
-			string? sort,
-			string? viewerId)
+		public async Task<UserProfileViewModel> GetProfileAsync(string userId,
+		string? search, string? address,int? categoryId, decimal? minPrice,
+		decimal? maxPrice, string? tags,string? sort, int page, string? viewerId)
 		{
-			// USER
+			const int PageSize = 21;
+
 			var user = await context.Users
 				.AsNoTracking()
 				.FirstOrDefaultAsync(u => u.Id == userId);
@@ -17230,18 +18671,70 @@ namespace MarketZone.Services.Implementations
 			if (user == null)
 				throw new ArgumentException("User not found");
 
-			// ADS
 			var adsQuery = context.Ads
 				.AsNoTracking()
-				.Where(a => a.UserId == userId);
+				.Where(a => a.UserId == userId)
+				.AsQueryable();
 
+			// Search (title + description)
 			if (!string.IsNullOrWhiteSpace(search))
-			{
 				adsQuery = adsQuery.Where(a =>
 					a.Title.Contains(search) ||
 					a.Description.Contains(search));
+
+			// Address scaling (token-based matching)
+			if (!string.IsNullOrWhiteSpace(address))
+			{
+				var tokens = address
+					.ToLower()
+					.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+					.Distinct()
+					.ToList();
+
+				foreach (var t in tokens)
+				{
+					var token = t;
+					adsQuery = adsQuery.Where(a =>
+						a.Address.ToLower().Contains(token));
+				}
 			}
 
+			// Category (selected + descendants)
+			if (categoryId.HasValue)
+			{
+				var allowedCategoryIds = await categoryHierarchyService
+				.GetDescendantCategoryIdsAsync(categoryId.Value);
+
+				adsQuery = adsQuery.Where(a => allowedCategoryIds.Contains(a.CategoryId));
+			}
+
+			// Price
+			if (minPrice.HasValue)
+				adsQuery = adsQuery.Where(a => a.Price >= minPrice.Value);
+
+			if (maxPrice.HasValue)
+				adsQuery = adsQuery.Where(a => a.Price <= maxPrice.Value);
+
+			// Tags (max 10)
+			if (!string.IsNullOrWhiteSpace(tags))
+			{
+				var tagList = tags
+					.Split(',', StringSplitOptions.RemoveEmptyEntries)
+					.Select(t => t.Trim().ToLower())
+					.Where(t => !string.IsNullOrWhiteSpace(t))
+					.Distinct()
+					.Take(10)
+					.ToList();
+
+				if (tagList.Count > 0)
+				{
+					adsQuery = adsQuery.Where(a =>
+						a.AdTags.Any(at =>
+							tagList.Contains(at.Tag.Name.ToLower())));
+				}
+			}
+
+			// Sorting
 			adsQuery = sort switch
 			{
 				"price_asc" => adsQuery.OrderBy(a => a.Price),
@@ -17250,7 +18743,11 @@ namespace MarketZone.Services.Implementations
 				_ => adsQuery.OrderByDescending(a => a.CreatedOn)
 			};
 
+			var totalAds = await adsQuery.CountAsync();
+
 			var ads = await adsQuery
+				.Skip((page - 1) * PageSize)
+				.Take(PageSize)
 				.Select(a => new AdListItemViewModel
 				{
 					Id = a.Id,
@@ -17265,10 +18762,8 @@ namespace MarketZone.Services.Implementations
 				})
 				.ToListAsync();
 
-			// REVIEWS (list)
 			var reviews = await reviewService.GetReviewsForUserAsync(userId);
 
-			// REVIEW STATS (ONE QUERY, SAFE)
 			var reviewStats = await context.Reviews
 				.AsNoTracking()
 				.Where(r => r.ReviewedUserId == userId)
@@ -17280,11 +18775,19 @@ namespace MarketZone.Services.Implementations
 				})
 				.FirstOrDefaultAsync();
 
-			// CAN REVIEW
 			bool canReview = false;
+
 			if (!string.IsNullOrWhiteSpace(viewerId))
-			{
 				canReview = await reviewService.CanReviewAsync(viewerId, userId);
+
+			string? categoryName = null;
+			if (categoryId.HasValue)
+			{
+				categoryName = await context.Categories
+					.AsNoTracking()
+					.Where(c => c.Id == categoryId.Value)
+					.Select(c => c.Name)
+					.FirstOrDefaultAsync();
 			}
 
 			return new UserProfileViewModel
@@ -17293,12 +18796,20 @@ namespace MarketZone.Services.Implementations
 				UserName = user.UserName!,
 				Email = user.Email!,
 				ProfilePictureUrl = user.ProfilePictureUrl,
-
 				CreatedOn = user.CreatedOn,
 				LastOnlineOn = user.LastOnlineOn,
 
 				SearchTerm = search,
+				Address = address,
+				CategoryId = categoryId,
+				CategoryName = categoryName,
+				MinPrice = minPrice,
+				MaxPrice = maxPrice,
+				Tags = tags,
 				Sort = sort,
+
+				CurrentPage = page,
+				TotalPages = (int)Math.Ceiling(totalAds / (double)PageSize),
 
 				Ads = ads,
 				Reviews = reviews,
@@ -17325,7 +18836,21 @@ namespace MarketZone.Services.Interfaces
 		Task<AdCreateModel?> GetEditModelAsync(int adId, string userId);
 		Task<bool> UpdateAsync(AdCreateModel model, string userId);	
         Task<bool> DeleteAsync(int adId, string userId);
-		Task<AdSearchViewModel> SearchAsync(string? search, int page, string? userId);
+		Task<AdSearchViewModel> SearchAsync(string? search,string? address,
+	    int? categoryId,decimal? minPrice,decimal? maxPrice,string? tags,
+	    string? sort,int page,string? userId);
+
+	}
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Services\Interfaces\ICategoryHierarchyService.cs ================
+
+namespace MarketZone.Services.Interfaces
+{
+	public interface ICategoryHierarchyService
+	{
+		Task<List<int>> GetDescendantCategoryIdsAsync(int rootId);
 	}
 }
 
@@ -17383,11 +18908,17 @@ namespace MarketZone.Services.Interfaces
 {
 	public interface IMessageService
 	{
-		Task<ChatViewModel?> GetChatAsync(int adId, string userId);
-		Task SaveMessageAsync(int adId, string senderId, string? content, List<string> imageUrls);
-		Task<InboxViewModel> GetInboxAsync(string userId,string mode);
-	}
+		Task<ChatViewModel?> GetChatAsync(int adId, string currentUserId, string otherUserId);
 
+		Task SaveMessageAsync(
+			int adId,
+			string senderId,
+			string receiverId,
+			string? content,
+			List<string> imageUrls);
+
+		Task<InboxViewModel> GetInboxAsync(string userId, string mode);
+	}
 }
 
 
@@ -17428,11 +18959,10 @@ namespace MarketZone.Services.Interfaces
 {
 	public interface IUserService
 	{
-		Task<UserProfileViewModel> GetProfileAsync(
-			string userId,
-			string? search,
-			string? sort,
-			string? viewerId);
+		Task<UserProfileViewModel> GetProfileAsync(string userId, string? search,
+		string? address,int? categoryId, decimal? minPrice, decimal? maxPrice,
+		string? tags,string? sort, int page, string? viewerId);
+
 	}
 }
 
@@ -17456,7 +18986,7 @@ namespace MarketZone.ViewModels.Ad
 
 		[Required]
 		[MinLength(40)]
-		[MaxLength(5000)]
+		[MaxLength(4000)]
 		public string Description { get; set; } = null!;
 
 		[Required]
@@ -17555,16 +19085,35 @@ namespace MarketZone.ViewModels.Ad
 
 namespace MarketZone.ViewModels.Ad
 {
-	public class AdSearchViewModel
+	public class AdSearchViewModel : SearchFiltersBaseViewModel
 	{
-		public string? SearchTerm { get; set; }
-
-		public int CurrentPage { get; set; } = 1;
-
-		public int TotalPages { get; set; }
 
 		public IEnumerable<AdListItemViewModel> Ads { get; set; }
 			= new List<AdListItemViewModel>();
+	}
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\ViewModels\Ad\SearchFiltersBaseViewModel.cs ================
+
+namespace MarketZone.ViewModels.Ad
+{
+	public abstract class SearchFiltersBaseViewModel
+	{
+		public string? SearchTerm { get; set; }
+		public string? Address { get; set; }
+
+		public int? CategoryId { get; set; }
+		public string? CategoryName { get; set; }
+
+		public decimal? MinPrice { get; set; }
+		public decimal? MaxPrice { get; set; }
+
+		public string? Tags { get; set; }
+		public string? Sort { get; set; }
+
+		public int CurrentPage { get; set; } = 1;
+		public int TotalPages { get; set; }
 	}
 }
 
@@ -17620,9 +19169,16 @@ namespace MarketZone.ViewModels.Message
 	public class ChatViewModel
 	{
 		public int AdId { get; set; }
+
+		// Unique per conversation (Ad + 2 users)
 		public string ChatId { get; set; } = null!;
+
+		// The other participant in THIS conversation
+		public string OtherUserId { get; set; } = null!;
 		public string OtherUserName { get; set; } = null!;
+
 		public string CurrentUserId { get; set; } = null!;
+
 		public List<ChatMessageViewModel> Messages { get; set; } = new();
 
 		// Ad preview (for chat header)
@@ -17639,6 +19195,7 @@ namespace MarketZone.ViewModels.Message
 	public class InboxChatItemViewModel
 	{
 		public int AdId { get; set; }
+		public string OtherUserId { get; set; } = null!;
 		public string AdTitle { get; set; } = null!;
 		public string OtherUserName { get; set; } = null!;
 		public string LastMessage { get; set; } = null!;
@@ -17730,7 +19287,7 @@ using MarketZone.ViewModels.Review;
 
 namespace MarketZone.ViewModels.User
 {
-	public class UserProfileViewModel
+	public class UserProfileViewModel : SearchFiltersBaseViewModel
 	{
 		// User info
 		public string UserId { get; set; } = null!;
@@ -17745,9 +19302,6 @@ namespace MarketZone.ViewModels.User
 		public IEnumerable<AdListItemViewModel> Ads { get; set; }
 			= new List<AdListItemViewModel>();
 
-		// Search & sort
-		public string? SearchTerm { get; set; }
-		public string? Sort { get; set; }
 		//Reviews
 		public IEnumerable<ReviewViewModel> Reviews { get; set; }
 			= new List<ReviewViewModel>();
@@ -17887,7 +19441,7 @@ namespace MarketZone.ViewModels
                     <a asp-controller="Messages"
                        asp-action="Chat"
                        asp-route-adId="@Model.Id"
-                       asp-route-userId="@Model.SellerId"
+                       asp-route-otherUserId="@Model.SellerId"
                        class="btn btn-outline-primary">
                         💬 Message Seller
                     </a>
@@ -18114,12 +19668,8 @@ else
 
 @model MarketZone.ViewModels.Ad.AdSearchViewModel
 
-<form method="get" class="mb-4">
-    <input type="text"
-           name="search"
-           value="@Model.SearchTerm"
-           class="form-control"
-           placeholder="Search by title..." />
+<form method="get" class="mb-3">
+    <partial name="_SearchFilters" model="Model" />
 </form>
 
 @if (!Model.Ads.Any())
@@ -18133,9 +19683,7 @@ else
         {
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-
                     <partial name="_AdCardPartial" model="ad" />
-
                     <div class="card-footer bg-white border-0">
                         <a asp-controller="Ad"
                            asp-action="Details"
@@ -18144,7 +19692,6 @@ else
                             View
                         </a>
                     </div>
-
                 </div>
             </div>
         }
@@ -18156,13 +19703,29 @@ else
             {
                 <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
                     <a class="page-link"
-                       href="?search=@Model.SearchTerm&page=@i">
+                       href="?search=@Model.SearchTerm
+                 &address=@Model.Address
+                 &categoryId=@Model.CategoryId
+                 &minPrice=@Model.MinPrice
+                 &maxPrice=@Model.MaxPrice
+                 &tags=@Model.Tags
+                 &sort=@Model.Sort
+                 &page=@i">
                         @i
                     </a>
+
                 </li>
             }
         </ul>
     </nav>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/filters.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/search-filters.js" asp-append-version="true"></script>
 }
 
 
@@ -18269,9 +19832,11 @@ else
     window.chatConfig = {
         chatId: "@Model.ChatId",
         adId: @Model.AdId,
-        currentUserId: "@Model.CurrentUserId"
+        currentUserId: "@Model.CurrentUserId",
+        otherUserId: "@Model.OtherUserId"
     };
 </script>
+
 
 @section Styles {
     <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />
@@ -18322,7 +19887,8 @@ else
                     <a class="list-group-item list-group-item-action"
                        asp-controller="Messages"
                        asp-action="Chat"
-                       asp-route-adId="@chat.AdId">
+                       asp-route-adId="@chat.AdId"
+                       asp-route-otherUserId="@chat.OtherUserId">
 
                         <div class="fw-bold">@chat.OtherUserName</div>
                         <div class="small text-muted">@chat.AdTitle</div>
@@ -18700,12 +20266,13 @@ else
                                     <li>
                                         <form asp-area="Identity"
                                               asp-page="/Account/Logout"
+                                              asp-route-returnUrl="@Url.Action("Index", "Home")"
                                               method="post">
-                                            <button type="submit"
-                                                    class="dropdown-item text-danger">
+                                            <button type="submit" class="dropdown-item text-danger">
                                                 Logout
                                             </button>
                                         </form>
+
                                     </li>
                                 </ul>
                             </div>
@@ -18865,37 +20432,40 @@ button.accept-policy {
 
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Views\Shared\_SearchFilters.cshtml ================
 
-@model dynamic
+@model MarketZone.ViewModels.Ad.SearchFiltersBaseViewModel
 
 @{
-    // Helper to get properties safely since we are using dynamic
-    string searchTerm = Model.SearchTerm;
-    string address = Model.Address;
+    string searchTerm = Model.SearchTerm ?? "";
+    string address = Model.Address ?? "";
     int? categoryId = Model.CategoryId;
-    string categoryName = Model.GetType().GetProperty("CategoryName")?.GetValue(Model, null) as string;
+    string categoryName = Model.CategoryName ?? "";
     decimal? minPrice = Model.MinPrice;
     decimal? maxPrice = Model.MaxPrice;
-    string tags = Model.Tags;
-    string sort = Model.Sort;
+    string tags = Model.Tags ?? "";
+    string sort = Model.Sort ?? "";
 }
 
 <div class="search-container">
-    <!-- Row 1: Search inputs -->
+    <!-- Row 1: Search + Address + Button -->
     <div class="search-main-row">
 
         <!-- Search Term -->
         <div class="search-input-group">
-            <i class="bi bi-search search-icon"></i>
-            <input type="text" name="search" class="search-input search-term-input"
-                   placeholder="Search" value="@searchTerm"
-                   style="text-align: right; padding-right: 15px;"> <!-- Right aligned placeholder -->
+            <input type="text" name="search"
+                   class="search-input search-term-input"
+                   placeholder="Search"
+                   value="@searchTerm" />
         </div>
 
-        <!-- Address (Autocomplete) -->
-        <div class="location-input-group" style="position: relative;">
-            <i class="bi bi-geo-alt search-icon"></i>
-            <input type="text" id="filter-address-input" name="address" class="search-input search-location-input"
-                   placeholder="Whole country" value="@address" autocomplete="off">
+        <!-- Address -->
+        <div class="location-input-group" style="position:relative;">
+            <input type="text"
+                   id="filter-address-input"
+                   name="address"
+                   class="search-input search-location-input"
+                   placeholder="Whole country"
+                   value="@address"
+                   autocomplete="off" />
             <div id="filter-address-suggestions" class="address-suggestions"></div>
         </div>
 
@@ -18907,7 +20477,7 @@ button.accept-policy {
     <!-- Row 2: Filters -->
     <div class="filters-row">
 
-        <!-- Category Picker (Hierarchical) -->
+        <!-- Category Picker -->
         <div class="filter-item" style="position: relative; cursor: pointer;" id="category-picker-container">
             <label class="filter-label">Category</label>
 
@@ -18915,31 +20485,34 @@ button.accept-policy {
                 <span id="selected-category-name" class="text-truncate" style="max-width: 130px; font-size: 14px; font-weight: 500;">
                     @(string.IsNullOrEmpty(categoryName) ? "All Categories" : categoryName)
                 </span>
-                <i class="bi bi-chevron-down small text-muted"></i>
+                <span class="small text-muted">▼</span>
             </div>
 
-            <!-- Hidden Input -->
             <input type="hidden" name="categoryId" id="filter-category-id" value="@categoryId" />
 
-            <!-- Dropdown Menu -->
             <div id="category-dropdown-menu" class="category-dropdown-menu">
                 <div class="p-2 border-bottom d-flex align-items-center bg-light">
                     <button type="button" id="cat-back-btn" class="btn btn-sm btn-link text-decoration-none p-0 me-2" style="display:none;">
-                        <i class="bi bi-arrow-left"></i> Back
+                        ← Back
                     </button>
                     <span id="cat-breadcrumb" class="small text-muted text-truncate">All Categories</span>
                 </div>
+
                 <ul id="filter-category-list" class="list-unstyled mb-0">
-                    <!-- Loaded via JS -->
-                    <li class="p-3 text-center text-muted"><span class="spinner-border spinner-border-sm"></span> Loading...</li>
+                    <li class="p-3 text-center text-muted">
+                        <span class="spinner-border spinner-border-sm"></span> Loading...
+                    </li>
                 </ul>
+
                 <div class="p-2 border-top text-center">
-                    <button type="button" class="btn btn-sm btn-outline-danger w-100" id="clear-category-btn">Clear Category</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100" id="clear-category-btn">
+                        Clear Category
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Price Range Filter -->
+        <!-- Price -->
         <div class="filter-item">
             <label class="filter-label">Price</label>
             <div class="price-range-container">
@@ -18949,18 +20522,27 @@ button.accept-policy {
             </div>
         </div>
 
-        <!-- Tags Filter -->
+        <!-- Tags -->
         <div class="filter-item flex-grow-1">
             <label class="filter-label">Tags (comma separated)</label>
             <input type="text" name="tags" class="filter-control"
                    placeholder="e.g. urgent, new" value="@tags" />
         </div>
 
-        <!-- Sort Filter -->
+        <!-- Sort -->
         <div class="filter-item">
             <label class="filter-label">Sort By</label>
+
             <select name="sort" class="filter-control">
-                <option value="">Newest</option>
+                @if (string.IsNullOrEmpty(sort))
+                {
+                    <option value="" selected>Newest</option>
+                }
+                else
+                {
+                    <option value="">Newest</option>
+                }
+
                 @if (sort == "oldest")
                 {
                     <option value="oldest" selected>Oldest</option>
@@ -18969,6 +20551,7 @@ button.accept-policy {
                 {
                     <option value="oldest">Oldest</option>
                 }
+
                 @if (sort == "price_asc")
                 {
                     <option value="price_asc" selected>Price Lowest</option>
@@ -18977,6 +20560,7 @@ button.accept-policy {
                 {
                     <option value="price_asc">Price Lowest</option>
                 }
+
                 @if (sort == "price_desc")
                 {
                     <option value="price_desc" selected>Price Highest</option>
@@ -18987,7 +20571,6 @@ button.accept-policy {
                 }
             </select>
         </div>
-
     </div>
 </div>
 
@@ -19043,55 +20626,9 @@ button.accept-policy {
         </div>
     </div>
 
-    <!-- SEARCH + SORT -->
-    <form method="get" class="row mb-4" novalidate>
+    <form method="get" class="mb-3" novalidate>
         <input type="hidden" name="id" value="@Model.UserId" />
-
-        <div class="col-md-6 mb-2">
-            <input type="text"
-                   name="search"
-                   value="@Model.SearchTerm"
-                   class="form-control"
-                   placeholder="Search ads..." />
-        </div>
-
-        <div class="col-md-4 mb-2">
-            <select name="sort" class="form-select">
-                <option value="">Newest</option>
-
-                @if (Model.Sort == "oldest")
-                {
-                    <option value="oldest" selected>Oldest</option>
-                }
-                else
-                {
-                    <option value="oldest">Oldest</option>
-                }
-
-                @if (Model.Sort == "price_asc")
-                {
-                    <option value="price_asc" selected>Price ↑</option>
-                }
-                else
-                {
-                    <option value="price_asc">Price ↑</option>
-                }
-
-                @if (Model.Sort == "price_desc")
-                {
-                    <option value="price_desc" selected>Price ↓</option>
-                }
-                else
-                {
-                    <option value="price_desc">Price ↓</option>
-                }
-            </select>
-
-        </div>
-
-        <div class="col-md-2 mb-2">
-            <button type="submit" class="btn btn-primary w-100">Apply</button>
-        </div>
+        <partial name="_SearchFilters" model="Model" />
     </form>
 
     <!-- ADS -->
@@ -19120,7 +20657,30 @@ button.accept-policy {
             }
         </div>
     }
-
+    @if (Model.TotalPages > 1)
+    {
+        <nav>
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link"
+                           href="?id=@Model.UserId
+                                      &search=@Model.SearchTerm
+                                      &address=@Model.Address
+                                      &categoryId=@Model.CategoryId
+                                      &minPrice=@Model.MinPrice
+                                      &maxPrice=@Model.MaxPrice
+                                      &tags=@Model.Tags
+                                      &sort=@Model.Sort
+                                      &page=@i">
+                            @i
+                        </a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
     <!-- REVIEWS -->
     <div class="card mt-4" id="reviews">
         <div class="card-body">
@@ -19233,6 +20793,13 @@ button.accept-policy {
     </div>
 
 </div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/filters.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/search-filters.js" asp-append-version="true"></script>
+}
 
 
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Views\_ViewImports.cshtml ================
@@ -19780,7 +21347,6 @@ button.accept-policy {
 
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\css\filters.css ================
 
-/* Search & Filter Bar Container */
 .search-container {
     background-color: #f2f4f5;
     padding: 15px;
@@ -19788,15 +21354,13 @@ button.accept-policy {
     margin-bottom: 20px;
 }
 
-/* Row 1: Search Inputs + Button */
 .search-main-row {
     display: flex;
-    gap: 0; /* No gap between inputs to make them look attached */
+    gap: 0;
     margin-bottom: 10px;
-    flex-wrap: wrap; /* Allow wrapping on mobile */
+    flex-wrap: wrap;
 }
 
-/* Search Input Wrapper */
 .search-input-group {
     flex-grow: 1;
     position: relative;
@@ -19804,7 +21368,6 @@ button.accept-policy {
     align-items: center;
 }
 
-/* Location Input Wrapper */
 .location-input-group {
     width: 300px;
     position: relative;
@@ -19812,39 +21375,27 @@ button.accept-policy {
     align-items: center;
 }
 
-/* Icons inside inputs */
-.search-icon {
-    position: absolute;
-    left: 15px;
-    color: #666;
-    z-index: 5;
-}
-
-/* The actual input fields */
 .search-input {
     width: 100%;
-    padding: 12px 12px 12px 40px; /* Space for icon */
+    padding: 12px 12px 12px 12px;
     border: 1px solid #ced4da;
     height: 50px;
     font-size: 16px;
     outline: none;
 }
 
-/* Specific styling for the first input (Search term) */
 .search-term-input {
     border-top-left-radius: 4px;
     border-bottom-left-radius: 4px;
-    border-right: none; /* Merge with next input */
+    border-right: none;
 }
 
-/* Specific styling for the second input (Location) */
 .search-location-input {
-    border-radius: 0; /* Square corners */
+    border-radius: 0;
 }
 
-/* The Search Button */
 .btn-search {
-    background-color: #002f34; /* OLX Dark color */
+    background-color: #002f34;
     color: white;
     font-weight: bold;
     padding: 0 40px;
@@ -19852,8 +21403,6 @@ button.accept-policy {
     border: none;
     border-top-right-radius: 4px;
     border-bottom-right-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
     cursor: pointer;
 }
 
@@ -19861,7 +21410,6 @@ button.accept-policy {
         background-color: #001e21;
     }
 
-/* Row 2: Filters */
 .filters-row {
     display: flex;
     gap: 15px;
@@ -19899,7 +21447,6 @@ button.accept-policy {
     margin-top: -2px;
 }
 
-/* Price Range Specifics */
 .price-range-container {
     display: flex;
     align-items: center;
@@ -19915,31 +21462,13 @@ button.accept-policy {
     padding: 0;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-    .search-main-row {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .search-input-group, .location-input-group, .btn-search {
-        width: 100%;
-        border-radius: 4px;
-    }
-
-    .search-term-input, .search-location-input {
-        border-right: 1px solid #ced4da;
-        border-radius: 4px;
-    }
-}
-
 /* Category Dropdown */
 .category-dropdown-menu {
-    display: none; /* Hidden by default */
+    display: none;
     position: absolute;
     top: 100%;
     left: 0;
-    width: 250px;
+    width: 260px;
     background: white;
     border: 1px solid #ced4da;
     border-radius: 4px;
@@ -19963,14 +21492,8 @@ button.accept-policy {
 
     #filter-category-list li:hover {
         background-color: #f8f9fa;
-        color: #002f34;
     }
 
-    #filter-category-list li:last-child {
-        border-bottom: none;
-    }
-
-/* Address Suggestions for Filter */
 .address-suggestions {
     position: absolute;
     top: 100%;
@@ -19996,14 +21519,28 @@ button.accept-policy {
     cursor: pointer;
     border-bottom: 1px solid #eee;
     font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
     .suggestion-item:hover {
         background-color: #f8f9fa;
     }
+
+@media (max-width: 768px) {
+    .search-main-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .search-input-group, .location-input-group, .btn-search {
+        width: 100%;
+        border-radius: 4px;
+    }
+
+    .search-term-input, .search-location-input {
+        border-right: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+}
 
 
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\css\site.css ================
@@ -20586,7 +22123,7 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", () => {
     if (!window.chatConfig) return;
 
-    const { chatId, adId, currentUserId } = window.chatConfig;
+    const { chatId, adId, currentUserId, otherUserId } = window.chatConfig;
 
     const chatBox = document.getElementById("chat-box");
 
@@ -20611,10 +22148,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const r = new FileReader();
             r.onload = e => {
                 imagePreview.innerHTML += `
-                        <div class="preview-image-wrapper">
-                            <img src="${e.target.result}" />
-                            <span class="remove-image" onclick="removeImage(${i})">✕</span>
-                        </div>`;
+                    <div class="preview-image-wrapper">
+                        <img src="${e.target.result}" />
+                        <span class="remove-image" onclick="removeImage(${i})">✕</span>
+                    </div>`;
             };
             r.readAsDataURL(file);
         });
@@ -20645,30 +22182,25 @@ document.addEventListener("DOMContentLoaded", () => {
         div.className = `chat-message ${mine ? "mine" : "theirs"}`;
 
         div.innerHTML = `
-                ${!mine ? `<img src="/images/default-avatar.png" class="chat-avatar" />` : ""}
-                <div class="chat-bubble">
-                    ${imageUrls.length ? `
-                        <div class="chat-images">
-                            ${imageUrls.map((i, x) =>
-            `<img src="${i}" class="chat-image"
-                                 onclick='openImageGallery(${JSON.stringify(imageUrls)}, ${x})' />`
+            ${!mine ? `<img src="/images/default-avatar.png" class="chat-avatar" />` : ""}
+            <div class="chat-bubble">
+                ${imageUrls.length ? `
+                    <div class="chat-images">
+                        ${imageUrls.map((url, idx) =>
+            `<img src="${url}" class="chat-image"
+                                  onclick='openImageGallery(${JSON.stringify(imageUrls)}, ${idx})' />`
         ).join("")}
-                        </div>` : ""}
-                    ${content ? `<div class="chat-text">${content}</div>` : ""}
-                    <div class="chat-time">${new Date(sentOn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </div>`;
+                    </div>` : ""}
+                ${content ? `<div class="chat-text">${content}</div>` : ""}
+                <div class="chat-time">${new Date(sentOn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>`;
 
         chatBox.appendChild(div);
         chatBox.scrollTop = chatBox.scrollHeight;
     });
 
     sendBtn.addEventListener("click", async () => {
- 
-        if (!isConnected) {
-            console.warn("SignalR not connected yet");
-            return;
-        }
-
+        if (!isConnected) return;
         if (!msgInput.value && !selectedImages.length) return;
 
         try {
@@ -20693,6 +22225,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 "SendMessage",
                 adId,
                 chatId,
+                otherUserId,   
                 msgInput.value,
                 urls
             );
@@ -20707,35 +22240,44 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    /* IMAGE VIEWER */
-    let gallery = [], index = 0;
+    /* image viewer */
+    let gallery = [];
+    let index = 0;
 
-    function openImageGallery(images, i) {
-        gallery = images;
-        index = i;
-        document.getElementById("imageViewer").classList.remove("hidden");
+    window.openImageGallery = function (images, i) {
+        gallery = images || [];
+        index = i || 0;
+
+        const viewer = document.getElementById("imageViewer");
+        if (!viewer) return;
+
+        viewer.classList.remove("hidden");
         updateViewer();
-    }
+    };
 
-    function closeViewer() {
-        document.getElementById("imageViewer").classList.add("hidden");
-    }
+    window.closeViewer = function () {
+        document.getElementById("imageViewer")?.classList.add("hidden");
+    };
 
     function updateViewer() {
-        document.getElementById("viewerImage").src = gallery[index];
-        document.getElementById("imageCounter").textContent = `${index + 1} / ${gallery.length}`;
+        const img = document.getElementById("viewerImage");
+        const counter = document.getElementById("imageCounter");
+        if (!img || !counter || !gallery.length) return;
+
+        img.src = gallery[index];
+        counter.textContent = `${index + 1} / ${gallery.length}`;
     }
 
-    function prevImage() {
+    window.prevImage = function () {
         if (index > 0) { index--; updateViewer(); }
-    }
+    };
 
-    function nextImage() {
+    window.nextImage = function () {
         if (index < gallery.length - 1) { index++; updateViewer(); }
-    }
+    };
 
-    /* DOWNLOAD (ONLY ADDITION) */
-    document.getElementById("downloadBtn").addEventListener("click", () => {
+    // Download current image
+    document.getElementById("downloadBtn")?.addEventListener("click", () => {
         if (!gallery.length) return;
 
         const url = gallery[index];
@@ -20758,7 +22300,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initCategoryPicker();
 });
 
-/* ─── Address Autocomplete ─── */
+/* ─── Address Autocomplete (Nominatim) ─── */
 function initAddressPicker() {
     const input = document.getElementById("filter-address-input");
     const suggestions = document.getElementById("filter-address-suggestions");
@@ -20767,7 +22309,6 @@ function initAddressPicker() {
 
     let debounceTimer;
 
-    // Hide suggestions when clicking outside
     document.addEventListener("click", (e) => {
         if (!input.contains(e.target) && !suggestions.contains(e.target)) {
             suggestions.classList.remove("show");
@@ -20784,13 +22325,13 @@ function initAddressPicker() {
         }
 
         debounceTimer = setTimeout(() => {
-            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5`, {
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`, {
                 headers: { "Accept-Language": "en" }
             })
                 .then(res => res.json())
                 .then(data => {
                     suggestions.innerHTML = "";
-                    if (data.length === 0) {
+                    if (!data.length) {
                         suggestions.classList.remove("show");
                         return;
                     }
@@ -20798,17 +22339,18 @@ function initAddressPicker() {
                     data.forEach(item => {
                         const div = document.createElement("div");
                         div.className = "suggestion-item";
-                        // Just take the first two parts for cleaner display
-                        const displayName = item.display_name.split(', ').slice(0, 3).join(', ');
 
-                        div.innerHTML = `<i class="bi bi-geo-alt text-muted"></i> <span>${displayName}</span>`;
+                        const displayName = item.display_name; // keep full
+                        div.textContent = displayName;
 
                         div.addEventListener("click", () => {
-                            input.value = displayName; // Set text only
+                            input.value = displayName;
                             suggestions.classList.remove("show");
                         });
+
                         suggestions.appendChild(div);
                     });
+
                     suggestions.classList.add("show");
                 })
                 .catch(() => suggestions.classList.remove("show"));
@@ -20827,56 +22369,54 @@ function initCategoryPicker() {
     const breadcrumb = document.getElementById("cat-breadcrumb");
     const clearBtn = document.getElementById("clear-category-btn");
 
-    if (!container || !dropdown) return;
+    if (!container || !dropdown || !list || !input || !display || !backBtn || !breadcrumb || !clearBtn) return;
 
     let parentStack = [];
     let breadcrumbStack = ["All Categories"];
     let currentParentId = null;
 
-    // Toggle Dropdown
     container.addEventListener("click", (e) => {
-        // Don't close if clicking inside the dropdown logic
         if (dropdown.contains(e.target)) return;
 
         const isVisible = dropdown.classList.contains("show");
-        closeAllDropdowns(); // Helper if you have multiple
-        if (!isVisible) {
-            dropdown.classList.add("show");
-            if (list.children.length <= 1) {
-                loadCategories(null); // Load initial list if empty
-            }
+        if (isVisible) {
+            dropdown.classList.remove("show");
+            return;
+        }
+
+        dropdown.classList.add("show");
+
+        // Load initial
+        if (list.children.length <= 1) {
+            loadCategories(null);
         }
     });
 
-    // Close on outside click
     document.addEventListener("click", (e) => {
         if (!container.contains(e.target)) {
             dropdown.classList.remove("show");
         }
     });
 
-    // Clear Selection
     clearBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         input.value = "";
         display.textContent = "All Categories";
         dropdown.classList.remove("show");
-        // Reset navigation
+
         parentStack = [];
         breadcrumbStack = ["All Categories"];
         loadCategories(null);
     });
 
-    // Back Button
     backBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        currentParentId = parentStack.pop();
+        currentParentId = parentStack.pop() ?? null;
         breadcrumbStack.pop();
         loadCategories(currentParentId);
     });
 
     function loadCategories(parentId) {
-        // Update UI state
         backBtn.style.display = parentStack.length > 0 ? "inline-block" : "none";
         breadcrumb.textContent = breadcrumbStack.join(" > ");
 
@@ -20893,7 +22433,7 @@ function initCategoryPicker() {
                     li.innerHTML = `<span>${c.name}</span>`;
 
                     if (c.hasChildren) {
-                        li.innerHTML += `<i class="bi bi-chevron-right text-muted"></i>`;
+                        li.innerHTML += `<span class="text-muted">›</span>`;
                         li.addEventListener("click", (e) => {
                             e.stopPropagation();
                             parentStack.push(currentParentId);
@@ -20901,7 +22441,6 @@ function initCategoryPicker() {
                             loadCategories(c.id);
                         });
                     } else {
-                        // Leaf node - Select it
                         li.addEventListener("click", (e) => {
                             e.stopPropagation();
                             input.value = c.id;
@@ -20909,13 +22448,10 @@ function initCategoryPicker() {
                             dropdown.classList.remove("show");
                         });
                     }
+
                     list.appendChild(li);
                 });
             });
-    }
-
-    function closeAllDropdowns() {
-        document.querySelectorAll('.category-dropdown-menu').forEach(el => el.classList.remove('show'));
     }
 }
 
@@ -20936,10 +22472,12 @@ using MarketZone.Infrastructure.SignalR;
 using MarketZone.Middlewares;
 using MarketZone.Services.Implementations;
 using MarketZone.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20956,6 +22494,33 @@ builder.Services
 	})
 	.AddRoles<IdentityRole>()
 	.AddEntityFrameworkStores<ApplicationDbContext>();
+
+builder.Services.AddAuthentication()
+	.AddGoogle(options =>
+	{
+		options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+		options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+
+		options.Events = new OAuthEvents
+		{
+			OnRedirectToAuthorizationEndpoint = context =>
+			{
+				// Remove any existing "prompt" to avoid duplicates
+				var uri = new Uri(context.RedirectUri);
+				var query = HttpUtility.ParseQueryString(uri.Query);
+
+				query.Remove("prompt");
+				query.Add("prompt", "select_account");
+
+				var newUrl =
+					$"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}?{query}";
+
+				context.Response.Redirect(newUrl);
+				return Task.CompletedTask;
+			}
+		};
+	});
+
 
 // SignalR (ONLY ONCE)
 builder.Services.AddSignalR(options =>
@@ -20979,6 +22544,7 @@ builder.Services.AddRazorPages();
 // Application services
 builder.Services.AddScoped<IAdService, AdService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryHierarchyService, CategoryHierarchyService>();
 builder.Services.AddScoped<IFavoriteService, FavoriteService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
@@ -21014,4 +22580,4 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-app.Run();
+	app.Run();

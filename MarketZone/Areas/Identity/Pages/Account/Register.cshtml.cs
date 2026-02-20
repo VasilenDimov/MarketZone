@@ -78,6 +78,16 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return Page();
 			}
 
+			// ✅ Email already exists handling (NO redirect, same message always)
+			var existingUser = await _userManager.FindByEmailAsync(Input.Email);
+			if (existingUser != null)
+			{
+				// Put the message on the Email field (best UX) + also in summary if you want
+				ModelState.AddModelError("Input.Email", "An account with this email already exists.");
+				// ModelState.AddModelError(string.Empty, "An account with this email already exists."); // optional
+				return Page();
+			}
+
 			var user = CreateUser();
 			user.CreatedOn = DateTime.UtcNow;
 
@@ -90,7 +100,15 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			{
 				foreach (var error in result.Errors)
 				{
-					ModelState.AddModelError(string.Empty, error.Description);
+					// ✅ If a duplicate happens due to race condition, show your exact message
+					if (error.Code == "DuplicateEmail" || error.Code == "DuplicateUserName")
+					{
+						ModelState.AddModelError("Input.Email", "An account with this email already exists.");
+					}
+					else
+					{
+						ModelState.AddModelError(string.Empty, error.Description);
+					}
 				}
 
 				return Page();
@@ -100,7 +118,7 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 			// 🔐 Generate 6-digit verification code
 			var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000)
-			.ToString();
+				.ToString();
 
 			_context.EmailVerificationCodes.Add(new EmailVerificationCode
 			{
