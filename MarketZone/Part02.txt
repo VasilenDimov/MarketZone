@@ -1,0 +1,2000 @@
+﻿	        }
+     	    public class InputModel
+	        {
+	        public string Code { get; set; } = string.Empty;
+		    public string Email { get; set; } = string.Empty;
+	        }
+        }
+
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\_ViewImports.cshtml ================
+
+    @using MarketZone.Areas.Identity.Pages.Account
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\_ValidationScriptsPartial.cshtml ================
+
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/dist/jquery.validate.unobtrusive.min.js"></script>
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\_ViewImports.cshtml ================
+
+    @using Microsoft.AspNetCore.Identity
+    @using MarketZone.Areas.Identity
+    @using MarketZone.Areas.Identity.Pages
+    @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+    @using MarketZone.Data.Models
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\_ViewStart.cshtml ================
+
+    @{
+        Layout = "/Views/Shared/_Layout.cshtml";
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Controllers\AdController.cs ================
+
+    using System.Security.Claims;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
+    using MarketZone.Services.Interfaces;
+    using MarketZone.ViewModels.Ad;
+
+    namespace MarketZone.Controllers
+    {
+	    [Authorize]
+	    public class AdController : Controller
+	    {
+		    private readonly IAdService adService;
+		    private readonly ICategoryService categoryService;
+
+		    public AdController(
+			    IAdService adService,
+			    ICategoryService categoryService)
+		    {
+			    this.adService = adService;
+			    this.categoryService = categoryService;
+		    }
+
+		    // GET: /Ad/Create
+		    [HttpGet]
+		    public async Task<IActionResult> Create()
+		    {
+			    var model = new AdCreateModel
+			    {
+				    Categories = await categoryService.GetAllAsync()
+			    };
+
+			    return View(model);
+		    }
+		    [AllowAnonymous]
+		    [HttpGet]
+		    public async Task<IActionResult> Details(int id)
+		    {
+			    string? userId = User.Identity!.IsAuthenticated
+				    ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+				    : null;
+
+			    var model = await adService.GetDetailsAsync(id, userId);
+
+			    if (model == null)
+				    return NotFound();
+
+			    return View(model);
+		    }
+
+
+		    [HttpGet]
+		    public async Task<IActionResult> MyAds()
+		    {
+			    string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    var ads = await adService.GetMyAdsAsync(userId);
+
+			    return View(ads);
+		    }
+		    [HttpGet]
+		    public async Task<IActionResult> Edit(int id)
+		    {
+			    string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    var model = await adService.GetEditModelAsync(id, userId);
+
+			    if (model == null)
+			    {
+				    return NotFound();
+			    }
+
+			    return View(model);
+		    }
+		    // GET: /Ad/GetChildren
+		    [HttpGet]
+		    [AllowAnonymous]
+		    public async Task<IActionResult> GetChildren(int? parentId)
+		    {
+			    var categories = await categoryService.GetChildrenAsync(parentId);
+			    return Json(categories);
+		    }
+
+		    // POST: /Ad/Create
+		    [HttpPost]
+		    [ValidateAntiForgeryToken]
+		    public async Task<IActionResult> Create(AdCreateModel model)
+		    {
+			    if (!ModelState.IsValid)
+			    {
+				    model.Categories = await categoryService.GetAllAsync();
+				    return View(model);
+			    }
+
+			    string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    int adId = await adService.CreateAsync(model, userId);
+
+			    return RedirectToAction("Details", new { id = adId });
+		    }
+		    [HttpPost]
+		    [ValidateAntiForgeryToken]
+		    public async Task<IActionResult> Edit(AdCreateModel model)
+		    {
+			    if (!ModelState.IsValid)
+			    {
+				    model.Categories = await categoryService.GetAllAsync();
+				    return View(model);
+			    }
+
+			    string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    bool updated = await adService.UpdateAsync(model, userId);
+
+			    if (!updated)
+				    return Forbid();
+
+			    return RedirectToAction("Details", new { id = model.Id });
+		    }
+		    [HttpPost]
+		    [ValidateAntiForgeryToken]
+		    public async Task<IActionResult> Delete(int id)
+		    {
+			    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+			    var success = await adService.DeleteAsync(id, userId!);
+
+			    if (!success)
+				    return BadRequest();
+
+			    return RedirectToAction(nameof(MyAds));
+		    }
+
+	    }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Controllers\FavoritesController.cs ================
+
+    using MarketZone.Services.Interfaces;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
+    using System.Security.Claims;
+
+    namespace MarketZone.Controllers
+    {
+	    [Authorize]
+	    public class FavoritesController : Controller
+	    {
+		    private readonly IFavoriteService favoriteService;
+
+		    public FavoritesController(IFavoriteService favoriteService)
+		    {
+			    this.favoriteService = favoriteService;
+		    }
+
+		    [HttpPost]
+		    [ValidateAntiForgeryToken]
+		    public async Task<IActionResult> Toggle([FromBody] int adId)
+		    {
+			    if (adId <= 0)
+				    return BadRequest();
+
+			    string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    bool isFavorite = await favoriteService.ToggleAsync(adId, userId);
+
+			    return Ok(new { isFavorite });
+		    }
+
+		    [HttpGet]
+		    public async Task<IActionResult> MyFavorites()
+		    {
+			    string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+			    var ads = await favoriteService.GetFavoritesAsync(userId);
+			    return View(ads);
+		    }
+	    }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Controllers\HomeController.cs ================
+
+    using MarketZone.Services.Interfaces;
+    using MarketZone.ViewModels;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
+    using System.Diagnostics;
+    using System.Security.Claims;
+
+    namespace MarketZone.Controllers
+    {
+	    public class HomeController : Controller
+	    {
+		    private readonly IAdService adService;
+
+		    public HomeController(IAdService adService)
+		    {
+			    this.adService = adService;
+		    }
+
+		    [HttpGet]
+		    public async Task<IActionResult> Index(string? search,string? address,
+	        int? categoryId,decimal? minPrice,decimal? maxPrice,string? tags,
+	        string? sort,int page = 1)
+		    {
+			    string? userId = User.Identity?.IsAuthenticated == true
+				    ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+				    : null;
+
+			    var model = await adService.SearchAsync(search,address,categoryId,
+			    minPrice,maxPrice,tags,sort,page,userId
+			    );
+
+			    return View(model);
+		    }
+
+
+		    [AllowAnonymous]
+		    public IActionResult Error(string? message)
+		    {
+			    var model = new ErrorViewModel
+			    {
+				    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier,
+				    Message = message
+			    };
+			    return View(model);
+		    }
+	    }
+
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Controllers\MessagesController.cs ================
+
+    using MarketZone.Services.Interfaces;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
+    using System.Security.Claims;
+
+    namespace MarketZone.Controllers
+    {
+	    [Authorize]
+	    public class MessagesController : Controller
+	    {
+		    private readonly IMessageService messageService;
+		    private readonly IImageService imageService;
+
+		    public MessagesController(IMessageService messageService,IImageService imageService)
+		    {
+			    this.messageService = messageService;
+			    this.imageService = imageService;
+		    }
+
+		    public async Task<IActionResult> Chat(int adId, string otherUserId)
+		    {
+			    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    var chat = await messageService.GetChatAsync(adId, currentUserId, otherUserId);
+			    if (chat == null)
+				    return NotFound();
+
+			    return View(chat);
+		    }
+
+		    public async Task<IActionResult> Inbox(string mode = "buying")
+		    {
+			    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    var model = await messageService.GetInboxAsync(userId, mode);
+
+			    return View(model);
+		    }
+		    [HttpPost]
+		    public async Task<IActionResult> UploadChatImage(IFormFile image)
+		    {
+			    var imageUrl = await imageService.UploadChatImageAsync(image);
+			    return Json(new { imageUrl });
+		    }
+	    }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Controllers\ReviewsController.cs ================
+
+    using MarketZone.Services.Interfaces;
+    using MarketZone.ViewModels.Review;
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Mvc;
+    using System.Security.Claims;
+
+    namespace MarketZone.Controllers
+    {
+	    [Authorize]
+	    public class ReviewController : Controller
+	    {
+		    private readonly IReviewService reviewService;
+		    private readonly IUserService userService;
+
+		    public ReviewController(
+			    IReviewService reviewService,
+			    IUserService userService)
+		    {
+			    this.reviewService = reviewService;
+			    this.userService = userService;
+		    }
+
+		    // EDIT (GET)
+		    [HttpGet]
+		    public async Task<IActionResult> Edit(int id)
+		    {
+			    var model = await reviewService.GetForEditAsync(id);
+
+			    if (model == null)
+				    return NotFound();
+
+			    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    if (!await reviewService.CanUserEditAsync(id, userId))
+				    return Forbid();
+
+			    return View(model);
+		    }
+
+		    // EDIT (POST)
+		    [HttpPost]
+		    [ValidateAntiForgeryToken]
+		    public async Task<IActionResult> Edit(ReviewEditViewModel model)
+		    {
+			    if (!ModelState.IsValid)
+				    return View(model);
+
+			    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    bool updated = await reviewService.UpdateAsync(model, userId);
+
+			    if (!updated)
+				    return Forbid();
+
+			    return RedirectToAction(
+				    "Profile",
+				    "User",
+				    new { id = model.ReviewedUserId });
+		    }
+
+		    // DELETE (POST)
+		    [HttpPost]
+		    [ValidateAntiForgeryToken]
+		    public async Task<IActionResult> Delete(int id, string reviewedUserId)
+		    {
+			    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+			    bool deleted = await reviewService.DeleteAsync(id, userId);
+
+			    if (!deleted)
+				    return Forbid();
+
+			    return RedirectToAction(
+				    "Profile",
+				    "User",
+				    new { id = reviewedUserId });
+		    }
+
+		    // CREATE (POST)
+		    [HttpPost]
+		    [ValidateAntiForgeryToken]
+		    public async Task<IActionResult> Create(ReviewCreateViewModel model)
+		    {
+			    var viewerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+			    if (!ModelState.IsValid)
+			    {
+				    return View(
+					    "~/Views/User/Profile.cshtml",
+					    await userService.GetProfileAsync(
+						    userId: model.ReviewedUserId,
+						    search: null,
+						    address: null,
+						    categoryId: null,
+						    minPrice: null,
+						    maxPrice: null,
+						    tags: null,
+						    sort: null,
+						    page: 1,
+						    viewerId: viewerId
+					    ));
+			    }
+
+			    var reviewerId = viewerId!;
+
+			    await reviewService.AddReviewAsync(reviewerId, model);
+
+			    return RedirectToAction(
+				    "Profile",
+				    "User",
+				    new { id = model.ReviewedUserId });
+		    }
+	    }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Controllers\UserController.cs ================
+
+    using MarketZone.Services.Interfaces;
+    using Microsoft.AspNetCore.Mvc;
+    using System.Security.Claims;
+
+    namespace MarketZone.Controllers
+    {
+	    public class UserController : Controller
+	    {
+		    private readonly IUserService userService;
+
+		    public UserController(IUserService userService)
+		    {
+			    this.userService = userService;
+		    }
+
+		    [HttpGet]
+		    public async Task<IActionResult> Profile(string id, string? search,
+		    string? address,int? categoryId, decimal? minPrice, decimal? maxPrice,
+		    string? tags, string? sort,int page = 1)
+		    {
+			    var viewerId = User.Identity?.IsAuthenticated == true
+				    ? User.FindFirstValue(ClaimTypes.NameIdentifier)
+				    : null;
+
+			    var model = await userService.GetProfileAsync(
+				    id, search, address, categoryId, minPrice, maxPrice, tags, sort,page,
+				    viewerId);
+
+			    return View(model);
+		    }
+
+	    }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Enums\Currency.cs ================
+
+    namespace MarketZone.Data.Enums
+    {
+	    public enum Currency
+	    {
+		    EUR = 1,
+		    USD = 2
+	    }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Enums\ItemCondition.cs ================
+
+    namespace MarketZone.Models.Enums
+    {
+	    public enum ItemCondition
+	    {
+		    New = 1,
+		    Used = 2
+	    }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\00000000000000_CreateIdentitySchema.cs ================
+
+    using System;
+    using Microsoft.EntityFrameworkCore.Metadata;
+    using Microsoft.EntityFrameworkCore.Migrations;
+
+    namespace MarketZone.Data.Migrations
+    {
+        public partial class CreateIdentitySchema : Migration
+        {
+            protected override void Up(MigrationBuilder migrationBuilder)
+            {
+                migrationBuilder.CreateTable(
+                    name: "AspNetRoles",
+                    columns: table => new
+                    {
+                        Id = table.Column<string>(nullable: false),
+                        Name = table.Column<string>(maxLength: 256, nullable: true),
+                        NormalizedName = table.Column<string>(maxLength: 256, nullable: true),
+                        ConcurrencyStamp = table.Column<string>(nullable: true)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AspNetRoles", x => x.Id);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "AspNetUsers",
+                    columns: table => new
+                    {
+                        Id = table.Column<string>(nullable: false),
+                        UserName = table.Column<string>(maxLength: 256, nullable: true),
+                        NormalizedUserName = table.Column<string>(maxLength: 256, nullable: true),
+                        Email = table.Column<string>(maxLength: 256, nullable: true),
+                        NormalizedEmail = table.Column<string>(maxLength: 256, nullable: true),
+                        EmailConfirmed = table.Column<bool>(nullable: false),
+                        PasswordHash = table.Column<string>(nullable: true),
+                        SecurityStamp = table.Column<string>(nullable: true),
+                        ConcurrencyStamp = table.Column<string>(nullable: true),
+                        PhoneNumber = table.Column<string>(nullable: true),
+                        PhoneNumberConfirmed = table.Column<bool>(nullable: false),
+                        TwoFactorEnabled = table.Column<bool>(nullable: false),
+                        LockoutEnd = table.Column<DateTimeOffset>(nullable: true),
+                        LockoutEnabled = table.Column<bool>(nullable: false),
+                        AccessFailedCount = table.Column<int>(nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "AspNetRoleClaims",
+                    columns: table => new
+                    {
+                        Id = table.Column<int>(nullable: false)
+                            .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        RoleId = table.Column<string>(nullable: false),
+                        ClaimType = table.Column<string>(nullable: true),
+                        ClaimValue = table.Column<string>(nullable: true)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AspNetRoleClaims", x => x.Id);
+                        table.ForeignKey(
+                            name: "FK_AspNetRoleClaims_AspNetRoles_RoleId",
+                            column: x => x.RoleId,
+                            principalTable: "AspNetRoles",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "AspNetUserClaims",
+                    columns: table => new
+                    {
+                        Id = table.Column<int>(nullable: false)
+                            .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        UserId = table.Column<string>(nullable: false),
+                        ClaimType = table.Column<string>(nullable: true),
+                        ClaimValue = table.Column<string>(nullable: true)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AspNetUserClaims", x => x.Id);
+                        table.ForeignKey(
+                            name: "FK_AspNetUserClaims_AspNetUsers_UserId",
+                            column: x => x.UserId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "AspNetUserLogins",
+                    columns: table => new
+                    {
+                        LoginProvider = table.Column<string>(maxLength: 128, nullable: false),
+                        ProviderKey = table.Column<string>(maxLength: 128, nullable: false),
+                        ProviderDisplayName = table.Column<string>(nullable: true),
+                        UserId = table.Column<string>(nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AspNetUserLogins", x => new { x.LoginProvider, x.ProviderKey });
+                        table.ForeignKey(
+                            name: "FK_AspNetUserLogins_AspNetUsers_UserId",
+                            column: x => x.UserId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "AspNetUserRoles",
+                    columns: table => new
+                    {
+                        UserId = table.Column<string>(nullable: false),
+                        RoleId = table.Column<string>(nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AspNetUserRoles", x => new { x.UserId, x.RoleId });
+                        table.ForeignKey(
+                            name: "FK_AspNetUserRoles_AspNetRoles_RoleId",
+                            column: x => x.RoleId,
+                            principalTable: "AspNetRoles",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                        table.ForeignKey(
+                            name: "FK_AspNetUserRoles_AspNetUsers_UserId",
+                            column: x => x.UserId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "AspNetUserTokens",
+                    columns: table => new
+                    {
+                        UserId = table.Column<string>(nullable: false),
+                        LoginProvider = table.Column<string>(maxLength: 128, nullable: false),
+                        Name = table.Column<string>(maxLength: 128, nullable: false),
+                        Value = table.Column<string>(nullable: true)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AspNetUserTokens", x => new { x.UserId, x.LoginProvider, x.Name });
+                        table.ForeignKey(
+                            name: "FK_AspNetUserTokens_AspNetUsers_UserId",
+                            column: x => x.UserId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                    });
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_AspNetRoleClaims_RoleId",
+                    table: "AspNetRoleClaims",
+                    column: "RoleId");
+
+                migrationBuilder.CreateIndex(
+                    name: "RoleNameIndex",
+                    table: "AspNetRoles",
+                    column: "NormalizedName",
+                    unique: true,
+                    filter: "[NormalizedName] IS NOT NULL");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_AspNetUserClaims_UserId",
+                    table: "AspNetUserClaims",
+                    column: "UserId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_AspNetUserLogins_UserId",
+                    table: "AspNetUserLogins",
+                    column: "UserId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_AspNetUserRoles_RoleId",
+                    table: "AspNetUserRoles",
+                    column: "RoleId");
+
+                migrationBuilder.CreateIndex(
+                    name: "EmailIndex",
+                    table: "AspNetUsers",
+                    column: "NormalizedEmail");
+
+                migrationBuilder.CreateIndex(
+                    name: "UserNameIndex",
+                    table: "AspNetUsers",
+                    column: "NormalizedUserName",
+                    unique: true,
+                    filter: "[NormalizedUserName] IS NOT NULL");
+            }
+
+            protected override void Down(MigrationBuilder migrationBuilder)
+            {
+                migrationBuilder.DropTable(
+                    name: "AspNetRoleClaims");
+
+                migrationBuilder.DropTable(
+                    name: "AspNetUserClaims");
+
+                migrationBuilder.DropTable(
+                    name: "AspNetUserLogins");
+
+                migrationBuilder.DropTable(
+                    name: "AspNetUserRoles");
+
+                migrationBuilder.DropTable(
+                    name: "AspNetUserTokens");
+
+                migrationBuilder.DropTable(
+                    name: "AspNetRoles");
+
+                migrationBuilder.DropTable(
+                    name: "AspNetUsers");
+            }
+        }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\00000000000000_CreateIdentitySchema.Designer.cs ================
+
+    // <auto-generated />
+    using System;
+    using MarketZone.Data;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Infrastructure;
+    using Microsoft.EntityFrameworkCore.Metadata;
+    using Microsoft.EntityFrameworkCore.Migrations;
+    using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+    namespace MarketZone.Data.Migrations
+    {
+        [DbContext(typeof(ApplicationDbContext))]
+        [Migration("00000000000000_CreateIdentitySchema")]
+        partial class CreateIdentitySchema
+        {
+            protected override void BuildTargetModel(ModelBuilder modelBuilder)
+            {
+    #pragma warning disable 612, 618
+                modelBuilder
+                    .HasAnnotation("ProductVersion", "3.0.0")
+                    .HasAnnotation("Relational:MaxIdentifierLength", 128)
+                    .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                    {
+                        b.Property<string>("Id")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("ConcurrencyStamp")
+                            .IsConcurrencyToken()
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("Name")
+                            .HasColumnType("nvarchar(256)")
+                            .HasMaxLength(256);
+
+                        b.Property<string>("NormalizedName")
+                            .HasColumnType("nvarchar(256)")
+                            .HasMaxLength(256);
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("NormalizedName")
+                            .IsUnique()
+                            .HasName("RoleNameIndex")
+                            .HasFilter("[NormalizedName] IS NOT NULL");
+
+                        b.ToTable("AspNetRoles");
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int")
+                            .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                        b.Property<string>("ClaimType")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("ClaimValue")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("RoleId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("RoleId");
+
+                        b.ToTable("AspNetRoleClaims");
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
+                    {
+                        b.Property<string>("Id")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<int>("AccessFailedCount")
+                            .HasColumnType("int");
+
+                        b.Property<string>("ConcurrencyStamp")
+                            .IsConcurrencyToken()
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("Email")
+                            .HasColumnType("nvarchar(256)")
+                            .HasMaxLength(256);
+
+                        b.Property<bool>("EmailConfirmed")
+                            .HasColumnType("bit");
+
+                        b.Property<bool>("LockoutEnabled")
+                            .HasColumnType("bit");
+
+                        b.Property<DateTimeOffset?>("LockoutEnd")
+                            .HasColumnType("datetimeoffset");
+
+                        b.Property<string>("NormalizedEmail")
+                            .HasColumnType("nvarchar(256)")
+                            .HasMaxLength(256);
+
+                        b.Property<string>("NormalizedUserName")
+                            .HasColumnType("nvarchar(256)")
+                            .HasMaxLength(256);
+
+                        b.Property<string>("PasswordHash")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("PhoneNumber")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<bool>("PhoneNumberConfirmed")
+                            .HasColumnType("bit");
+
+                        b.Property<string>("SecurityStamp")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<bool>("TwoFactorEnabled")
+                            .HasColumnType("bit");
+
+                        b.Property<string>("UserName")
+                            .HasColumnType("nvarchar(256)")
+                            .HasMaxLength(256);
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("NormalizedEmail")
+                            .HasName("EmailIndex");
+
+                        b.HasIndex("NormalizedUserName")
+                            .IsUnique()
+                            .HasName("UserNameIndex")
+                            .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                        b.ToTable("AspNetUsers");
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int")
+                            .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                        b.Property<string>("ClaimType")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("ClaimValue")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("UserId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("UserId");
+
+                        b.ToTable("AspNetUserClaims");
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                    {
+                        b.Property<string>("LoginProvider")
+                            .HasColumnType("nvarchar(128)")
+                            .HasMaxLength(128);
+
+                        b.Property<string>("ProviderKey")
+                            .HasColumnType("nvarchar(128)")
+                            .HasMaxLength(128);
+
+                        b.Property<string>("ProviderDisplayName")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("UserId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("LoginProvider", "ProviderKey");
+
+                        b.HasIndex("UserId");
+
+                        b.ToTable("AspNetUserLogins");
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                    {
+                        b.Property<string>("UserId")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("RoleId")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("UserId", "RoleId");
+
+                        b.HasIndex("RoleId");
+
+                        b.ToTable("AspNetUserRoles");
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                    {
+                        b.Property<string>("UserId")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("LoginProvider")
+                            .HasColumnType("nvarchar(128)")
+                            .HasMaxLength(128);
+
+                        b.Property<string>("Name")
+                            .HasColumnType("nvarchar(128)")
+                            .HasMaxLength(128);
+
+                        b.Property<string>("Value")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.HasKey("UserId", "LoginProvider", "Name");
+
+                        b.ToTable("AspNetUserTokens");
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                    {
+                        b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                            .WithMany()
+                            .HasForeignKey("RoleId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                    {
+                        b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                            .WithMany()
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                    {
+                        b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                            .WithMany()
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                    {
+                        b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                            .WithMany()
+                            .HasForeignKey("RoleId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+
+                        b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                            .WithMany()
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                    {
+                        b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                            .WithMany()
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+    #pragma warning restore 612, 618
+            }
+        }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\20251224154020_AddMarketZoneModels.cs ================
+
+    using System;
+    using Microsoft.EntityFrameworkCore.Migrations;
+
+    #nullable disable
+
+    namespace MarketZone.Data.Migrations
+    {
+        /// <inheritdoc />
+        public partial class AddMarketZoneModels : Migration
+        {
+            /// <inheritdoc />
+            protected override void Up(MigrationBuilder migrationBuilder)
+            {
+                migrationBuilder.AddColumn<string>(
+                    name: "ProfilePictureUrl",
+                    table: "AspNetUsers",
+                    type: "nvarchar(250)",
+                    maxLength: 250,
+                    nullable: false,
+                    defaultValue: "");
+
+                migrationBuilder.CreateTable(
+                    name: "Categories",
+                    columns: table => new
+                    {
+                        Id = table.Column<int>(type: "int", nullable: false)
+                            .Annotation("SqlServer:Identity", "1, 1"),
+                        Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                        Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_Categories", x => x.Id);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "Reviews",
+                    columns: table => new
+                    {
+                        Id = table.Column<int>(type: "int", nullable: false)
+                            .Annotation("SqlServer:Identity", "1, 1"),
+                        Rating = table.Column<int>(type: "int", nullable: false),
+                        Comment = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                        CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                        ReviewerId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                        ReviewedUserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_Reviews", x => x.Id);
+                        table.ForeignKey(
+                            name: "FK_Reviews_AspNetUsers_ReviewedUserId",
+                            column: x => x.ReviewedUserId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Restrict);
+                        table.ForeignKey(
+                            name: "FK_Reviews_AspNetUsers_ReviewerId",
+                            column: x => x.ReviewerId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Restrict);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "Ads",
+                    columns: table => new
+                    {
+                        Id = table.Column<int>(type: "int", nullable: false)
+                            .Annotation("SqlServer:Identity", "1, 1"),
+                        Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                        Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                        Price = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                        ImageUrl = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
+                        CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                        CategoryId = table.Column<int>(type: "int", nullable: false),
+                        UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_Ads", x => x.Id);
+                        table.ForeignKey(
+                            name: "FK_Ads_AspNetUsers_UserId",
+                            column: x => x.UserId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                        table.ForeignKey(
+                            name: "FK_Ads_Categories_CategoryId",
+                            column: x => x.CategoryId,
+                            principalTable: "Categories",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "Messages",
+                    columns: table => new
+                    {
+                        Id = table.Column<int>(type: "int", nullable: false)
+                            .Annotation("SqlServer:Identity", "1, 1"),
+                        Content = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                        SentOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                        SenderId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                        ReceiverId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                        AdId = table.Column<int>(type: "int", nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_Messages", x => x.Id);
+                        table.ForeignKey(
+                            name: "FK_Messages_Ads_AdId",
+                            column: x => x.AdId,
+                            principalTable: "Ads",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                        table.ForeignKey(
+                            name: "FK_Messages_AspNetUsers_ReceiverId",
+                            column: x => x.ReceiverId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Restrict);
+                        table.ForeignKey(
+                            name: "FK_Messages_AspNetUsers_SenderId",
+                            column: x => x.SenderId,
+                            principalTable: "AspNetUsers",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Restrict);
+                    });
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_Ads_CategoryId",
+                    table: "Ads",
+                    column: "CategoryId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_Ads_UserId",
+                    table: "Ads",
+                    column: "UserId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_Messages_AdId",
+                    table: "Messages",
+                    column: "AdId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_Messages_ReceiverId",
+                    table: "Messages",
+                    column: "ReceiverId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_Messages_SenderId",
+                    table: "Messages",
+                    column: "SenderId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_Reviews_ReviewedUserId",
+                    table: "Reviews",
+                    column: "ReviewedUserId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_Reviews_ReviewerId",
+                    table: "Reviews",
+                    column: "ReviewerId");
+            }
+
+            /// <inheritdoc />
+            protected override void Down(MigrationBuilder migrationBuilder)
+            {
+                migrationBuilder.DropTable(
+                    name: "Messages");
+
+                migrationBuilder.DropTable(
+                    name: "Reviews");
+
+                migrationBuilder.DropTable(
+                    name: "Ads");
+
+                migrationBuilder.DropTable(
+                    name: "Categories");
+
+                migrationBuilder.DropColumn(
+                    name: "ProfilePictureUrl",
+                    table: "AspNetUsers");
+            }
+        }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\20251224154020_AddMarketZoneModels.Designer.cs ================
+
+    // <auto-generated />
+    using System;
+    using MarketZone.Data;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Infrastructure;
+    using Microsoft.EntityFrameworkCore.Metadata;
+    using Microsoft.EntityFrameworkCore.Migrations;
+    using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+    #nullable disable
+
+    namespace MarketZone.Data.Migrations
+    {
+        [DbContext(typeof(ApplicationDbContext))]
+        [Migration("20251224154020_AddMarketZoneModels")]
+        partial class AddMarketZoneModels
+        {
+            /// <inheritdoc />
+            protected override void BuildTargetModel(ModelBuilder modelBuilder)
+            {
+    #pragma warning disable 612, 618
+                modelBuilder
+                    .HasAnnotation("ProductVersion", "10.0.1")
+                    .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+                SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+                modelBuilder.Entity("MarketZone.Models.Ad", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<int>("CategoryId")
+                            .HasColumnType("int");
+
+                        b.Property<DateTime>("CreatedOn")
+                            .HasColumnType("datetime2");
+
+                        b.Property<string>("Description")
+                            .IsRequired()
+                            .HasMaxLength(1000)
+                            .HasColumnType("nvarchar(1000)");
+
+                        b.Property<string>("ImageUrl")
+                            .IsRequired()
+                            .HasMaxLength(250)
+                            .HasColumnType("nvarchar(250)");
+
+                        b.Property<decimal>("Price")
+                            .HasColumnType("decimal(18,2)");
+
+                        b.Property<string>("Title")
+                            .IsRequired()
+                            .HasMaxLength(100)
+                            .HasColumnType("nvarchar(100)");
+
+                        b.Property<string>("UserId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("CategoryId");
+
+                        b.HasIndex("UserId");
+
+                        b.ToTable("Ads");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Category", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<string>("Description")
+                            .IsRequired()
+                            .HasMaxLength(500)
+                            .HasColumnType("nvarchar(500)");
+
+                        b.Property<string>("Name")
+                            .IsRequired()
+                            .HasMaxLength(100)
+                            .HasColumnType("nvarchar(100)");
+
+                        b.HasKey("Id");
+
+                        b.ToTable("Categories");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Message", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<int>("AdId")
+                            .HasColumnType("int");
+
+                        b.Property<string>("Content")
+                            .IsRequired()
+                            .HasMaxLength(1000)
+                            .HasColumnType("nvarchar(1000)");
+
+                        b.Property<string>("ReceiverId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("SenderId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<DateTime>("SentOn")
+                            .HasColumnType("datetime2");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("AdId");
+
+                        b.HasIndex("ReceiverId");
+
+                        b.HasIndex("SenderId");
+
+                        b.ToTable("Messages");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Review", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<string>("Comment")
+                            .IsRequired()
+                            .HasMaxLength(1000)
+                            .HasColumnType("nvarchar(1000)");
+
+                        b.Property<DateTime>("CreatedOn")
+                            .HasColumnType("datetime2");
+
+                        b.Property<int>("Rating")
+                            .HasColumnType("int");
+
+                        b.Property<string>("ReviewedUserId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("ReviewerId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("ReviewedUserId");
+
+                        b.HasIndex("ReviewerId");
+
+                        b.ToTable("Reviews");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.User", b =>
+                    {
+                        b.Property<string>("Id")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<int>("AccessFailedCount")
+                            .HasColumnType("int");
+
+                        b.Property<string>("ConcurrencyStamp")
+                            .IsConcurrencyToken()
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("Email")
+                            .HasMaxLength(256)
+                            .HasColumnType("nvarchar(256)");
+
+                        b.Property<bool>("EmailConfirmed")
+                            .HasColumnType("bit");
+
+                        b.Property<bool>("LockoutEnabled")
+                            .HasColumnType("bit");
+
+                        b.Property<DateTimeOffset?>("LockoutEnd")
+                            .HasColumnType("datetimeoffset");
+
+                        b.Property<string>("NormalizedEmail")
+                            .HasMaxLength(256)
+                            .HasColumnType("nvarchar(256)");
+
+                        b.Property<string>("NormalizedUserName")
+                            .HasMaxLength(256)
+                            .HasColumnType("nvarchar(256)");
+
+                        b.Property<string>("PasswordHash")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("PhoneNumber")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<bool>("PhoneNumberConfirmed")
+                            .HasColumnType("bit");
+
+                        b.Property<string>("ProfilePictureUrl")
+                            .IsRequired()
+                            .HasMaxLength(250)
+                            .HasColumnType("nvarchar(250)");
+
+                        b.Property<string>("SecurityStamp")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<bool>("TwoFactorEnabled")
+                            .HasColumnType("bit");
+
+                        b.Property<string>("UserName")
+                            .HasMaxLength(256)
+                            .HasColumnType("nvarchar(256)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("NormalizedEmail")
+                            .HasDatabaseName("EmailIndex");
+
+                        b.HasIndex("NormalizedUserName")
+                            .IsUnique()
+                            .HasDatabaseName("UserNameIndex")
+                            .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                        b.ToTable("AspNetUsers", (string)null);
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+                    {
+                        b.Property<string>("Id")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("ConcurrencyStamp")
+                            .IsConcurrencyToken()
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("Name")
+                            .HasMaxLength(256)
+                            .HasColumnType("nvarchar(256)");
+
+                        b.Property<string>("NormalizedName")
+                            .HasMaxLength(256)
+                            .HasColumnType("nvarchar(256)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("NormalizedName")
+                            .IsUnique()
+                            .HasDatabaseName("RoleNameIndex")
+                            .HasFilter("[NormalizedName] IS NOT NULL");
+
+                        b.ToTable("AspNetRoles", (string)null);
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<string>("ClaimType")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("ClaimValue")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("RoleId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("RoleId");
+
+                        b.ToTable("AspNetRoleClaims", (string)null);
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<string>("ClaimType")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("ClaimValue")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("UserId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("UserId");
+
+                        b.ToTable("AspNetUserClaims", (string)null);
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                    {
+                        b.Property<string>("LoginProvider")
+                            .HasMaxLength(128)
+                            .HasColumnType("nvarchar(128)");
+
+                        b.Property<string>("ProviderKey")
+                            .HasMaxLength(128)
+                            .HasColumnType("nvarchar(128)");
+
+                        b.Property<string>("ProviderDisplayName")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.Property<string>("UserId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("LoginProvider", "ProviderKey");
+
+                        b.HasIndex("UserId");
+
+                        b.ToTable("AspNetUserLogins", (string)null);
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                    {
+                        b.Property<string>("UserId")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("RoleId")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("UserId", "RoleId");
+
+                        b.HasIndex("RoleId");
+
+                        b.ToTable("AspNetUserRoles", (string)null);
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                    {
+                        b.Property<string>("UserId")
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("LoginProvider")
+                            .HasMaxLength(128)
+                            .HasColumnType("nvarchar(128)");
+
+                        b.Property<string>("Name")
+                            .HasMaxLength(128)
+                            .HasColumnType("nvarchar(128)");
+
+                        b.Property<string>("Value")
+                            .HasColumnType("nvarchar(max)");
+
+                        b.HasKey("UserId", "LoginProvider", "Name");
+
+                        b.ToTable("AspNetUserTokens", (string)null);
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Ad", b =>
+                    {
+                        b.HasOne("MarketZone.Models.Category", "Category")
+                            .WithMany("Ads")
+                            .HasForeignKey("CategoryId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+
+                        b.HasOne("MarketZone.Models.User", "User")
+                            .WithMany("Ads")
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+
+                        b.Navigation("Category");
+
+                        b.Navigation("User");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Message", b =>
+                    {
+                        b.HasOne("MarketZone.Models.Ad", "Ad")
+                            .WithMany("Messages")
+                            .HasForeignKey("AdId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+
+                        b.HasOne("MarketZone.Models.User", "Receiver")
+                            .WithMany("ReceivedMessages")
+                            .HasForeignKey("ReceiverId")
+                            .OnDelete(DeleteBehavior.Restrict)
+                            .IsRequired();
+
+                        b.HasOne("MarketZone.Models.User", "Sender")
+                            .WithMany("SentMessages")
+                            .HasForeignKey("SenderId")
+                            .OnDelete(DeleteBehavior.Restrict)
+                            .IsRequired();
+
+                        b.Navigation("Ad");
+
+                        b.Navigation("Receiver");
+
+                        b.Navigation("Sender");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Review", b =>
+                    {
+                        b.HasOne("MarketZone.Models.User", "ReviewedUser")
+                            .WithMany("ReviewsReceived")
+                            .HasForeignKey("ReviewedUserId")
+                            .OnDelete(DeleteBehavior.Restrict)
+                            .IsRequired();
+
+                        b.HasOne("MarketZone.Models.User", "Reviewer")
+                            .WithMany("ReviewsWritten")
+                            .HasForeignKey("ReviewerId")
+                            .OnDelete(DeleteBehavior.Restrict)
+                            .IsRequired();
+
+                        b.Navigation("ReviewedUser");
+
+                        b.Navigation("Reviewer");
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+                    {
+                        b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                            .WithMany()
+                            .HasForeignKey("RoleId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+                    {
+                        b.HasOne("MarketZone.Models.User", null)
+                            .WithMany()
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+                    {
+                        b.HasOne("MarketZone.Models.User", null)
+                            .WithMany()
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+                    {
+                        b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                            .WithMany()
+                            .HasForeignKey("RoleId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+
+                        b.HasOne("MarketZone.Models.User", null)
+                            .WithMany()
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                    {
+                        b.HasOne("MarketZone.Models.User", null)
+                            .WithMany()
+                            .HasForeignKey("UserId")
+                            .OnDelete(DeleteBehavior.Cascade)
+                            .IsRequired();
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Ad", b =>
+                    {
+                        b.Navigation("Messages");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Category", b =>
+                    {
+                        b.Navigation("Ads");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.User", b =>
+                    {
+                        b.Navigation("Ads");
+
+                        b.Navigation("ReceivedMessages");
+
+                        b.Navigation("ReviewsReceived");
+
+                        b.Navigation("ReviewsWritten");
+
+                        b.Navigation("SentMessages");
+                    });
+    #pragma warning restore 612, 618
+            }
+        }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\20251226165226_AddAdImagesAndTags.cs ================
+
+    using Microsoft.EntityFrameworkCore.Migrations;
+
+    #nullable disable
+
+    namespace MarketZone.Data.Migrations
+    {
+        /// <inheritdoc />
+        public partial class AddAdImagesAndTags : Migration
+        {
+            /// <inheritdoc />
+            protected override void Up(MigrationBuilder migrationBuilder)
+            {
+                migrationBuilder.DropColumn(
+                    name: "ImageUrl",
+                    table: "Ads");
+
+                migrationBuilder.CreateTable(
+                    name: "AdImages",
+                    columns: table => new
+                    {
+                        Id = table.Column<int>(type: "int", nullable: false)
+                            .Annotation("SqlServer:Identity", "1, 1"),
+                        ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                        AdId = table.Column<int>(type: "int", nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AdImages", x => x.Id);
+                        table.ForeignKey(
+                            name: "FK_AdImages_Ads_AdId",
+                            column: x => x.AdId,
+                            principalTable: "Ads",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "Tags",
+                    columns: table => new
+                    {
+                        Id = table.Column<int>(type: "int", nullable: false)
+                            .Annotation("SqlServer:Identity", "1, 1"),
+                        Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_Tags", x => x.Id);
+                    });
+
+                migrationBuilder.CreateTable(
+                    name: "AdTag",
+                    columns: table => new
+                    {
+                        AdsId = table.Column<int>(type: "int", nullable: false),
+                        TagsId = table.Column<int>(type: "int", nullable: false)
+                    },
+                    constraints: table =>
+                    {
+                        table.PrimaryKey("PK_AdTag", x => new { x.AdsId, x.TagsId });
+                        table.ForeignKey(
+                            name: "FK_AdTag_Ads_AdsId",
+                            column: x => x.AdsId,
+                            principalTable: "Ads",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                        table.ForeignKey(
+                            name: "FK_AdTag_Tags_TagsId",
+                            column: x => x.TagsId,
+                            principalTable: "Tags",
+                            principalColumn: "Id",
+                            onDelete: ReferentialAction.Cascade);
+                    });
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_AdImages_AdId",
+                    table: "AdImages",
+                    column: "AdId");
+
+                migrationBuilder.CreateIndex(
+                    name: "IX_AdTag_TagsId",
+                    table: "AdTag",
+                    column: "TagsId");
+            }
+
+            /// <inheritdoc />
+            protected override void Down(MigrationBuilder migrationBuilder)
+            {
+                migrationBuilder.DropTable(
+                    name: "AdImages");
+
+                migrationBuilder.DropTable(
+                    name: "AdTag");
+
+                migrationBuilder.DropTable(
+                    name: "Tags");
+
+                migrationBuilder.AddColumn<string>(
+                    name: "ImageUrl",
+                    table: "Ads",
+                    type: "nvarchar(250)",
+                    maxLength: 250,
+                    nullable: false,
+                    defaultValue: "");
+            }
+        }
+    }
+
+
+    ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Data\Migrations\20251226165226_AddAdImagesAndTags.Designer.cs ================
+
+    // <auto-generated />
+    using System;
+    using MarketZone.Data;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.EntityFrameworkCore.Infrastructure;
+    using Microsoft.EntityFrameworkCore.Metadata;
+    using Microsoft.EntityFrameworkCore.Migrations;
+    using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+    #nullable disable
+
+    namespace MarketZone.Data.Migrations
+    {
+        [DbContext(typeof(ApplicationDbContext))]
+        [Migration("20251226165226_AddAdImagesAndTags")]
+        partial class AddAdImagesAndTags
+        {
+            /// <inheritdoc />
+            protected override void BuildTargetModel(ModelBuilder modelBuilder)
+            {
+    #pragma warning disable 612, 618
+                modelBuilder
+                    .HasAnnotation("ProductVersion", "10.0.1")
+                    .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+                SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+                modelBuilder.Entity("AdTag", b =>
+                    {
+                        b.Property<int>("AdsId")
+                            .HasColumnType("int");
+
+                        b.Property<int>("TagsId")
+                            .HasColumnType("int");
+
+                        b.HasKey("AdsId", "TagsId");
+
+                        b.HasIndex("TagsId");
+
+                        b.ToTable("AdTag");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Ad", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<int>("CategoryId")
+                            .HasColumnType("int");
+
+                        b.Property<DateTime>("CreatedOn")
+                            .HasColumnType("datetime2");
+
+                        b.Property<string>("Description")
+                            .IsRequired()
+                            .HasMaxLength(1000)
+                            .HasColumnType("nvarchar(1000)");
+
+                        b.Property<decimal>("Price")
+                            .HasPrecision(18, 2)
+                            .HasColumnType("decimal(18,2)");
+
+                        b.Property<string>("Title")
+                            .IsRequired()
+                            .HasMaxLength(100)
+                            .HasColumnType("nvarchar(100)");
+
+                        b.Property<string>("UserId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("CategoryId");
+
+                        b.HasIndex("UserId");
+
+                        b.ToTable("Ads");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.AdImage", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<int>("AdId")
+                            .HasColumnType("int");
+
+                        b.Property<string>("ImageUrl")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(max)");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("AdId");
+
+                        b.ToTable("AdImages");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Category", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<string>("Description")
+                            .IsRequired()
+                            .HasMaxLength(500)
+                            .HasColumnType("nvarchar(500)");
+
+                        b.Property<string>("Name")
+                            .IsRequired()
+                            .HasMaxLength(100)
+                            .HasColumnType("nvarchar(100)");
+
+                        b.HasKey("Id");
+
+                        b.ToTable("Categories");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Message", b =>
+                    {
+                        b.Property<int>("Id")
+                            .ValueGeneratedOnAdd()
+                            .HasColumnType("int");
+
+                        SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                        b.Property<int>("AdId")
+                            .HasColumnType("int");
+
+                        b.Property<string>("Content")
+                            .IsRequired()
+                            .HasMaxLength(1000)
+                            .HasColumnType("nvarchar(1000)");
+
+                        b.Property<string>("ReceiverId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<string>("SenderId")
+                            .IsRequired()
+                            .HasColumnType("nvarchar(450)");
+
+                        b.Property<DateTime>("SentOn")
+                            .HasColumnType("datetime2");
+
+                        b.HasKey("Id");
+
+                        b.HasIndex("AdId");
+
+                        b.HasIndex("ReceiverId");
+
+                        b.HasIndex("SenderId");
+
+                        b.ToTable("Messages");
+                    });
+
+                modelBuilder.Entity("MarketZone.Models.Review", b =>
+                    {
+                        b.Property<int>("Id")

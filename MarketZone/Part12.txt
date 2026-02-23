@@ -1,0 +1,1417 @@
+﻿.location-input-group {
+    width: 300px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 12px 12px 12px;
+    border: 1px solid #ced4da;
+    height: 50px;
+    font-size: 16px;
+    outline: none;
+}
+
+.search-term-input {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-right: none;
+}
+
+.search-location-input {
+    border-radius: 0;
+}
+
+.btn-search {
+    background-color: #002f34;
+    color: white;
+    font-weight: bold;
+    padding: 0 40px;
+    height: 50px;
+    border: none;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    cursor: pointer;
+}
+
+    .btn-search:hover {
+        background-color: #001e21;
+    }
+
+.filters-row {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-item {
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    padding: 5px 10px;
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+    height: 50px;
+    justify-content: center;
+}
+
+.filter-label {
+    font-size: 11px;
+    color: #7f9799;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+.filter-control {
+    border: none;
+    width: 100%;
+    font-size: 14px;
+    color: #002f34;
+    outline: none;
+    background: transparent;
+    padding: 0;
+    margin-top: -2px;
+}
+
+.price-range-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.price-input {
+    width: 60px;
+    border: none;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    font-size: 13px;
+    padding: 0;
+}
+
+/* Category Dropdown */
+.category-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 260px;
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+    .category-dropdown-menu.show {
+        display: block;
+    }
+
+#filter-category-list li {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+}
+
+    #filter-category-list li:hover {
+        background-color: #f8f9fa;
+    }
+
+.address-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ced4da;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+    .address-suggestions.show {
+        display: block;
+    }
+
+.suggestion-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+    .suggestion-item:hover {
+        background-color: #f8f9fa;
+    }
+
+@media (max-width: 768px) {
+    .search-main-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .search-input-group, .location-input-group, .btn-search {
+        width: 100%;
+        border-radius: 4px;
+    }
+
+    .search-term-input, .search-location-input {
+        border-right: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\css\site.css ================
+
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+/* User dropdown */
+.user-dropdown {
+    position: relative;
+}
+
+.user-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 110%;
+    right: 0;
+    min-width: 180px;
+    border-radius: 8px;
+    z-index: 1050;
+}
+
+.user-dropdown:hover .user-dropdown-menu {
+    display: block;
+}
+
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\ad-details.js ================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    if (!window.adDetailsConfig) return;
+
+    const {
+        adId,
+        isAuthenticated,
+        isOwner,
+        antiForgeryToken
+    } = window.adDetailsConfig;
+
+    /* Require login */
+    window.requireLogin = function () {
+        alert("You need an account to use this feature.");
+        window.location.href = "/Identity/Account/Login";
+    };
+
+    /* Favorites */
+    if (!isAuthenticated || isOwner) return;
+
+    const favBtn = document.getElementById("favorite-btn");
+    if (!favBtn) return;
+
+    favBtn.addEventListener("click", async () => {
+        try {
+            const response = await fetch("/Favorites/Toggle", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": antiForgeryToken
+                },
+                body: JSON.stringify(adId)
+            });
+
+            if (!response.ok)
+                throw new Error("Request failed");
+
+            const result = await response.json();
+
+            favBtn.textContent = result.isFavorite
+                ? "❤️ Remove from Favorites"
+                : "🤍 Add to Favorites";
+        }
+        catch {
+            alert("Failed to update favorites.");
+        }
+    });
+});
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\ad-form.js ================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const existingImages =
+        (window.adFormConfig && window.adFormConfig.existingImages) || [];
+
+    /* ── Elements ── */
+    const form = document.getElementById("ad-form");
+    const submitBtn = document.getElementById("submit-btn");
+
+    // Title
+    const titleInput = document.getElementById("Title");
+    const titleError = document.querySelector("[data-valmsg-for='Title']");
+
+    // Description
+    const descInput = document.getElementById("Description");
+    const descError = document.querySelector("[data-valmsg-for='Description']");
+
+    // Price
+    const priceInput = document.getElementById("Price");
+    const priceError = document.querySelector("[data-valmsg-for='Price']");
+
+    // Address
+    const addrInput = document.getElementById("address-input");
+    const addrError = document.querySelector("[data-valmsg-for='Address']");
+
+    // Category
+    const categoryInput = document.querySelector("#CategoryId") ||
+        document.querySelector("[name='CategoryId']");
+    const categoryError = document.querySelector("[data-valmsg-for='CategoryId']");
+
+    // Condition
+    const conditionInputs = document.querySelectorAll("[name='Condition']");
+    const conditionError = document.querySelector("[data-valmsg-for='Condition']");
+
+    // Images
+    const grid = document.getElementById("image-grid");
+    const fileInput = document.getElementById("image-input");
+    const imageError = document.querySelector("[data-valmsg-for='Images']");
+
+    // Category picker
+    const list = document.getElementById("category-list");
+    const backBtn = document.getElementById("back-btn");
+    const breadcrumb = document.getElementById("breadcrumb");
+
+    let parentStack = [];
+    let breadcrumbStack = [];
+    let currentParentId = null;
+    let files = [];
+    const MAX_IMAGES = 10;
+
+    /* ── Validators ── */
+    function validateTitle() {
+        const val = titleInput?.value.trim() ?? "";
+        const ok = val.length >= 1 && val.length <= 100;
+        if (titleError) titleError.textContent = ok ? "" : "Title is required (max 100 chars).";
+        return ok;
+    }
+
+    function validateDesc() {
+        const val = descInput?.value.trim() ?? "";
+        const ok = val.length >= 40 && val.length <= 5000;
+        if (descError) descError.textContent = ok ? "" : "Description must be at least 40 characters.";
+        return ok;
+    }
+
+    function validatePrice() {
+        const val = parseFloat(priceInput?.value ?? "0");
+        const ok = val > 0;
+        if (priceError) priceError.textContent = ok ? "" : "Price must be greater than 0.";
+        return ok;
+    }
+
+    function validateAddress() {
+        // Check the flag from address-picker.js
+        const confirmed = window.addressConfirmed === true;
+        if (addrError) addrError.textContent = confirmed ? "" : "Please select an address from the suggestions.";
+        return confirmed;
+    }
+
+    function validateCategory() {
+        const val = categoryInput?.value ?? "0";
+        const ok = val !== "0" && val !== "";
+        if (categoryError) categoryError.textContent = ok ? "" : "Please select a category.";
+        return ok;
+    }
+
+    function validateCondition() {
+        const checked = [...conditionInputs].some(r => r.checked);
+        if (conditionError) conditionError.textContent = checked ? "" : "Please select a condition.";
+        return checked;
+    }
+
+    function validateImages() {
+        const count = existingImages.length + files.length;
+        const ok = count > 0;
+        if (imageError) imageError.textContent = ok ? "" : "At least one image is required.";
+        return ok;
+    }
+
+    function validateAll() {
+        const ok =
+            validateTitle() &
+            validateDesc() &
+            validatePrice() &
+            validateAddress() &
+            validateCategory() &
+            validateCondition() &
+            validateImages();
+
+        if (submitBtn) {
+            submitBtn.disabled = !ok;
+        }
+
+        return !!ok;
+    }
+
+    /* ── Show all errors on load & disable submit ── */
+    window.validateAll = validateAll;
+    validateAll();
+
+    /* ── Real-time listeners ── */
+    titleInput?.addEventListener("input", validateAll);
+    descInput?.addEventListener("input", validateAll);
+    priceInput?.addEventListener("input", validateAll);
+    addrInput?.addEventListener("input", validateAll);
+    conditionInputs.forEach(r => r.addEventListener("change", validateAll));
+
+    /* ── Category picker ── */
+    if (list) loadCategories(null);
+
+    function loadCategories(parentId, label = null) {
+        if (label) breadcrumbStack.push(label);
+
+        fetch(`/Ad/GetChildren?parentId=${parentId ?? ""}`)
+            .then(r => r.json())
+            .then(data => {
+                list.innerHTML = "";
+                currentParentId = parentId;
+
+                backBtn.style.display =
+                    parentStack.length > 0 ? "inline-block" : "none";
+                breadcrumb.textContent = breadcrumbStack.join(" → ");
+
+                data.forEach(c => {
+                    const li = document.createElement("li");
+                    li.className = "p-2 border-bottom";
+                    li.style.cursor = "pointer";
+                    li.textContent = c.name;
+
+                    if (c.hasChildren) {
+                        li.innerHTML += " ➜";
+                        li.onclick = () => {
+                            parentStack.push(currentParentId);
+                            loadCategories(c.id, c.name);
+                        };
+                    } else {
+                        li.onclick = () => {
+                            categoryInput.value = c.id;
+                            [...list.children].forEach(x => x.classList.remove("bg-light"));
+                            li.classList.add("bg-light");
+                            validateAll();
+                        };
+                    }
+                    list.appendChild(li);
+                });
+            });
+    }
+
+    if (backBtn) {
+        backBtn.onclick = () => {
+            currentParentId = parentStack.pop();
+            breadcrumbStack.pop();
+            categoryInput.value = "0";
+            [...list.children].forEach(x => x.classList.remove("bg-light"));
+            validateAll();
+            loadCategories(currentParentId);
+        };
+    }
+
+    /* ── Image upload ── */
+    if (!grid || !fileInput) return;
+
+    renderGrid();
+
+    function renderGrid() {
+        grid.innerHTML = "";
+
+        existingImages.forEach((url, index) => {
+            const box = document.createElement("div");
+            box.className = "image-box";
+            box.innerHTML = `
+                <img src="${url}">
+                <div class="image-actions"><button type="button">🗑</button></div>`;
+            box.querySelector("button").onclick = e => {
+                e.stopPropagation();
+                existingImages.splice(index, 1);
+                document.querySelectorAll("input[name^='ExistingImageUrls']")[index]?.remove();
+                renderGrid();
+                validateAll();
+            };
+            grid.appendChild(box);
+        });
+
+        files.forEach((file, index) => {
+            const box = document.createElement("div");
+            box.className = "image-box";
+            const reader = new FileReader();
+            reader.onload = e => {
+                box.innerHTML = `
+                    <img src="${e.target.result}">
+                    <div class="image-actions"><button type="button">🗑</button></div>`;
+                box.querySelector("button").onclick = ev => {
+                    ev.stopPropagation();
+                    files.splice(index, 1);
+                    syncInputFiles();
+                    renderGrid();
+                    validateAll();
+                };
+            };
+            reader.readAsDataURL(file);
+            grid.appendChild(box);
+        });
+
+        const used = existingImages.length + files.length;
+        for (let i = used; i < MAX_IMAGES; i++) {
+            const empty = document.createElement("div");
+            empty.className = "image-box";
+            empty.innerHTML = "<span>+</span>";
+            empty.onclick = () => fileInput.click();
+            grid.appendChild(empty);
+        }
+    }
+
+    fileInput.addEventListener("change", e => {
+        for (let file of e.target.files) {
+            if (files.length + existingImages.length < MAX_IMAGES) files.push(file);
+        }
+        fileInput.value = "";
+        syncInputFiles();
+        renderGrid();
+        validateAll();
+    });
+
+    function syncInputFiles() {
+        const dt = new DataTransfer();
+        files.forEach(f => dt.items.add(f));
+        fileInput.files = dt.files;
+    }
+
+    /* ── Final guard on submit ── */
+    form?.addEventListener("submit", e => {
+        if (!validateAll()) e.preventDefault();
+    });
+
+});
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\address-picker.js ================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    // address-input is now the asp-for bound field directly
+    const input = document.getElementById("address-input");
+    const suggestions = document.getElementById("address-suggestions");
+    const loading = document.getElementById("address-loading");
+    const mapContainer = document.getElementById("address-map-preview");
+    const confirmedBadge = document.getElementById("address-confirmed-badge");
+    const hiddenLat = document.getElementById("Latitude");
+    const hiddenLng = document.getElementById("Longitude");
+
+    if (!input) return;
+
+    let map = null;
+    let marker = null;
+    let debounceTimer = null;
+    let activeIndex = -1;
+    let currentResults = [];
+
+    // ── Debounced search ──
+    input.addEventListener("input", () => {
+        const query = input.value.trim();
+
+        window.addressConfirmed = false;
+        window.validateAll?.();
+
+        clearTimeout(debounceTimer);
+        confirmedBadge?.classList.remove("show");
+
+        // Clear lat/lng when user types again
+        if (hiddenLat) hiddenLat.value = "";
+        if (hiddenLng) hiddenLng.value = "";
+
+        // Hide map immediately when input is cleared
+        if (!query) {
+            hideMap();
+            closeSuggestions();
+            return;
+        }
+
+        if (query.length < 3) {
+            closeSuggestions();
+            return;
+        }
+
+        debounceTimer = setTimeout(() => searchAddress(query), 400);
+    });
+
+    async function searchAddress(query) {
+        loading?.classList.add("show");
+        closeSuggestions();
+
+        try {
+            const res = await fetch(
+                `https://nominatim.openstreetmap.org/search?` +
+                `q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`,
+                { headers: { "Accept-Language": "en" } }
+            );
+
+            const data = await res.json();
+            currentResults = data;
+            renderSuggestions(data);
+        } catch {
+            closeSuggestions();
+        } finally {
+            loading?.classList.remove("show");
+        }
+    }
+
+    function renderSuggestions(results) {
+        if (!suggestions) return;
+
+        suggestions.innerHTML = "";
+        activeIndex = -1;
+
+        if (!results.length) {
+            suggestions.innerHTML =
+                `<div class="suggestion-item" style="color:#888;cursor:default">
+                    No results found
+                 </div>`;
+            suggestions.classList.add("show");
+            return;
+        }
+
+        results.forEach((r) => {
+            const parts = (r.display_name || "").split(", ");
+            const main = parts.slice(0, 2).join(", ");
+            const sub = parts.slice(2).join(", ");
+
+            const item = document.createElement("div");
+            item.className = "suggestion-item";
+            item.innerHTML = `
+                <span class="suggestion-icon">📍</span>
+                <div>
+                    <div class="suggestion-main">${escapeHtml(main)}</div>
+                    <div class="suggestion-sub">${escapeHtml(sub)}</div>
+                </div>`;
+
+            item.addEventListener("mousedown", (e) => {
+                e.preventDefault();
+                selectResult(r);
+            });
+
+            suggestions.appendChild(item);
+        });
+
+        suggestions.classList.add("show");
+    }
+
+    function selectResult(result) {
+        const lat = parseFloat(result.lat);
+        const lng = parseFloat(result.lon);
+        const displayName = result.display_name || "";
+
+        input.value = displayName;
+        if (hiddenLat) hiddenLat.value = String(lat);
+        if (hiddenLng) hiddenLng.value = String(lng);
+
+        closeSuggestions();
+        showMap(lat, lng);
+
+        window.addressConfirmed = true;
+        confirmedBadge?.classList.add("show");
+        window.validateAll?.();
+    }
+
+    function showMap(lat, lng) {
+        if (!mapContainer) return;
+
+        mapContainer.classList.add("show");
+
+        if (!map) {
+            // Leaflet must be loaded
+            if (typeof L === "undefined") return;
+
+            map = L.map("address-map", { zoomControl: true, scrollWheelZoom: false });
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "© OpenStreetMap contributors"
+            }).addTo(map);
+        }
+
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map);
+        map.setView([lat, lng], 14);
+
+        // Fix Leaflet tile rendering inside hidden containers
+        setTimeout(() => map && map.invalidateSize(), 100);
+    }
+
+    function hideMap() {
+        mapContainer?.classList.remove("show");
+        if (marker && map) {
+            map.removeLayer(marker);
+            marker = null;
+        }
+    }
+
+    function closeSuggestions() {
+        if (!suggestions) return;
+        suggestions.classList.remove("show");
+        suggestions.innerHTML = "";
+        activeIndex = -1;
+    }
+
+    // ── Keyboard navigation ──
+    input.addEventListener("keydown", (e) => {
+        const items = suggestions?.querySelectorAll(".suggestion-item") || [];
+
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            updateActive(items);
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            activeIndex = Math.max(activeIndex - 1, 0);
+            updateActive(items);
+        } else if (e.key === "Enter") {
+            e.preventDefault();
+            if (activeIndex >= 0 && currentResults[activeIndex]) {
+                selectResult(currentResults[activeIndex]);
+            }
+        } else if (e.key === "Escape") {
+            closeSuggestions();
+        }
+    });
+
+    function updateActive(items) {
+        items.forEach((item, i) => {
+            item.classList.toggle("active", i === activeIndex);
+        });
+    }
+
+    // Close on outside click
+    document.addEventListener("click", (e) => {
+        const wrapper = input.closest(".address-picker-wrapper");
+        if (wrapper && !wrapper.contains(e.target)) {
+            closeSuggestions();
+        }
+    });
+
+    // ── Restore map if editing (existing address with coords) ──
+    const existingLat = hiddenLat?.value;
+    const existingLng = hiddenLng?.value;
+
+    if (existingLat && existingLng && input.value) {
+        showMap(parseFloat(existingLat), parseFloat(existingLng));
+        confirmedBadge?.classList.add("show");
+
+        // THIS is the key for your submit button validation on Edit
+        window.addressConfirmed = true;
+        window.validateAll?.();
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+});
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\auth-cooldown.js ================
+
+(function () {
+    function ready(fn) {
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", fn);
+        } else {
+            fn();
+        }
+    }
+
+    function nowMs() {
+        return Date.now();
+    }
+
+    function getInt(v, fallback) {
+        const n = parseInt(v, 10);
+        return Number.isFinite(n) ? n : fallback;
+    }
+
+    function formatSeconds(s) {
+        return `${s}s`;
+    }
+
+    ready(() => {
+        const buttons = Array.from(document.querySelectorAll("button[data-cooldown-key]"));
+        if (!buttons.length) return;
+
+        // Prevent double-click spam while the request is submitting (NOT the cooldown).
+        const forms = new Set(buttons.map(b => b.closest("form")).filter(Boolean));
+        forms.forEach((form) => {
+            form.addEventListener("submit", (e) => {
+                const submitter = e.submitter;
+                if (!submitter) return;
+                if (submitter.matches("button[data-cooldown-key]")) {
+                    submitter.disabled = true;
+                }
+            });
+        });
+
+        function ensureTimerEl(btn) {
+            const timerAttr = btn.getAttribute("data-cooldown-timer-id");
+            let timerEl = null;
+
+            if (timerAttr) timerEl = document.getElementById(timerAttr);
+
+            if (!timerEl) {
+                const next = btn.nextElementSibling;
+                if (next && next.classList.contains("cooldown-timer")) timerEl = next;
+            }
+
+            if (!timerEl) {
+                timerEl = document.createElement("span");
+                timerEl.className = "ms-2 text-muted small cooldown-timer";
+                btn.insertAdjacentElement("afterend", timerEl);
+            }
+
+            return timerEl;
+        }
+
+        function setState(btn, timerEl, remainingSec) {
+            if (remainingSec > 0) {
+                btn.disabled = true;
+                timerEl.textContent = `(${formatSeconds(remainingSec)})`;
+            } else {
+                btn.disabled = false;
+                timerEl.textContent = "";
+            }
+        }
+
+        function startTick(btn, storageKey, seconds) {
+            const timerEl = ensureTimerEl(btn);
+
+            // Clear existing ticks
+            if (btn._cooldownIntervalId) {
+                clearInterval(btn._cooldownIntervalId);
+                btn._cooldownIntervalId = null;
+            }
+
+            btn._cooldownIntervalId = setInterval(() => {
+                const until = getInt(sessionStorage.getItem(storageKey), 0);
+                const remainingMs = until - nowMs();
+                const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+
+                setState(btn, timerEl, remainingSec);
+
+                if (remainingSec <= 0) {
+                    sessionStorage.removeItem(storageKey);
+                    clearInterval(btn._cooldownIntervalId);
+                    btn._cooldownIntervalId = null;
+                }
+            }, 250);
+
+            const until = getInt(sessionStorage.getItem(storageKey), 0);
+            const remainingMs = until - nowMs();
+            const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+            setState(btn, timerEl, remainingSec);
+        }
+
+        function beginCooldownForKey(key, seconds) {
+            const btn = buttons.find(b => (b.getAttribute("data-cooldown-key") || "") === key);
+            if (!btn) return;
+
+            const storageKey = `mz_cooldown_${key}`;
+            sessionStorage.setItem(storageKey, String(nowMs() + seconds * 1000));
+            startTick(btn, storageKey, seconds);
+        }
+
+        // Restore existing cooldowns (if tab refreshed mid-cooldown)
+        buttons.forEach((btn) => {
+            const key = btn.getAttribute("data-cooldown-key");
+            const seconds = getInt(btn.getAttribute("data-cooldown-seconds"), 30);
+            const storageKey = `mz_cooldown_${key}`;
+            const until = getInt(sessionStorage.getItem(storageKey), 0);
+            const remainingMs = until - nowMs();
+            const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+
+            if (remainingSec > 0) {
+                startTick(btn, storageKey, seconds);
+            } else {
+                const timerEl = ensureTimerEl(btn);
+                setState(btn, timerEl, 0);
+            }
+        });
+
+        // Start cooldown ONLY if server requested it
+        const start = document.getElementById("authCooldownStart");
+        if (start) {
+            const key = start.getAttribute("data-key") || "";
+            const seconds = getInt(start.getAttribute("data-seconds"), 30);
+            if (key) {
+                beginCooldownForKey(key, seconds);
+            }
+        }
+    });
+})();
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\chat.js ================
+
+document.addEventListener("DOMContentLoaded", () => {
+    if (!window.chatConfig) return;
+
+    const { chatId, adId, currentUserId, otherUserId } = window.chatConfig;
+
+    const chatBox = document.getElementById("chat-box");
+
+    let isConnected = false;
+    const imageInput = document.getElementById("imageInput");
+    const imagePreview = document.getElementById("imagePreview");
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    sendBtn.disabled = true;
+
+    let selectedImages = [];
+
+    imageInput.addEventListener("change", () => {
+        selectedImages = Array.from(imageInput.files);
+        renderPreview();
+    });
+
+    function renderPreview() {
+        imagePreview.innerHTML = "";
+        selectedImages.forEach((file, i) => {
+            const r = new FileReader();
+            r.onload = e => {
+                imagePreview.innerHTML += `
+                    <div class="preview-image-wrapper">
+                        <img src="${e.target.result}" />
+                        <span class="remove-image" onclick="removeImage(${i})">✕</span>
+                    </div>`;
+            };
+            r.readAsDataURL(file);
+        });
+    }
+
+    window.removeImage = i => {
+        selectedImages.splice(i, 1);
+        renderPreview();
+    };
+
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/chatHub")
+        .build();
+
+    connection.start()
+        .then(() => {
+            isConnected = true;
+            sendBtn.disabled = false;
+            connection.invoke("JoinChat", chatId);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        })
+        .catch(err => console.error("SignalR start failed:", err));
+
+    connection.on("ReceiveMessage", (senderId, content, imageUrls, sentOn) => {
+        const mine = senderId === currentUserId;
+
+        const div = document.createElement("div");
+        div.className = `chat-message ${mine ? "mine" : "theirs"}`;
+
+        div.innerHTML = `
+            ${!mine ? `<img src="/images/default-avatar.png" class="chat-avatar" />` : ""}
+            <div class="chat-bubble">
+                ${imageUrls.length ? `
+                    <div class="chat-images">
+                        ${imageUrls.map((url, idx) =>
+            `<img src="${url}" class="chat-image"
+                                  onclick='openImageGallery(${JSON.stringify(imageUrls)}, ${idx})' />`
+        ).join("")}
+                    </div>` : ""}
+                ${content ? `<div class="chat-text">${content}</div>` : ""}
+                <div class="chat-time">${new Date(sentOn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+            </div>`;
+
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    sendBtn.addEventListener("click", async () => {
+        if (!isConnected) return;
+        if (!msgInput.value && !selectedImages.length) return;
+
+        try {
+            const urls = [];
+
+            for (const f of selectedImages) {
+                const fd = new FormData();
+                fd.append("image", f);
+
+                const r = await fetch("/Messages/UploadChatImage", {
+                    method: "POST",
+                    body: fd
+                });
+
+                if (!r.ok) throw new Error("Image upload failed");
+
+                const d = await r.json();
+                urls.push(d.imageUrl);
+            }
+
+            await connection.invoke(
+                "SendMessage",
+                adId,
+                chatId,
+                otherUserId,   
+                msgInput.value,
+                urls
+            );
+
+            msgInput.value = "";
+            selectedImages = [];
+            imagePreview.innerHTML = "";
+
+        } catch (err) {
+            console.error("Send failed:", err);
+            alert("Message failed to send");
+        }
+    });
+
+    /* image viewer */
+    let gallery = [];
+    let index = 0;
+
+    window.openImageGallery = function (images, i) {
+        gallery = images || [];
+        index = i || 0;
+
+        const viewer = document.getElementById("imageViewer");
+        if (!viewer) return;
+
+        viewer.classList.remove("hidden");
+        updateViewer();
+    };
+
+    window.closeViewer = function () {
+        document.getElementById("imageViewer")?.classList.add("hidden");
+    };
+
+    function updateViewer() {
+        const img = document.getElementById("viewerImage");
+        const counter = document.getElementById("imageCounter");
+        if (!img || !counter || !gallery.length) return;
+
+        img.src = gallery[index];
+        counter.textContent = `${index + 1} / ${gallery.length}`;
+    }
+
+    window.prevImage = function () {
+        if (index > 0) { index--; updateViewer(); }
+    };
+
+    window.nextImage = function () {
+        if (index < gallery.length - 1) { index++; updateViewer(); }
+    };
+
+    // Download current image
+    document.getElementById("downloadBtn")?.addEventListener("click", () => {
+        if (!gallery.length) return;
+
+        const url = gallery[index];
+        const name = url.split("/").pop().split("?")[0] || "image.jpg";
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    });
+});
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\login-persist.js ================
+
+(function () {
+    const EMAIL_KEY = "mz_login_email";
+    const PASS_KEY = "mz_login_password";
+
+    function ready(fn) {
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", fn);
+        } else {
+            fn();
+        }
+    }
+
+    ready(() => {
+        const form = document.getElementById("account");
+        const emailInput = document.getElementById("Input_Email");
+        const passInput = document.getElementById("Input_Password");
+
+        if (!form || !emailInput || !passInput) return;
+
+        // Restore saved values (only within the same tab/session)
+        const savedEmail = sessionStorage.getItem(EMAIL_KEY);
+        const savedPass = sessionStorage.getItem(PASS_KEY);
+
+        if (savedEmail && !emailInput.value) emailInput.value = savedEmail;
+        if (savedPass && !passInput.value) passInput.value = savedPass;
+
+        // Save on typing
+        emailInput.addEventListener("input", () => {
+            sessionStorage.setItem(EMAIL_KEY, emailInput.value || "");
+        });
+
+        passInput.addEventListener("input", () => {
+            sessionStorage.setItem(PASS_KEY, passInput.value || "");
+        });
+
+        // Before any submit (login / resend / forgot), persist the latest values
+        form.addEventListener("submit", () => {
+            sessionStorage.setItem(EMAIL_KEY, emailInput.value || "");
+            sessionStorage.setItem(PASS_KEY, passInput.value || "");
+        });
+    });
+})();
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\search-filters.js ================
+
+document.addEventListener("DOMContentLoaded", () => {
+    initAddressPicker();
+    initCategoryPicker();
+});
+
+/* ─── Address Autocomplete (Nominatim) ─── */
+function initAddressPicker() {
+    const input = document.getElementById("filter-address-input");
+    const suggestions = document.getElementById("filter-address-suggestions");
+
+    if (!input || !suggestions) return;
+
+    let debounceTimer;
+
+    document.addEventListener("click", (e) => {
+        if (!input.contains(e.target) && !suggestions.contains(e.target)) {
+            suggestions.classList.remove("show");
+        }
+    });
+
+    input.addEventListener("input", () => {
+        const query = input.value.trim();
+        clearTimeout(debounceTimer);
+
+        if (query.length < 3) {
+            suggestions.classList.remove("show");
+            return;
+        }
+
+        debounceTimer = setTimeout(() => {
+            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`, {
+                headers: { "Accept-Language": "en" }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    suggestions.innerHTML = "";
+                    if (!data.length) {
+                        suggestions.classList.remove("show");
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const div = document.createElement("div");
+                        div.className = "suggestion-item";
+
+                        const displayName = item.display_name; // keep full
+                        div.textContent = displayName;
+
+                        div.addEventListener("click", () => {
+                            input.value = displayName;
+                            suggestions.classList.remove("show");
+                        });
+
+                        suggestions.appendChild(div);
+                    });
+
+                    suggestions.classList.add("show");
+                })
+                .catch(() => suggestions.classList.remove("show"));
+        }, 300);
+    });
+}
+
+/* ─── Hierarchical Category Picker ─── */
+function initCategoryPicker() {
+    const container = document.getElementById("category-picker-container");
+    const dropdown = document.getElementById("category-dropdown-menu");
+    const list = document.getElementById("filter-category-list");
+    const input = document.getElementById("filter-category-id");
+    const display = document.getElementById("selected-category-name");
+    const backBtn = document.getElementById("cat-back-btn");
+    const breadcrumb = document.getElementById("cat-breadcrumb");
+    const clearBtn = document.getElementById("clear-category-btn");
+
+    if (!container || !dropdown || !list || !input || !display || !backBtn || !breadcrumb || !clearBtn) return;
+
+    let parentStack = [];
+    let breadcrumbStack = ["All Categories"];
+    let currentParentId = null;
+
+    container.addEventListener("click", (e) => {
+        if (dropdown.contains(e.target)) return;
+
+        const isVisible = dropdown.classList.contains("show");
+        if (isVisible) {
+            dropdown.classList.remove("show");
+            return;
+        }
+
+        dropdown.classList.add("show");
+
+        // Load initial
+        if (list.children.length <= 1) {
+            loadCategories(null);
+        }
+    });
+
+    document.addEventListener("click", (e) => {
+        if (!container.contains(e.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
+
+    clearBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        input.value = "";
+        display.textContent = "All Categories";
+        dropdown.classList.remove("show");
+
+        parentStack = [];
+        breadcrumbStack = ["All Categories"];
+        loadCategories(null);
+    });
+
+    backBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        currentParentId = parentStack.pop() ?? null;
+        breadcrumbStack.pop();
+        loadCategories(currentParentId);
+    });
+
+    function loadCategories(parentId) {
+        backBtn.style.display = parentStack.length > 0 ? "inline-block" : "none";
+        breadcrumb.textContent = breadcrumbStack.join(" > ");
+
+        list.innerHTML = `<li class="p-3 text-center text-muted"><span class="spinner-border spinner-border-sm"></span></li>`;
+
+        fetch(`/Ad/GetChildren?parentId=${parentId ?? ""}`)
+            .then(r => r.json())
+            .then(data => {
+                list.innerHTML = "";
+                currentParentId = parentId;
+
+                data.forEach(c => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `<span>${c.name}</span>`;
+
+                    if (c.hasChildren) {
+                        li.innerHTML += `<span class="text-muted">›</span>`;
+                        li.addEventListener("click", (e) => {
+                            e.stopPropagation();
+                            parentStack.push(currentParentId);
+                            breadcrumbStack.push(c.name);
+                            loadCategories(c.id);
+                        });
+                    } else {
+                        li.addEventListener("click", (e) => {
+                            e.stopPropagation();
+                            input.value = c.id;
+                            display.textContent = c.name;
+                            dropdown.classList.remove("show");
+                        });
+                    }
+
+                    list.appendChild(li);
+                });
+            });
+    }
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\site.js ================
+
+// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+// for details on configuring this project to bundle and minify static web assets.
+
+// Write your JavaScript code.
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Program.cs ================
+
+using MarketZone.Data;
+using MarketZone.Data.Models;
+using MarketZone.Infrastructure.SignalR;
+using MarketZone.Middlewares;
+using MarketZone.Services.Implementations;
+using MarketZone.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using System.Web;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Identity
+builder.Services
+	.AddDefaultIdentity<User>(options =>
+	{
+		options.SignIn.RequireConfirmedAccount = true;
+		options.User.RequireUniqueEmail = true;
+	})
+	.AddRoles<IdentityRole>()
+	.AddEntityFrameworkStores<ApplicationDbContext>();
+
+// External login
+builder.Services.AddAuthentication()
+	.AddGoogle(options =>
+	{
+		options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+		options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+
+		options.Events = new OAuthEvents
+		{
+			OnRedirectToAuthorizationEndpoint = context =>
+			{
+				var uri = new Uri(context.RedirectUri);
+				var query = HttpUtility.ParseQueryString(uri.Query);
+
+				query.Remove("prompt");
+				query.Add("prompt", "select_account");
+
+				var newUrl = $"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}?{query}";
+
+				context.Response.Redirect(newUrl);
+				return Task.CompletedTask;
+			}
+		};
+	});
+
+// SignalR
+builder.Services.AddSignalR(options =>
+{
+	options.EnableDetailedErrors = true;
+});
+builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
+
+// Email sender
+builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
+
+// Background service
+builder.Services.AddHostedService<EmailVerificationCleanupService>();
+
+// MVC + Razor Pages
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
+// Application services
+builder.Services.AddScoped<IAdService, AdService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICategoryHierarchyService, CategoryHierarchyService>();
+builder.Services.AddScoped<IFavoriteService, FavoriteService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IMessageService, MessageService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+
+var app = builder.Build();
+
+// Global exception handling
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+if (!app.Environment.IsDevelopment())
+{
+	app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseMiddleware<UserOnlineMiddleware>();
+
+// SignalR Hub
+app.MapHub<ChatHub>("/chatHub");
+
+// MVC routes
+app.MapControllerRoute(
+	name: "default",
+	pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapRazorPages();
+
+app.Run();

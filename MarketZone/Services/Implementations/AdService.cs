@@ -92,38 +92,48 @@ namespace MarketZone.Services.Implementations
 
 		public async Task<AdDetailsModel?> GetDetailsAsync(int id, string? userId)
 		{
-			return await context.Ads
+			var data = await context.Ads
 				.AsNoTracking()
 				.Where(a => a.Id == id)
-				.Select(a => new AdDetailsModel
+				.Select(a => new
 				{
-					Id = a.Id,
-					Title = a.Title,
-					Description = a.Description,
-					Price = a.Price,
-					Currency = a.Currency,
-					Condition = a.Condition,
-					Address = a.Address,
-					Latitude = a.Latitude,
-					Longitude = a.Longitude,
-					CreatedOn = a.CreatedOn,
-					SellerId = a.UserId,
+					CategoryId = a.CategoryId,
+					Model = new AdDetailsModel
+					{
+						Id = a.Id,
+						Title = a.Title,
+						Description = a.Description,
+						Price = a.Price,
+						Currency = a.Currency,
+						Condition = a.Condition,
+						Address = a.Address,
+						Latitude = a.Latitude,
+						Longitude = a.Longitude,
+						CreatedOn = a.CreatedOn,
+						SellerId = a.UserId,
 
-					SellerName = a.User.UserName!,
-					CategoryPath = a.Category.ParentCategory != null
-						? a.Category.ParentCategory.Name + " → " + a.Category.Name
-						: a.Category.Name,
+						SellerName = a.User.UserName!,
 
-					ImageUrls = a.Images
-						.OrderBy(i => i.Id)
-						.Select(i => i.ImageUrl)
-						.ToList(),
+						// will be filled after query
+						CategoryPath = string.Empty,
 
-					IsFavorite = userId != null &&
-						context.Favorites.Any(f =>
-							f.AdId == a.Id && f.UserId == userId)
+						ImageUrls = a.Images
+							.OrderBy(i => i.Id)
+							.Select(i => i.ImageUrl)
+							.ToList(),
+
+						IsFavorite = userId != null &&
+							context.Favorites.Any(f =>
+								f.AdId == a.Id && f.UserId == userId)
+					}
 				})
 				.FirstOrDefaultAsync();
+
+			if (data == null)
+				return null;
+
+			data.Model.CategoryPath = await BuildCategoryPathAsync(data.CategoryId);
+			return data.Model;
 		}
 
 		public async Task<IEnumerable<AdListItemViewModel>> GetMyAdsAsync(string userId)
@@ -140,13 +150,14 @@ namespace MarketZone.Services.Implementations
 					Currency = a.Currency,
 					CreatedOn = a.CreatedOn,
 					MainImageUrl = a.Images
-		                  .OrderBy(i => i.Id)
-		                  .Select(i => i.ImageUrl)
-		                  .FirstOrDefault(),
+						  .OrderBy(i => i.Id)
+						  .Select(i => i.ImageUrl)
+						  .FirstOrDefault(),
 					CanEdit = true
 				})
 				.ToListAsync();
 		}
+
 		public async Task<AdCreateModel?> GetEditModelAsync(int adId, string userId)
 		{
 			var ad = await context.Ads
@@ -173,12 +184,12 @@ namespace MarketZone.Services.Implementations
 				CategoryId = ad.CategoryId,
 				Tags = string.Join(", ", ad.AdTags.Select(t => t.Tag.Name)),
 				ExistingImageUrls = ad.Images
-	             .OrderBy(i => i.Id)
-	             .Select(i => i.ImageUrl)
-                 .ToList()
+				 .OrderBy(i => i.Id)
+				 .Select(i => i.ImageUrl)
+				 .ToList()
 			};
-
 		}
+
 		public async Task<bool> UpdateAsync(AdCreateModel model, string userId)
 		{
 			var ad = await context.Ads
@@ -201,9 +212,7 @@ namespace MarketZone.Services.Implementations
 			ad.Longitude = model.Longitude;
 			ad.CategoryId = model.CategoryId!.Value;
 
-			// IMAGES
-
-			// Remove images that user removed in UI
+			// Images
 			var imagesToRemove = ad.Images
 				.Where(i => !model.ExistingImageUrls.Contains(i.ImageUrl))
 				.ToList();
@@ -211,23 +220,19 @@ namespace MarketZone.Services.Implementations
 			foreach (var img in imagesToRemove)
 			{
 				ad.Images.Remove(img);
-
 				await imageService.DeleteImageAsync(img.ImageUrl);
 			}
 
-			// Add newly uploaded images
 			foreach (var image in model.Images)
 			{
 				var imageUrl = await imageService.UploadAdImageAsync(image);
 				ad.Images.Add(new AdImage { ImageUrl = imageUrl });
 			}
 
-			// Enforce at least one image AFTER merge
 			if (!ad.Images.Any())
 				throw new InvalidOperationException("At least one image is required.");
 
-			// TAGS
-
+			// Tags
 			ad.AdTags.Clear();
 
 			if (!string.IsNullOrWhiteSpace(model.Tags))
@@ -250,6 +255,7 @@ namespace MarketZone.Services.Implementations
 			await context.SaveChangesAsync();
 			return true;
 		}
+
 		public async Task<bool> DeleteAsync(int adId, string userId)
 		{
 			var ad = await context.Ads
@@ -259,7 +265,6 @@ namespace MarketZone.Services.Implementations
 			if (ad == null)
 				return false;
 
-			// Delete physical images
 			foreach (var img in ad.Images.ToList())
 			{
 				ad.Images.Remove(img);
@@ -271,23 +276,21 @@ namespace MarketZone.Services.Implementations
 
 			return true;
 		}
+
 		public async Task<AdSearchViewModel> SearchAsync(string? search,
-	    string? address,int? categoryId, decimal? minPrice, decimal? maxPrice,
-		string? tags,string? sort, int page, string? userId)
+			string? address, int? categoryId, decimal? minPrice, decimal? maxPrice,
+			string? tags, string? sort, int page, string? userId)
 		{
 			const int PageSize = 21;
 
 			var query = context.Ads.AsNoTracking().AsQueryable();
 
-			// Exclude user's own ads
 			if (!string.IsNullOrEmpty(userId))
 				query = query.Where(a => a.UserId != userId);
 
-			// Search (title)
 			if (!string.IsNullOrWhiteSpace(search))
 				query = query.Where(a => a.Title.Contains(search));
 
-			// Address scaling: split into tokens and require all tokens to be present (order independent)
 			if (!string.IsNullOrWhiteSpace(address))
 			{
 				var tokens = address
@@ -303,22 +306,19 @@ namespace MarketZone.Services.Implementations
 				}
 			}
 
-			// Category: include selected + all descendants
 			if (categoryId.HasValue)
 			{
 				var allowedCategoryIds = await categoryHierarchyService
-				.GetDescendantCategoryIdsAsync(categoryId.Value);
+					.GetDescendantCategoryIdsAsync(categoryId.Value);
 				query = query.Where(a => allowedCategoryIds.Contains(a.CategoryId));
 			}
 
-			// Price
 			if (minPrice.HasValue)
 				query = query.Where(a => a.Price >= minPrice.Value);
 
 			if (maxPrice.HasValue)
 				query = query.Where(a => a.Price <= maxPrice.Value);
 
-			// Tags (up to 10, OR match): AdTags -> Tag.Name
 			if (!string.IsNullOrWhiteSpace(tags))
 			{
 				var tagList = tags
@@ -335,7 +335,6 @@ namespace MarketZone.Services.Implementations
 				}
 			}
 
-			// Sorting
 			query = sort switch
 			{
 				"oldest" => query.OrderBy(a => a.CreatedOn),
@@ -387,6 +386,30 @@ namespace MarketZone.Services.Implementations
 				TotalPages = (int)Math.Ceiling(totalAds / (double)PageSize),
 				Ads = ads
 			};
+		}
+
+		private async Task<string> BuildCategoryPathAsync(int categoryId)
+		{
+			var names = new List<string>();
+			int? currentId = categoryId;
+
+			while (currentId != null)
+			{
+				var cat = await context.Categories
+					.AsNoTracking()
+					.Where(c => c.Id == currentId.Value)
+					.Select(c => new { c.Name, c.ParentCategoryId })
+					.FirstOrDefaultAsync();
+
+				if (cat == null)
+					break;
+
+				names.Add(cat.Name);
+				currentId = cat.ParentCategoryId;
+			}
+
+			names.Reverse();
+			return string.Join(" → ", names);
 		}
 	}
 }

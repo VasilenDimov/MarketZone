@@ -1,5 +1,175 @@
 ﻿
 
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\Manage\Index.cshtml ================
+
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Profile";
+    ViewData["ActivePage"] = ManageNavPages.Index;
+}
+
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+
+<div class="row">
+    <div class="col-md-6">
+        <form id="profile-form" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.UserName" class="form-control" placeholder="Please choose your username." />
+                <label asp-for="Input.UserName" class="form-label"></label>
+                <span asp-validation-for="Input.UserName" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">
+                Save
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\Manage\Index.cshtml.cs ================
+
+#nullable disable
+
+using System.ComponentModel.DataAnnotations;
+using MarketZone.Data.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace MarketZone.Areas.Identity.Pages.Account.Manage
+{
+	public class IndexModel : PageModel
+	{
+		private readonly UserManager<User> _userManager;
+		private readonly SignInManager<User> _signInManager;
+
+		public IndexModel(
+			UserManager<User> userManager,
+			SignInManager<User> signInManager)
+		{
+			_userManager = userManager;
+			_signInManager = signInManager;
+		}
+
+		[TempData]
+		public string StatusMessage { get; set; }
+
+		[BindProperty]
+		public InputModel Input { get; set; }
+
+		public class InputModel
+		{
+			[Required]
+			[Display(Name = "Username")]
+			[StringLength(30, MinimumLength = 3, ErrorMessage = "Username must be between {2} and {1} characters.")]
+			[RegularExpression(@"^[a-zA-Z0-9._-]+$", ErrorMessage = "Username can contain letters, numbers, dot, underscore and dash only.")]
+			public string UserName { get; set; }
+
+			[Phone]
+			[Display(Name = "Phone number")]
+			public string PhoneNumber { get; set; }
+		}
+
+		private async Task LoadAsync(User user)
+		{
+			var userName = await _userManager.GetUserNameAsync(user);
+			var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+
+			Input = new InputModel
+			{
+				UserName = userName,
+				PhoneNumber = phoneNumber
+			};
+		}
+
+		public async Task<IActionResult> OnGetAsync()
+		{
+			var user = await _userManager.GetUserAsync(User);
+			if (user == null)
+			{
+				return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+			}
+
+			await LoadAsync(user);
+			return Page();
+		}
+
+		public async Task<IActionResult> OnPostAsync()
+		{
+			var user = await _userManager.GetUserAsync(User);
+			if (user == null)
+			{
+				return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+			}
+
+			if (!ModelState.IsValid)
+			{
+				await LoadAsync(user);
+				return Page();
+			}
+
+			// Username
+			var currentUserName = await _userManager.GetUserNameAsync(user);
+			var newUserName = Input.UserName?.Trim();
+
+			if (!string.Equals(currentUserName, newUserName, StringComparison.Ordinal))
+			{
+				var existing = await _userManager.FindByNameAsync(newUserName);
+				if (existing != null && existing.Id != user.Id)
+				{
+					ModelState.AddModelError("Input.UserName", "This username is already taken.");
+					await LoadAsync(user);
+					return Page();
+				}
+
+				var setUserNameResult = await _userManager.SetUserNameAsync(user, newUserName);
+				if (!setUserNameResult.Succeeded)
+				{
+					foreach (var error in setUserNameResult.Errors)
+					{
+						ModelState.AddModelError(string.Empty, error.Description);
+					}
+
+					await LoadAsync(user);
+					return Page();
+				}
+			}
+
+			// Phone
+			var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
+			if (Input.PhoneNumber != phoneNumber)
+			{
+				var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
+				if (!setPhoneResult.Succeeded)
+				{
+					StatusMessage = "Unexpected error when trying to set phone number.";
+					return RedirectToPage();
+				}
+			}
+
+			await _signInManager.RefreshSignInAsync(user);
+			StatusMessage = "Your profile has been updated.";
+			return RedirectToPage();
+		}
+	}
+}
+
+
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\Manage\ManageNavPages.cs ================
 
 // Licensed to the .NET Foundation under one or more agreements.
@@ -262,100 +432,68 @@ namespace MarketZone.Areas.Identity.Pages.Account
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
 using MarketZone.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
 
 namespace MarketZone.Areas.Identity.Pages.Account
 {
-    [AllowAnonymous]
-    public class ExternalLoginModel : PageModel
-    {
-        private readonly SignInManager<User> _signInManager;
-        private readonly UserManager<User> _userManager;
-        private readonly IUserStore<User> _userStore;
-        private readonly IUserEmailStore<User> _emailStore;
-        private readonly IEmailSender _emailSender;
-        private readonly ILogger<ExternalLoginModel> _logger;
+	[AllowAnonymous]
+	public class ExternalLoginModel : PageModel
+	{
+		private readonly SignInManager<User> _signInManager;
+		private readonly UserManager<User> _userManager;
+		private readonly IUserStore<User> _userStore;
+		private readonly IUserEmailStore<User> _emailStore;
+		private readonly IEmailSender _emailSender;
+		private readonly ILogger<ExternalLoginModel> _logger;
 
-        public ExternalLoginModel(
-            SignInManager<User> signInManager,
-            UserManager<User> userManager,
-            IUserStore<User> userStore,
-            ILogger<ExternalLoginModel> logger,
-            IEmailSender emailSender)
-        {
-            _signInManager = signInManager;
-            _userManager = userManager;
-            _userStore = userStore;
-            _emailStore = GetEmailStore();
-            _logger = logger;
-            _emailSender = emailSender;
-        }
+		public ExternalLoginModel(
+			SignInManager<User> signInManager,
+			UserManager<User> userManager,
+			IUserStore<User> userStore,
+			ILogger<ExternalLoginModel> logger,
+			IEmailSender emailSender)
+		{
+			_signInManager = signInManager;
+			_userManager = userManager;
+			_userStore = userStore;
+			_emailStore = GetEmailStore();
+			_logger = logger;
+			_emailSender = emailSender;
+		}
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [BindProperty]
-        public InputModel Input { get; set; }
+		[BindProperty]
+		public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public string ProviderDisplayName { get; set; }
+		public string ProviderDisplayName { get; set; }
+		public string ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public string ReturnUrl { get; set; }
+		[TempData]
+		public string ErrorMessage { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        [TempData]
-        public string ErrorMessage { get; set; }
+		public class InputModel
+		{
+			[Required]
+			[EmailAddress]
+			public string Email { get; set; }
+		}
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
-        public class InputModel
-        {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [EmailAddress]
-            public string Email { get; set; }
-        }
-        
-        public IActionResult OnGet() => RedirectToPage("./Login");
+		public IActionResult OnGet() => RedirectToPage("./Login");
 
-        public IActionResult OnPost(string provider, string returnUrl = null)
-        {
-            // Request a redirect to the external login provider.
-            var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
-            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
-            return new ChallengeResult(provider, properties);
-        }
+		public IActionResult OnPost(string provider, string returnUrl = null)
+		{
+			returnUrl ??= Url.Content("~/");
+
+			var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
+			var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+			return new ChallengeResult(provider, properties);
+		}
 
 		public async Task<IActionResult> OnGetCallbackAsync(string returnUrl = null, string remoteError = null)
 		{
@@ -374,7 +512,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
 			}
 
-			// If the user already has this external login linked -> normal sign in
 			var result = await _signInManager.ExternalLoginSignInAsync(
 				info.LoginProvider,
 				info.ProviderKey,
@@ -383,128 +520,145 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 			if (result.Succeeded)
 			{
-				_logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity?.Name, info.LoginProvider);
+				_logger.LogInformation("{Name} logged in with {LoginProvider} provider.",
+					info.Principal.Identity?.Name, info.LoginProvider);
+
 				return LocalRedirect(returnUrl);
 			}
 
 			if (result.IsLockedOut)
 				return RedirectToPage("./Lockout");
 
-			// ✅ NEW: if a local user with the same email already exists -> do NOT link
 			var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+
 			if (!string.IsNullOrWhiteSpace(email))
 			{
 				var existingUser = await _userManager.FindByEmailAsync(email);
+
 				if (existingUser != null)
 				{
 					if (!existingUser.EmailConfirmed)
 					{
-						ErrorMessage = "An account with this email already exists but it is not confirmed. Please confirm your email first, then log in.";
-						return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+						ErrorMessage =
+							"An account with this email already exists but it is not confirmed. " +
+							"Please confirm your email or use 'Resend email confirmation'.";
+
+						return RedirectToPage("./Login", new { ReturnUrl = returnUrl, email, showResend = true });
 					}
 
-					ErrorMessage = "An account with this email already exists. Please log in to your account.";
-					return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+					var logins = await _userManager.GetLoginsAsync(existingUser);
+					bool alreadyLinked = logins.Any(l =>
+						l.LoginProvider.Equals(info.LoginProvider, StringComparison.OrdinalIgnoreCase) &&
+						l.ProviderKey == info.ProviderKey);
+
+					if (!alreadyLinked)
+					{
+						var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
+						if (!addLoginResult.Succeeded)
+						{
+							ErrorMessage = "This Google account is already linked to another user. Please log in using the correct account.";
+							return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+						}
+					}
+
+					await _signInManager.SignInAsync(existingUser, isPersistent: false);
+
+					_logger.LogInformation("Linked {LoginProvider} to existing user {UserId} and signed in.",
+						info.LoginProvider, existingUser.Id);
+
+					return LocalRedirect(returnUrl);
 				}
 			}
 
-			// Otherwise continue to the external confirmation page (new account creation)
 			ReturnUrl = returnUrl;
 			ProviderDisplayName = info.ProviderDisplayName;
 
 			if (!string.IsNullOrWhiteSpace(email))
 			{
-				Input = new InputModel
-				{
-					Email = email
-				};
+				Input = new InputModel { Email = email };
 			}
 
 			return Page();
 		}
 
 		public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
-        {
-            returnUrl = returnUrl ?? Url.Content("~/");
-            // Get the information about the user from the external login provider
-            var info = await _signInManager.GetExternalLoginInfoAsync();
-            if (info == null)
-            {
-                ErrorMessage = "Error loading external login information during confirmation.";
-                return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
-            }
+		{
+			returnUrl ??= Url.Content("~/");
 
-            if (ModelState.IsValid)
-            {
-                var user = CreateUser();
+			var info = await _signInManager.GetExternalLoginInfoAsync();
+			if (info == null)
+			{
+				ErrorMessage = "Error loading external login information during confirmation.";
+				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+			}
 
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+			if (ModelState.IsValid)
+			{
+				var existing = await _userManager.FindByEmailAsync(Input.Email);
+				if (existing != null)
+				{
+					ErrorMessage = "An account with this email already exists. Please log in.";
+					return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+				}
 
-                var result = await _userManager.CreateAsync(user);
-                if (result.Succeeded)
-                {
-                    result = await _userManager.AddLoginAsync(user, info);
-                    if (result.Succeeded)
-                    {
-                        _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+				var user = CreateUser();
+				user.CreatedOn = DateTime.UtcNow;
 
-                        var userId = await _userManager.GetUserIdAsync(user);
-                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                        var callbackUrl = Url.Page(
-                            "/Account/ConfirmEmail",
-                            pageHandler: null,
-                            values: new { area = "Identity", userId = userId, code = code },
-                            protocol: Request.Scheme);
+				// Google already verifies email ownership -> treat as confirmed
+				user.EmailConfirmed = true;
 
-                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+				await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+				await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
-                        // If account confirmation is required, we need to show the link if we don't have a real email sender
-                        if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                        {
-                            return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });
-                        }
+				var createResult = await _userManager.CreateAsync(user);
+				if (createResult.Succeeded)
+				{
+					var loginResult = await _userManager.AddLoginAsync(user, info);
+					if (loginResult.Succeeded)
+					{
+						_logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
-                        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-                        return LocalRedirect(returnUrl);
-                    }
-                }
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-            }
+						await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+						return LocalRedirect(returnUrl);
+					}
 
-            ProviderDisplayName = info.ProviderDisplayName;
-            ReturnUrl = returnUrl;
-            return Page();
-        }
+					foreach (var error in loginResult.Errors)
+						ModelState.AddModelError(string.Empty, error.Description);
+				}
+				else
+				{
+					foreach (var error in createResult.Errors)
+						ModelState.AddModelError(string.Empty, error.Description);
+				}
+			}
 
-        private User CreateUser()
-        {
-            try
-            {
-                return Activator.CreateInstance<User>();
-            }
-            catch
-            {
-                throw new InvalidOperationException($"Can't create an instance of '{nameof(User)}'. " +
-                    $"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor, or alternatively " +
-                    $"override the external login page in /Areas/Identity/Pages/Account/ExternalLogin.cshtml");
-            }
-        }
+			ProviderDisplayName = info.ProviderDisplayName;
+			ReturnUrl = returnUrl;
+			return Page();
+		}
 
-        private IUserEmailStore<User> GetEmailStore()
-        {
-            if (!_userManager.SupportsUserEmail)
-            {
-                throw new NotSupportedException("The default UI requires a user store with email support.");
-            }
-            return (IUserEmailStore<User>)_userStore;
-        }
-    }
+		private User CreateUser()
+		{
+			try
+			{
+				return Activator.CreateInstance<User>();
+			}
+			catch
+			{
+				throw new InvalidOperationException($"Can't create an instance of '{nameof(User)}'. " +
+					$"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor, or alternatively " +
+					$"override the external login page in /Areas/Identity/Pages/Account/ExternalLogin.cshtml");
+			}
+		}
+
+		private IUserEmailStore<User> GetEmailStore()
+		{
+			if (!_userManager.SupportsUserEmail)
+				throw new NotSupportedException("The default UI requires a user store with email support.");
+
+			return (IUserEmailStore<User>)_userStore;
+		}
+	}
 }
 
 
@@ -518,102 +672,156 @@ namespace MarketZone.Areas.Identity.Pages.Account
 }
 
 <h1>@ViewData["Title"]</h1>
+
 <div class="row">
     <div class="col-md-4">
         <section>
             <form id="account" method="post">
                 <h2>Use a local account to log in.</h2>
                 <hr />
+
+                @* Status message from resend/forgot actions *@
+                @if (!string.IsNullOrWhiteSpace(Model.StatusMessage))
+                {
+                    <div class="alert alert-info" role="alert">
+                        @Model.StatusMessage
+                    </div>
+                }
+
                 <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
                 <div class="form-floating mb-3">
-                    <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
+                    <input asp-for="Input.Email"
+                           class="form-control"
+                           autocomplete="username"
+                           aria-required="true"
+                           placeholder="name@example.com" />
                     <label asp-for="Input.Email" class="form-label">Email</label>
                     <span asp-validation-for="Input.Email" class="text-danger"></span>
                 </div>
+
                 <div class="form-floating mb-3">
-                    <input asp-for="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
+                    <input asp-for="Input.Password"
+                           class="form-control"
+                           autocomplete="current-password"
+                           aria-required="true"
+                           placeholder="password" />
                     <label asp-for="Input.Password" class="form-label">Password</label>
                     <span asp-validation-for="Input.Password" class="text-danger"></span>
                 </div>
+
                 <div class="checkbox mb-3">
                     <label asp-for="Input.RememberMe" class="form-label">
                         <input class="form-check-input" asp-for="Input.RememberMe" />
                         @Html.DisplayNameFor(m => m.Input.RememberMe)
                     </label>
                 </div>
+
                 <div>
-                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                    <button id="login-submit" type="submit" class="w-100 btn btn-lg btn-primary">
+                        Log in
+                    </button>
                 </div>
-                <div>
-                    <p>
-                        <a id="forgot-password" asp-page="./ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a id="resend-confirmation" asp-page="./ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
+
+                <div class="mt-3 d-flex flex-column gap-2">
+
+                    <button type="submit"
+                            class="btn btn-outline-secondary"
+                            asp-page-handler="ForgotPassword"
+                            formnovalidate
+                            data-cooldown-key="login_forgot"
+                            data-cooldown-seconds="30">
+                        Forgot your password?
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-outline-secondary"
+                            asp-page-handler="ResendConfirmation"
+                            formnovalidate
+                            data-cooldown-key="login_resend"
+                            data-cooldown-seconds="30">
+                        Resend email confirmation
+                    </button>
+
+                    <a asp-page="./Register"
+                       asp-route-returnUrl="@Model.ReturnUrl">
+                        Register as a new user
+                    </a>
+
                 </div>
             </form>
         </section>
     </div>
+
     <div class="col-md-6 col-md-offset-2">
         <section>
             <h3>Use another service to log in.</h3>
             <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
+
+            @if ((Model.ExternalLogins?.Count ?? 0) == 0)
+            {
+                <div class="alert alert-warning">
+                    External login providers are currently unavailable.
+                </div>
+            }
+            else
+            {
+                <form id="external-account"
+                      asp-page="./ExternalLogin"
+                      method="post"
+                      class="form-horizontal">
+
+                    <input type="hidden" name="flow" value="login" />
+                    <input type="hidden" name="returnUrl"
+                           value="@(Model.ReturnUrl ?? Url.Content("~/"))" />
+
                     <div>
                         <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
+                            @foreach (var provider in Model.ExternalLogins!)
+                            {
+                                <button type="submit"
+                                        class="btn btn-primary"
+                                        name="provider"
+                                        value="@provider.Name"
+                                        title="Log in using your @provider.DisplayName account">
+                                    @provider.DisplayName
+                                </button>
+                            }
                         </p>
                     </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
-                    </form>
-                }
+                </form>
             }
         </section>
     </div>
 </div>
 
+@* Server-controlled cooldown start marker *@
+<span id="authCooldownStart"
+      data-key="@TempData["StartCooldownKey"]"
+      data-seconds="@TempData["StartCooldownSeconds"]"
+      hidden></span>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/login-persist.js" asp-append-version="true"></script>
+    <script src="~/js/auth-cooldown.js" asp-append-version="true"></script>
 }
 
 
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\Login.cshtml.cs ================
 
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
 using MarketZone.Data.Models;
-using MarketZone.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.WebUtilities;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Text;
+using System.Text.Encodings.Web;
 
 namespace MarketZone.Areas.Identity.Pages.Account
 {
@@ -621,15 +829,18 @@ namespace MarketZone.Areas.Identity.Pages.Account
 	{
 		private readonly SignInManager<User> _signInManager;
 		private readonly UserManager<User> _userManager;
+		private readonly IEmailSender _emailSender;
 		private readonly ILogger<LoginModel> _logger;
 
 		public LoginModel(
 			SignInManager<User> signInManager,
 			UserManager<User> userManager,
+			IEmailSender emailSender,
 			ILogger<LoginModel> logger)
 		{
 			_signInManager = signInManager;
 			_userManager = userManager;
+			_emailSender = emailSender;
 			_logger = logger;
 		}
 
@@ -642,6 +853,9 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 		[TempData]
 		public string ErrorMessage { get; set; }
+
+		[TempData]
+		public string StatusMessage { get; set; }
 
 		public class InputModel
 		{
@@ -657,33 +871,32 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			public bool RememberMe { get; set; }
 		}
 
-		public async Task OnGetAsync(string returnUrl = null)
+		public async Task OnGetAsync(string returnUrl = null, string email = null)
 		{
 			if (!string.IsNullOrEmpty(ErrorMessage))
-			{
 				ModelState.AddModelError(string.Empty, ErrorMessage);
-			}
 
 			returnUrl ??= Url.Content("~/");
 
-			// Clear the existing external cookie to ensure a clean login process
 			await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-
 			ReturnUrl = returnUrl;
+
+			if (!string.IsNullOrWhiteSpace(email))
+			{
+				Input ??= new InputModel();
+				Input.Email = email;
+			}
 		}
 
 		public async Task<IActionResult> OnPostAsync(string returnUrl = null)
 		{
 			returnUrl ??= Url.Content("~/");
-
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
 			if (!ModelState.IsValid)
-			{
 				return Page();
-			}
 
 			var user = await _userManager.FindByEmailAsync(Input.Email);
 
@@ -721,13 +934,119 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			}
 
 			if (result.IsLockedOut)
-			{
-				_logger.LogWarning("User account locked out.");
 				return RedirectToPage("./Lockout");
-			}
 
 			ModelState.AddModelError(string.Empty, "Invalid login attempt.");
 			return Page();
+		}
+
+		public async Task<IActionResult> OnPostResendConfirmationAsync(string returnUrl = null)
+		{
+			returnUrl ??= Url.Content("~/");
+
+			var email = Input?.Email?.Trim();
+			if (string.IsNullOrWhiteSpace(email))
+			{
+				TempData["StatusMessage"] = "Please enter your email first.";
+				return RedirectToPage("./Login", new { returnUrl });
+			}
+
+			var user = await _userManager.FindByEmailAsync(email);
+
+			if (user == null)
+			{
+				TempData["StatusMessage"] = "No account found with this email. No email was sent.";
+				return RedirectToPage("./Login", new { returnUrl, email });
+			}
+
+			var logins = await _userManager.GetLoginsAsync(user);
+			if (logins.Any())
+			{
+				TempData["StatusMessage"] = "This account uses Google sign-in. Email confirmation resend is not available.";
+				return RedirectToPage("./Login", new { returnUrl, email });
+			}
+
+			if (user.EmailConfirmed)
+			{
+				TempData["StatusMessage"] = "This email is already confirmed. Please log in.";
+				return RedirectToPage("./Login", new { returnUrl, email });
+			}
+
+			var userId = await _userManager.GetUserIdAsync(user);
+			var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+			code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+			var callbackUrl = Url.Page(
+				"/Account/ConfirmEmail",
+				pageHandler: null,
+				values: new { area = "Identity", userId, code },
+				protocol: Request.Scheme);
+
+			await _emailSender.SendEmailAsync(
+				email,
+				"Confirm your email",
+				$"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+			TempData["StatusMessage"] = "Verification email sent. Please check your email.";
+
+			TempData["StartCooldownKey"] = "login_resend";
+			TempData["StartCooldownSeconds"] = 30;
+
+			return RedirectToPage("./Login", new { returnUrl, email });
+		}
+
+		public async Task<IActionResult> OnPostForgotPasswordAsync(string returnUrl = null)
+		{
+			returnUrl ??= Url.Content("~/");
+
+			var email = Input?.Email?.Trim();
+			if (string.IsNullOrWhiteSpace(email))
+			{
+				TempData["StatusMessage"] = "Please enter your email first.";
+				return RedirectToPage("./Login", new { returnUrl });
+			}
+
+			var user = await _userManager.FindByEmailAsync(email);
+
+			if (user == null)
+			{
+				TempData["StatusMessage"] = "No account found with this email. No email was sent.";
+				return RedirectToPage("./Login", new { returnUrl, email });
+			}
+
+			var logins = await _userManager.GetLoginsAsync(user);
+			if (logins.Any())
+			{
+				TempData["StatusMessage"] = "This account uses Google sign-in. Password reset is not available.";
+				return RedirectToPage("./Login", new { returnUrl, email });
+			}
+
+			if (!user.EmailConfirmed)
+			{
+				TempData["StatusMessage"] = "Your email is not confirmed. Please confirm it first (or resend confirmation).";
+				return RedirectToPage("./Login", new { returnUrl, email });
+			}
+
+			var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+			code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+			var callbackUrl = Url.Page(
+				"/Account/ResetPassword",
+				pageHandler: null,
+				values: new { area = "Identity", code, email },
+				protocol: Request.Scheme);
+
+			await _emailSender.SendEmailAsync(
+				email,
+				"Reset Password",
+				$"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+			TempData["StatusMessage"] = "Password reset email sent. Please check your email.";
+
+			TempData["StartCooldownKey"] = "login_forgot";
+			TempData["StartCooldownSeconds"] = 30;
+
+			return RedirectToPage("./Login", new { returnUrl, email });
 		}
 	}
 }
@@ -749,47 +1068,44 @@ namespace MarketZone.Areas.Identity.Pages.Account
             <h2>Create a new account.</h2>
             <hr />
 
-            <div asp-validation-summary="ModelOnly"
-                 class="text-danger"
-                 role="alert"></div>
+            @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+            {
+                <div class="alert alert-info" role="alert">
+                    @Model.InfoMessage
+                </div>
+            }
+
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 
             <div class="form-floating mb-3">
-                <input asp-for="Input.Email"
-                       class="form-control"
-                       autocomplete="username"
-                       aria-required="true"
-                       placeholder="name@example.com" />
+                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
                 <label asp-for="Input.Email">Email</label>
-                <span asp-validation-for="Input.Email"
-                      class="text-danger"></span>
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
             </div>
 
             <div class="form-floating mb-3">
-                <input asp-for="Input.Password"
-                       class="form-control"
-                       autocomplete="new-password"
-                       aria-required="true"
-                       placeholder="password" />
+                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
                 <label asp-for="Input.Password">Password</label>
-                <span asp-validation-for="Input.Password"
-                      class="text-danger"></span>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
             </div>
 
             <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword"
-                       class="form-control"
-                       autocomplete="new-password"
-                       aria-required="true"
-                       placeholder="password" />
+                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
                 <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                <span asp-validation-for="Input.ConfirmPassword"
-                      class="text-danger"></span>
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
 
-            <button id="registerSubmit"
-                    type="submit"
-                    class="w-100 btn btn-lg btn-primary">
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">
                 Register
+            </button>
+
+            <button type="submit"
+                    class="w-100 btn btn-outline-secondary mt-2"
+                    asp-page-handler="ResendConfirmation"
+                    formnovalidate
+                    data-cooldown-key="register_resend"
+                    data-cooldown-seconds="30">
+                Resend email confirmation
             </button>
         </form>
     </div>
@@ -801,14 +1117,9 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
             @if ((Model.ExternalLogins?.Count ?? 0) == 0)
             {
-                <p>
-                    There are no external authentication services configured.
-                    See this
-                    <a href="https://go.microsoft.com/fwlink/?LinkID=532715">
-                        article about setting up this ASP.NET application
-                        to support logging in via external services
-                    </a>.
-                </p>
+                <div class="alert alert-warning">
+                    External register providers are currently unavailable.
+                </div>
             }
             else
             {
@@ -816,45 +1127,54 @@ namespace MarketZone.Areas.Identity.Pages.Account
                       asp-page="./ExternalLogin"
                       method="post"
                       class="form-horizontal">
-                    <div>
-                        <p>
-                            @foreach (var provider in Model.ExternalLogins!)
-                            {
-                                <button type="submit"
-                                        class="btn btn-primary"
-                                        name="provider"
-                                        value="@provider.Name"
-                                        title="Log in using your @provider.DisplayName account">
-                                    @provider.DisplayName
-                                </button>
-                            }
-                        </p>
-                    </div>
+
+                    <input type="hidden" name="flow" value="register" />
+                    <input type="hidden" name="returnUrl" value="~/" />
+
+                    <p>
+                        @foreach (var provider in Model.ExternalLogins!)
+                        {
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    name="provider"
+                                    value="@provider.Name"
+                                    title="Register using your @provider.DisplayName account">
+                                @provider.DisplayName
+                            </button>
+                        }
+                    </p>
                 </form>
             }
         </section>
     </div>
 </div>
 
+@* Server-controlled cooldown start marker *@
+<span id="authCooldownStart"
+      data-key="@TempData["StartCooldownKey"]"
+      data-seconds="@TempData["StartCooldownSeconds"]"
+      hidden></span>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/auth-cooldown.js" asp-append-version="true"></script>
 }
 
 
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\Register.cshtml.cs ================
 
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
-using MarketZone.Data;
+
 using MarketZone.Data.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.WebUtilities;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
+using System.Text;
+using System.Text.Encodings.Web;
 
 namespace MarketZone.Areas.Identity.Pages.Account
 {
@@ -866,15 +1186,13 @@ namespace MarketZone.Areas.Identity.Pages.Account
 		private readonly IUserEmailStore<User> _emailStore;
 		private readonly ILogger<RegisterModel> _logger;
 		private readonly IEmailSender _emailSender;
-		private readonly ApplicationDbContext _context;
 
 		public RegisterModel(
 			UserManager<User> userManager,
 			IUserStore<User> userStore,
 			SignInManager<User> signInManager,
 			ILogger<RegisterModel> logger,
-			IEmailSender emailSender,
-			ApplicationDbContext context)
+			IEmailSender emailSender)
 		{
 			_userManager = userManager;
 			_userStore = userStore;
@@ -882,13 +1200,15 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			_signInManager = signInManager;
 			_logger = logger;
 			_emailSender = emailSender;
-			_context = context;
 		}
 
 		[BindProperty]
 		public InputModel Input { get; set; }
 
 		public IList<AuthenticationScheme> ExternalLogins { get; set; }
+
+		[TempData]
+		public string InfoMessage { get; set; }
 
 		public class InputModel
 		{
@@ -909,9 +1229,15 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			public string ConfirmPassword { get; set; }
 		}
 
-		public async Task OnGetAsync()
+		public async Task OnGetAsync(string email = null)
 		{
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+			if (!string.IsNullOrWhiteSpace(email))
+			{
+				Input ??= new InputModel();
+				Input.Email = email;
+			}
 		}
 
 		public async Task<IActionResult> OnPostAsync()
@@ -919,7 +1245,12 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
 			if (!ModelState.IsValid)
+				return Page();
+
+			var existingUser = await _userManager.FindByEmailAsync(Input.Email);
+			if (existingUser != null)
 			{
+				ModelState.AddModelError("Input.Email", "An account with this email already exists.");
 				return Page();
 			}
 
@@ -935,7 +1266,10 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			{
 				foreach (var error in result.Errors)
 				{
-					ModelState.AddModelError(string.Empty, error.Description);
+					if (error.Code == "DuplicateEmail" || error.Code == "DuplicateUserName")
+						ModelState.AddModelError("Input.Email", "An account with this email already exists.");
+					else
+						ModelState.AddModelError(string.Empty, error.Description);
 				}
 
 				return Page();
@@ -943,32 +1277,77 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 			_logger.LogInformation("User created a new account with password.");
 
-			// 🔐 Generate 6-digit verification code
-			var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000)
-			.ToString();
+			await SendConfirmationEmailAsync(user, Input.Email);
+			InfoMessage = "Confirmation email sent. Please check your email.";
 
-			_context.EmailVerificationCodes.Add(new EmailVerificationCode
+			return RedirectToPage("./Register", new { email = Input.Email });
+		}
+
+		public async Task<IActionResult> OnPostResendConfirmationAsync()
+		{
+			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+			ModelState.Remove("Input.Password");
+			ModelState.Remove("Input.ConfirmPassword");
+
+			if (!ModelState.IsValid)
+				return Page();
+
+			var email = Input?.Email?.Trim();
+			if (string.IsNullOrWhiteSpace(email))
 			{
-				UserId = user.Id,
-				Code = verificationCode,
-				CreatedAt = DateTime.UtcNow,
-				ExpiresAt = DateTime.UtcNow.AddMinutes(10)
-			});
+				ModelState.AddModelError("Input.Email", "Please enter your email first.");
+				return Page();
+			}
 
-			await _context.SaveChangesAsync();
+			var user = await _userManager.FindByEmailAsync(email);
 
-			// ✉️ Send email with code
+			if (user == null)
+			{
+				InfoMessage = "No account found with this email. No email was sent.";
+				return RedirectToPage("./Register", new { email });
+			}
+
+			var logins = await _userManager.GetLoginsAsync(user);
+			if (logins.Any())
+			{
+				InfoMessage = "This account uses Google sign-in. Email confirmation resend is not available.";
+				return RedirectToPage("./Register", new { email });
+			}
+
+			if (user.EmailConfirmed)
+			{
+				InfoMessage = "This email is already confirmed. Please log in.";
+				return RedirectToPage("./Register", new { email });
+			}
+
+			await SendConfirmationEmailAsync(user, email);
+
+			InfoMessage = "Confirmation email resent. Please check your email.";
+
+			TempData["StartCooldownKey"] = "register_resend";
+			TempData["StartCooldownSeconds"] = 30;
+
+			return RedirectToPage("./Register", new { email });
+		}
+
+		private async Task SendConfirmationEmailAsync(User user, string email)
+		{
+			var userId = await _userManager.GetUserIdAsync(user);
+
+			var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+			code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+			var callbackUrl = Url.Page(
+				"/Account/ConfirmEmail",
+				pageHandler: null,
+				values: new { area = "Identity", userId, code },
+				protocol: Request.Scheme);
+
 			await _emailSender.SendEmailAsync(
-				Input.Email,
-				"MarketZone – verification code",
-				$"Your verification code is <b>{verificationCode}</b>. It expires in 10 minutes."
-			);
-
-			// ❗ Do NOT sign in the user
-			// ❗ Do NOT confirm email yet
-
-			// ➜ Redirect to code verification page
-			return RedirectToPage("VerifyEmailCode", new { email = Input.Email });
+				email,
+				"Confirm your email",
+				$"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 		}
 
 		private User CreateUser()
@@ -989,9 +1368,7 @@ namespace MarketZone.Areas.Identity.Pages.Account
 		private IUserEmailStore<User> GetEmailStore()
 		{
 			if (!_userManager.SupportsUserEmail)
-			{
 				throw new NotSupportedException("The default UI requires a user store with email support.");
-			}
 
 			return (IUserEmailStore<User>)_userStore;
 		}
@@ -1107,6 +1484,188 @@ namespace MarketZone.Areas.Identity.Pages.Account
             return Page();
         }
     }
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\ResetPassword.cshtml ================
+
+@page
+@model ResetPasswordModel
+@{
+    ViewData["Title"] = "Reset your password";
+}
+
+<div class="container d-flex justify-content-center">
+    <div class="col-12 col-md-6 col-lg-5">
+
+        <h2 class="text-center mt-4 mb-3">@ViewData["Title"]</h2>
+
+        <form method="post" class="mt-3">
+            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+            <input asp-for="Input.Code" type="hidden" />
+            <input asp-for="Input.Email" type="hidden" />
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.Password"
+                       class="form-control"
+                       autocomplete="new-password"
+                       aria-required="true"
+                       placeholder="Please enter your new password." />
+                <label asp-for="Input.Password" class="form-label">New password</label>
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input asp-for="Input.ConfirmPassword"
+                       class="form-control"
+                       autocomplete="new-password"
+                       aria-required="true"
+                       placeholder="Please confirm your new password." />
+                <label asp-for="Input.ConfirmPassword" class="form-label">Confirm new password</label>
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Reset</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\ResetPassword.cshtml.cs ================
+
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+#nullable disable
+
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Threading.Tasks;
+using MarketZone.Data.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.WebUtilities;
+
+namespace MarketZone.Areas.Identity.Pages.Account
+{
+	[AllowAnonymous]
+	public class ResetPasswordModel : PageModel
+	{
+		private readonly UserManager<User> _userManager;
+
+		public ResetPasswordModel(UserManager<User> userManager)
+		{
+			_userManager = userManager;
+		}
+
+		[BindProperty]
+		public InputModel Input { get; set; }
+
+		public class InputModel
+		{
+			[Required]
+			[EmailAddress]
+			public string Email { get; set; }
+
+			[Required]
+			[StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+			[DataType(DataType.Password)]
+			public string Password { get; set; }
+
+			[DataType(DataType.Password)]
+			[Display(Name = "Confirm password")]
+			[Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+			public string ConfirmPassword { get; set; }
+
+			[Required]
+			public string Code { get; set; }
+		}
+
+		public IActionResult OnGet(string code = null, string email = null)
+		{
+			if (string.IsNullOrWhiteSpace(code))
+				return BadRequest("A code must be supplied for password reset.");
+
+			if (string.IsNullOrWhiteSpace(email))
+				return BadRequest("An email must be supplied for password reset.");
+
+			Input = new InputModel
+			{
+				Email = email.Trim(),
+				Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code))
+			};
+
+			return Page();
+		}
+
+		public async Task<IActionResult> OnPostAsync()
+		{
+			if (!ModelState.IsValid)
+				return Page();
+
+			var user = await _userManager.FindByEmailAsync(Input.Email);
+
+			if (user == null)
+			{
+				ModelState.AddModelError(string.Empty, "No account found with this email.");
+				return Page();
+			}
+
+			var result = await _userManager.ResetPasswordAsync(user, Input.Code, Input.Password);
+
+			if (result.Succeeded)
+			{
+				TempData["StatusMessage"] = "Your password has been reset. Please log in.";
+				return RedirectToPage("./Login");
+			}
+
+			foreach (var error in result.Errors)
+				ModelState.AddModelError(string.Empty, error.Description);
+
+			return Page();
+		}
+	}
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\ResetPasswordConfirmation.cshtml ================
+
+@page
+@model ResetPasswordConfirmationModel
+@{
+    // This page should never be shown.
+    ViewData["Title"] = "Redirecting...";
+}
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Areas\Identity\Pages\Account\ResetPasswordConfirmation.cshtml.cs ================
+
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+#nullable disable
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace MarketZone.Areas.Identity.Pages.Account
+{
+	[AllowAnonymous]
+	public class ResetPasswordConfirmationModel : PageModel
+	{
+		public IActionResult OnGet()
+		{
+			// In case something still redirects here, go to Login with a message.
+			TempData["StatusMessage"] = "Password reset successful. Please log in.";
+			return RedirectToPage("./Login");
+		}
+	}
 }
 
 
@@ -17566,6 +18125,8 @@ public class EmailVerificationCleanupService : BackgroundService
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\Services\Email\SendGridEmailSender.cs ================
 
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 
@@ -17574,45 +18135,114 @@ namespace MarketZone.Services.Implementations
 	public class SendGridEmailSender : IEmailSender
 	{
 		private readonly IConfiguration _configuration;
+		private readonly ILogger<SendGridEmailSender> _logger;
 
-		public SendGridEmailSender(IConfiguration configuration)
+		public SendGridEmailSender(
+			IConfiguration configuration,
+			ILogger<SendGridEmailSender> logger)
 		{
 			_configuration = configuration;
+			_logger = logger;
 		}
 
 		public async Task SendEmailAsync(string email, string subject, string htmlMessage)
 		{
 			var apiKey = _configuration["SendGrid:ApiKey"];
+			var fromEmail = _configuration["SendGrid:FromEmail"];
+			var fromName = _configuration["SendGrid:FromName"] ?? "MarketZone";
 
 			if (string.IsNullOrWhiteSpace(apiKey))
-				throw new InvalidOperationException("SendGrid API key is missing");
+				throw new InvalidOperationException("SendGrid API key is missing (SendGrid:ApiKey).");
 
+			if (string.IsNullOrWhiteSpace(fromEmail))
+				throw new InvalidOperationException("SendGrid FromEmail is missing (SendGrid:FromEmail).");
+
+			if (string.IsNullOrWhiteSpace(email))
+				throw new ArgumentException("Recipient email is empty.", nameof(email));
+
+			// Create client per call is OK, but we can keep it here.
+			// (If you want, you can inject ISendGridClient later.)
 			var client = new SendGridClient(apiKey);
 
-			var from = new EmailAddress(
-				_configuration["SendGrid:FromEmail"],
-				_configuration["SendGrid:FromName"]
-			);
-
+			var from = new EmailAddress(fromEmail, fromName);
 			var to = new EmailAddress(email);
 
 			var msg = MailHelper.CreateSingleEmail(
 				from,
 				to,
 				subject,
-				plainTextContent: "Verification code",
+				plainTextContent: StripHtml(htmlMessage),
 				htmlContent: htmlMessage
 			);
 
-			var response = await client.SendEmailAsync(msg);
+			// Retries for transient failures (429, 5xx)
+			const int maxAttempts = 3;
+			var delay = TimeSpan.FromMilliseconds(400);
 
-			if ((int)response.StatusCode >= 400)
+			for (int attempt = 1; attempt <= maxAttempts; attempt++)
 			{
-				var body = await response.Body.ReadAsStringAsync();
-				throw new InvalidOperationException($"SendGrid failed: {response.StatusCode} - {body}");
+				try
+				{
+					var response = await client.SendEmailAsync(msg);
+
+					// 202 is success for SendGrid
+					if ((int)response.StatusCode < 400)
+					{
+						_logger.LogInformation(
+							"SendGrid email accepted. To={To} Subject={Subject} Status={Status}",
+							email, subject, response.StatusCode);
+
+						return;
+					}
+
+					var body = await response.Body.ReadAsStringAsync();
+
+					_logger.LogWarning(
+						"SendGrid email failed. Attempt {Attempt}/{MaxAttempts}. To={To} Status={Status} Body={Body}",
+						attempt, maxAttempts, email, response.StatusCode, body);
+
+					// Retry only for rate limit / transient server issues
+					if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests ||
+						(int)response.StatusCode >= 500)
+					{
+						if (attempt < maxAttempts)
+						{
+							await Task.Delay(delay);
+							delay = TimeSpan.FromMilliseconds(delay.TotalMilliseconds * 2);
+							continue;
+						}
+					}
+
+					throw new InvalidOperationException(
+						$"SendGrid failed: {response.StatusCode} - {body}");
+				}
+				catch (Exception ex) when (attempt < maxAttempts)
+				{
+					// Network / transient exception: retry
+					_logger.LogWarning(
+						ex,
+						"SendGrid exception on attempt {Attempt}/{MaxAttempts}. To={To}",
+						attempt, maxAttempts, email);
+
+					await Task.Delay(delay);
+					delay = TimeSpan.FromMilliseconds(delay.TotalMilliseconds * 2);
+				}
 			}
+
+			// If we get here, all attempts failed (should have thrown above)
+			throw new InvalidOperationException("SendGrid failed after retries.");
 		}
 
+		private static string StripHtml(string html)
+		{
+			if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+			// keep it simple; you only need a fallback text body
+			return html
+				.Replace("<br>", "\n", StringComparison.OrdinalIgnoreCase)
+				.Replace("<br/>", "\n", StringComparison.OrdinalIgnoreCase)
+				.Replace("<br />", "\n", StringComparison.OrdinalIgnoreCase)
+				.Replace("&nbsp;", " ", StringComparison.OrdinalIgnoreCase);
+		}
 	}
 }
 
@@ -21935,16 +22565,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let debounceTimer = null;
     let activeIndex = -1;
     let currentResults = [];
-    let addressConfirmed = false;
 
     // ── Debounced search ──
     input.addEventListener("input", () => {
         const query = input.value.trim();
+
         window.addressConfirmed = false;
         window.validateAll?.();
 
         clearTimeout(debounceTimer);
-        confirmedBadge.classList.remove("show");
+        confirmedBadge?.classList.remove("show");
 
         // Clear lat/lng when user types again
         if (hiddenLat) hiddenLat.value = "";
@@ -21966,7 +22596,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     async function searchAddress(query) {
-        loading.classList.add("show");
+        loading?.classList.add("show");
         closeSuggestions();
 
         try {
@@ -21975,17 +22605,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 `q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=6`,
                 { headers: { "Accept-Language": "en" } }
             );
+
             const data = await res.json();
             currentResults = data;
             renderSuggestions(data);
         } catch {
             closeSuggestions();
         } finally {
-            loading.classList.remove("show");
+            loading?.classList.remove("show");
         }
     }
 
     function renderSuggestions(results) {
+        if (!suggestions) return;
+
         suggestions.innerHTML = "";
         activeIndex = -1;
 
@@ -21998,8 +22631,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        results.forEach((r, i) => {
-            const parts = r.display_name.split(", ");
+        results.forEach((r) => {
+            const parts = (r.display_name || "").split(", ");
             const main = parts.slice(0, 2).join(", ");
             const sub = parts.slice(2).join(", ");
 
@@ -22008,8 +22641,8 @@ document.addEventListener("DOMContentLoaded", () => {
             item.innerHTML = `
                 <span class="suggestion-icon">📍</span>
                 <div>
-                    <div class="suggestion-main">${main}</div>
-                    <div class="suggestion-sub">${sub}</div>
+                    <div class="suggestion-main">${escapeHtml(main)}</div>
+                    <div class="suggestion-sub">${escapeHtml(sub)}</div>
                 </div>`;
 
             item.addEventListener("mousedown", (e) => {
@@ -22026,24 +22659,29 @@ document.addEventListener("DOMContentLoaded", () => {
     function selectResult(result) {
         const lat = parseFloat(result.lat);
         const lng = parseFloat(result.lon);
-        const displayName = result.display_name;
+        const displayName = result.display_name || "";
 
-        // Write directly into the asp-for bound input
         input.value = displayName;
-        if (hiddenLat) hiddenLat.value = lat;
-        if (hiddenLng) hiddenLng.value = lng;
+        if (hiddenLat) hiddenLat.value = String(lat);
+        if (hiddenLng) hiddenLng.value = String(lng);
 
         closeSuggestions();
         showMap(lat, lng);
+
         window.addressConfirmed = true;
-        confirmedBadge.classList.add("show");
+        confirmedBadge?.classList.add("show");
         window.validateAll?.();
     }
 
     function showMap(lat, lng) {
+        if (!mapContainer) return;
+
         mapContainer.classList.add("show");
 
         if (!map) {
+            // Leaflet must be loaded
+            if (typeof L === "undefined") return;
+
             map = L.map("address-map", { zoomControl: true, scrollWheelZoom: false });
             L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
                 attribution: "© OpenStreetMap contributors"
@@ -22055,11 +22693,11 @@ document.addEventListener("DOMContentLoaded", () => {
         map.setView([lat, lng], 14);
 
         // Fix Leaflet tile rendering inside hidden containers
-        setTimeout(() => map.invalidateSize(), 100);
+        setTimeout(() => map && map.invalidateSize(), 100);
     }
 
     function hideMap() {
-        mapContainer.classList.remove("show");
+        mapContainer?.classList.remove("show");
         if (marker && map) {
             map.removeLayer(marker);
             marker = null;
@@ -22067,6 +22705,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function closeSuggestions() {
+        if (!suggestions) return;
         suggestions.classList.remove("show");
         suggestions.innerHTML = "";
         activeIndex = -1;
@@ -22074,7 +22713,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ── Keyboard navigation ──
     input.addEventListener("keydown", (e) => {
-        const items = suggestions.querySelectorAll(".suggestion-item");
+        const items = suggestions?.querySelectorAll(".suggestion-item") || [];
 
         if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -22102,7 +22741,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Close on outside click
     document.addEventListener("click", (e) => {
-        if (!input.closest(".address-picker-wrapper").contains(e.target)) {
+        const wrapper = input.closest(".address-picker-wrapper");
+        if (wrapper && !wrapper.contains(e.target)) {
             closeSuggestions();
         }
     });
@@ -22113,9 +22753,160 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (existingLat && existingLng && input.value) {
         showMap(parseFloat(existingLat), parseFloat(existingLng));
-        confirmedBadge.classList.add("show");
+        confirmedBadge?.classList.add("show");
+
+        // THIS is the key for your submit button validation on Edit
+        window.addressConfirmed = true;
+        window.validateAll?.();
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 });
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\auth-cooldown.js ================
+
+(function () {
+    function ready(fn) {
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", fn);
+        } else {
+            fn();
+        }
+    }
+
+    function nowMs() {
+        return Date.now();
+    }
+
+    function getInt(v, fallback) {
+        const n = parseInt(v, 10);
+        return Number.isFinite(n) ? n : fallback;
+    }
+
+    function formatSeconds(s) {
+        return `${s}s`;
+    }
+
+    ready(() => {
+        const buttons = Array.from(document.querySelectorAll("button[data-cooldown-key]"));
+        if (!buttons.length) return;
+
+        // Prevent double-click spam while the request is submitting (NOT the cooldown).
+        const forms = new Set(buttons.map(b => b.closest("form")).filter(Boolean));
+        forms.forEach((form) => {
+            form.addEventListener("submit", (e) => {
+                const submitter = e.submitter;
+                if (!submitter) return;
+                if (submitter.matches("button[data-cooldown-key]")) {
+                    submitter.disabled = true;
+                }
+            });
+        });
+
+        function ensureTimerEl(btn) {
+            const timerAttr = btn.getAttribute("data-cooldown-timer-id");
+            let timerEl = null;
+
+            if (timerAttr) timerEl = document.getElementById(timerAttr);
+
+            if (!timerEl) {
+                const next = btn.nextElementSibling;
+                if (next && next.classList.contains("cooldown-timer")) timerEl = next;
+            }
+
+            if (!timerEl) {
+                timerEl = document.createElement("span");
+                timerEl.className = "ms-2 text-muted small cooldown-timer";
+                btn.insertAdjacentElement("afterend", timerEl);
+            }
+
+            return timerEl;
+        }
+
+        function setState(btn, timerEl, remainingSec) {
+            if (remainingSec > 0) {
+                btn.disabled = true;
+                timerEl.textContent = `(${formatSeconds(remainingSec)})`;
+            } else {
+                btn.disabled = false;
+                timerEl.textContent = "";
+            }
+        }
+
+        function startTick(btn, storageKey, seconds) {
+            const timerEl = ensureTimerEl(btn);
+
+            // Clear existing ticks
+            if (btn._cooldownIntervalId) {
+                clearInterval(btn._cooldownIntervalId);
+                btn._cooldownIntervalId = null;
+            }
+
+            btn._cooldownIntervalId = setInterval(() => {
+                const until = getInt(sessionStorage.getItem(storageKey), 0);
+                const remainingMs = until - nowMs();
+                const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+
+                setState(btn, timerEl, remainingSec);
+
+                if (remainingSec <= 0) {
+                    sessionStorage.removeItem(storageKey);
+                    clearInterval(btn._cooldownIntervalId);
+                    btn._cooldownIntervalId = null;
+                }
+            }, 250);
+
+            const until = getInt(sessionStorage.getItem(storageKey), 0);
+            const remainingMs = until - nowMs();
+            const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+            setState(btn, timerEl, remainingSec);
+        }
+
+        function beginCooldownForKey(key, seconds) {
+            const btn = buttons.find(b => (b.getAttribute("data-cooldown-key") || "") === key);
+            if (!btn) return;
+
+            const storageKey = `mz_cooldown_${key}`;
+            sessionStorage.setItem(storageKey, String(nowMs() + seconds * 1000));
+            startTick(btn, storageKey, seconds);
+        }
+
+        // Restore existing cooldowns (if tab refreshed mid-cooldown)
+        buttons.forEach((btn) => {
+            const key = btn.getAttribute("data-cooldown-key");
+            const seconds = getInt(btn.getAttribute("data-cooldown-seconds"), 30);
+            const storageKey = `mz_cooldown_${key}`;
+            const until = getInt(sessionStorage.getItem(storageKey), 0);
+            const remainingMs = until - nowMs();
+            const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+
+            if (remainingSec > 0) {
+                startTick(btn, storageKey, seconds);
+            } else {
+                const timerEl = ensureTimerEl(btn);
+                setState(btn, timerEl, 0);
+            }
+        });
+
+        // Start cooldown ONLY if server requested it
+        const start = document.getElementById("authCooldownStart");
+        if (start) {
+            const key = start.getAttribute("data-key") || "";
+            const seconds = getInt(start.getAttribute("data-seconds"), 30);
+            if (key) {
+                beginCooldownForKey(key, seconds);
+            }
+        }
+    });
+})();
 
 
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\chat.js ================
@@ -22291,6 +23082,52 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.removeChild(a);
     });
 });
+
+
+================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\login-persist.js ================
+
+(function () {
+    const EMAIL_KEY = "mz_login_email";
+    const PASS_KEY = "mz_login_password";
+
+    function ready(fn) {
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", fn);
+        } else {
+            fn();
+        }
+    }
+
+    ready(() => {
+        const form = document.getElementById("account");
+        const emailInput = document.getElementById("Input_Email");
+        const passInput = document.getElementById("Input_Password");
+
+        if (!form || !emailInput || !passInput) return;
+
+        // Restore saved values (only within the same tab/session)
+        const savedEmail = sessionStorage.getItem(EMAIL_KEY);
+        const savedPass = sessionStorage.getItem(PASS_KEY);
+
+        if (savedEmail && !emailInput.value) emailInput.value = savedEmail;
+        if (savedPass && !passInput.value) passInput.value = savedPass;
+
+        // Save on typing
+        emailInput.addEventListener("input", () => {
+            sessionStorage.setItem(EMAIL_KEY, emailInput.value || "");
+        });
+
+        passInput.addEventListener("input", () => {
+            sessionStorage.setItem(PASS_KEY, passInput.value || "");
+        });
+
+        // Before any submit (login / resend / forgot), persist the latest values
+        form.addEventListener("submit", () => {
+            sessionStorage.setItem(EMAIL_KEY, emailInput.value || "");
+            sessionStorage.setItem(PASS_KEY, passInput.value || "");
+        });
+    });
+})();
 
 
 ================ FILE: C:\Users\ASUS\Desktop\SoftUni2\MarketZone\MarketZone\wwwroot\js\search-filters.js ================
@@ -22483,18 +23320,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-	options.UseSqlServer(
-		builder.Configuration.GetConnectionString("DefaultConnection")));
+	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Identity
 builder.Services
 	.AddDefaultIdentity<User>(options =>
 	{
-		options.SignIn.RequireConfirmedAccount = false;
+		options.SignIn.RequireConfirmedAccount = true;
+		options.User.RequireUniqueEmail = true;
 	})
 	.AddRoles<IdentityRole>()
 	.AddEntityFrameworkStores<ApplicationDbContext>();
 
+// External login
 builder.Services.AddAuthentication()
 	.AddGoogle(options =>
 	{
@@ -22505,15 +23343,13 @@ builder.Services.AddAuthentication()
 		{
 			OnRedirectToAuthorizationEndpoint = context =>
 			{
-				// Remove any existing "prompt" to avoid duplicates
 				var uri = new Uri(context.RedirectUri);
 				var query = HttpUtility.ParseQueryString(uri.Query);
 
 				query.Remove("prompt");
 				query.Add("prompt", "select_account");
 
-				var newUrl =
-					$"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}?{query}";
+				var newUrl = $"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}?{query}";
 
 				context.Response.Redirect(newUrl);
 				return Task.CompletedTask;
@@ -22521,14 +23357,11 @@ builder.Services.AddAuthentication()
 		};
 	});
 
-
-// SignalR (ONLY ONCE)
+// SignalR
 builder.Services.AddSignalR(options =>
 {
 	options.EnableDetailedErrors = true;
 });
-
-// SignalR user identification
 builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 
 // Email sender
@@ -22552,6 +23385,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
 var app = builder.Build();
+
 // Global exception handling
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -22580,4 +23414,4 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-	app.Run();
+app.Run();

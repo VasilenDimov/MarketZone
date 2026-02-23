@@ -15,18 +15,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Database
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-	options.UseSqlServer(
-		builder.Configuration.GetConnectionString("DefaultConnection")));
+	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Identity
 builder.Services
 	.AddDefaultIdentity<User>(options =>
 	{
-		options.SignIn.RequireConfirmedAccount = false;
+		options.SignIn.RequireConfirmedAccount = true;
+		options.User.RequireUniqueEmail = true;
 	})
 	.AddRoles<IdentityRole>()
 	.AddEntityFrameworkStores<ApplicationDbContext>();
 
+// External login
 builder.Services.AddAuthentication()
 	.AddGoogle(options =>
 	{
@@ -37,15 +38,13 @@ builder.Services.AddAuthentication()
 		{
 			OnRedirectToAuthorizationEndpoint = context =>
 			{
-				// Remove any existing "prompt" to avoid duplicates
 				var uri = new Uri(context.RedirectUri);
 				var query = HttpUtility.ParseQueryString(uri.Query);
 
 				query.Remove("prompt");
 				query.Add("prompt", "select_account");
 
-				var newUrl =
-					$"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}?{query}";
+				var newUrl = $"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}?{query}";
 
 				context.Response.Redirect(newUrl);
 				return Task.CompletedTask;
@@ -53,14 +52,11 @@ builder.Services.AddAuthentication()
 		};
 	});
 
-
-// SignalR (ONLY ONCE)
+// SignalR
 builder.Services.AddSignalR(options =>
 {
 	options.EnableDetailedErrors = true;
 });
-
-// SignalR user identification
 builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 
 // Email sender
@@ -84,6 +80,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 
 var app = builder.Build();
+
 // Global exception handling
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -112,4 +109,4 @@ app.MapControllerRoute(
 
 app.MapRazorPages();
 
-	app.Run();
+app.Run();

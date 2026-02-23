@@ -71,6 +71,12 @@ namespace MarketZone.Controllers
 
 			return View(model);
 		}
+		[HttpGet]
+		public async Task<IActionResult> GetCategoryPath(int categoryId)
+		{
+			var path = await categoryService.GetCategoryPathAsync(categoryId);
+			return Json(path);
+		}
 		// GET: /Ad/GetChildren
 		[HttpGet]
 		[AllowAnonymous]

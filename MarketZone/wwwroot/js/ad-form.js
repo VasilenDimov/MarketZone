@@ -3,7 +3,7 @@
     const existingImages =
         (window.adFormConfig && window.adFormConfig.existingImages) || [];
 
-    /* ── Elements ── */
+    /* Elements */
     const form = document.getElementById("ad-form");
     const submitBtn = document.getElementById("submit-btn");
 
@@ -58,7 +58,7 @@
 
     function validateDesc() {
         const val = descInput?.value.trim() ?? "";
-        const ok = val.length >= 40 && val.length <= 5000;
+        const ok = val.length >= 40 && val.length <= 5000; // (you said ignore this for now)
         if (descError) descError.textContent = ok ? "" : "Description must be at least 40 characters.";
         return ok;
     }
@@ -114,24 +114,59 @@
         return !!ok;
     }
 
-    /* ── Show all errors on load & disable submit ── */
+    /* Show all errors on load & disable submit */
     window.validateAll = validateAll;
     validateAll();
 
-    /* ── Real-time listeners ── */
+    /* Real-time listeners */
     titleInput?.addEventListener("input", validateAll);
     descInput?.addEventListener("input", validateAll);
     priceInput?.addEventListener("input", validateAll);
     addrInput?.addEventListener("input", validateAll);
     conditionInputs.forEach(r => r.addEventListener("change", validateAll));
 
-    /* ── Category picker ── */
-    if (list) loadCategories(null);
+    / Category picker */
+    if (list) {
+        const selectedId = parseInt(categoryInput?.value || "0", 10);
+
+        // If editing and category is already selected, restore the picker UI
+        if (selectedId > 0) {
+            fetch(`/Ad/GetCategoryPath?categoryId=${selectedId}`)
+                .then(r => r.json())
+                .then(path => {
+                    if (!path || !path.length) {
+                        return loadCategories(null);
+                    }
+
+                    // path: root -> leaf
+                    const leaf = path[path.length - 1];
+                    const parent = path.length >= 2 ? path[path.length - 2] : null;
+
+                    // Setup stacks to match your back button logic
+                    parentStack = [];
+                    breadcrumbStack = [];
+
+                    if (path.length >= 2) {
+                        breadcrumbStack = path.slice(0, -1).map(x => x.name);
+                        parentStack = [null, ...path.slice(0, -2).map(x => x.id)];
+                    } else {
+                        breadcrumbStack = [];
+                        parentStack = [];
+                    }
+
+                    return loadCategories(parent ? parent.id : null);
+                })
+                .catch(() => loadCategories(null));
+        } else {
+            // Create page
+            loadCategories(null);
+        }
+    }
 
     function loadCategories(parentId, label = null) {
         if (label) breadcrumbStack.push(label);
 
-        fetch(`/Ad/GetChildren?parentId=${parentId ?? ""}`)
+        return fetch(`/Ad/GetChildren?parentId=${parentId ?? ""}`)
             .then(r => r.json())
             .then(data => {
                 list.innerHTML = "";
@@ -141,11 +176,19 @@
                     parentStack.length > 0 ? "inline-block" : "none";
                 breadcrumb.textContent = breadcrumbStack.join(" → ");
 
+                const selectedId = parseInt(categoryInput?.value || "0", 10);
+
                 data.forEach(c => {
                     const li = document.createElement("li");
                     li.className = "p-2 border-bottom";
                     li.style.cursor = "pointer";
                     li.textContent = c.name;
+
+                    // Highlight selected leaf if present in current list
+                    if (!c.hasChildren && selectedId === c.id) {
+                        li.classList.add("bg-light");
+                        breadcrumb.textContent = [...breadcrumbStack, c.name].join(" → ");
+                    }
 
                     if (c.hasChildren) {
                         li.innerHTML += " ➜";
@@ -158,6 +201,9 @@
                             categoryInput.value = c.id;
                             [...list.children].forEach(x => x.classList.remove("bg-light"));
                             li.classList.add("bg-light");
+
+                            breadcrumb.textContent = [...breadcrumbStack, c.name].join(" → ");
+
                             validateAll();
                         };
                     }
@@ -177,7 +223,7 @@
         };
     }
 
-    /* ── Image upload ── */
+    /* Image upload */
     if (!grid || !fileInput) return;
 
     renderGrid();
@@ -247,7 +293,7 @@
         fileInput.files = dt.files;
     }
 
-    /* ── Final guard on submit ── */
+    /* Final guard on submit */
     form?.addEventListener("submit", e => {
         if (!validateAll()) e.preventDefault();
     });

@@ -2,22 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using System.Text;
-using System.Text.Encodings.Web;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using MarketZone.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Logging;
 
 namespace MarketZone.Areas.Identity.Pages.Account
 {
@@ -90,7 +82,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
 			}
 
-			// 1) If this external login is already linked -> SIGN IN
 			var result = await _signInManager.ExternalLoginSignInAsync(
 				info.LoginProvider,
 				info.ProviderKey,
@@ -108,7 +99,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			if (result.IsLockedOut)
 				return RedirectToPage("./Lockout");
 
-			// 2) Not linked yet -> try match by email
 			var email = info.Principal.FindFirstValue(ClaimTypes.Email);
 
 			if (!string.IsNullOrWhiteSpace(email))
@@ -117,7 +107,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 				if (existingUser != null)
 				{
-					// Policy B: NOT confirmed -> NEVER link
 					if (!existingUser.EmailConfirmed)
 					{
 						ErrorMessage =
@@ -127,7 +116,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 						return RedirectToPage("./Login", new { ReturnUrl = returnUrl, email, showResend = true });
 					}
 
-					// confirmed -> link + sign in
 					var logins = await _userManager.GetLoginsAsync(existingUser);
 					bool alreadyLinked = logins.Any(l =>
 						l.LoginProvider.Equals(info.LoginProvider, StringComparison.OrdinalIgnoreCase) &&
@@ -152,7 +140,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				}
 			}
 
-			// 3) No existing user -> continue to external confirmation page (new account creation)
 			ReturnUrl = returnUrl;
 			ProviderDisplayName = info.ProviderDisplayName;
 
@@ -177,7 +164,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 			if (ModelState.IsValid)
 			{
-				// Safety: if email already exists, do NOT create another account
 				var existing = await _userManager.FindByEmailAsync(Input.Email);
 				if (existing != null)
 				{
@@ -186,6 +172,10 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				}
 
 				var user = CreateUser();
+				user.CreatedOn = DateTime.UtcNow;
+
+				// Google already verifies email ownership -> treat as confirmed
+				user.EmailConfirmed = true;
 
 				await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
 				await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
@@ -197,22 +187,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 					if (loginResult.Succeeded)
 					{
 						_logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
-
-						var userId = await _userManager.GetUserIdAsync(user);
-						var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-						code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-						var callbackUrl = Url.Page(
-							"/Account/ConfirmEmail",
-							pageHandler: null,
-							values: new { area = "Identity", userId, code },
-							protocol: Request.Scheme);
-
-						await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-							$"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-						if (_userManager.Options.SignIn.RequireConfirmedAccount)
-							return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });
 
 						await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
 						return LocalRedirect(returnUrl);

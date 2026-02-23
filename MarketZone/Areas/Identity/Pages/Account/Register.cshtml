@@ -12,6 +12,13 @@
             <h2>Create a new account.</h2>
             <hr />
 
+            @if (!string.IsNullOrWhiteSpace(Model.InfoMessage))
+            {
+                <div class="alert alert-info" role="alert">
+                    @Model.InfoMessage
+                </div>
+            }
+
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 
             <div class="form-floating mb-3">
@@ -32,7 +39,18 @@
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
 
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">
+                Register
+            </button>
+
+            <button type="submit"
+                    class="w-100 btn btn-outline-secondary mt-2"
+                    asp-page-handler="ResendConfirmation"
+                    formnovalidate
+                    data-cooldown-key="register_resend"
+                    data-cooldown-seconds="30">
+                Resend email confirmation
+            </button>
         </form>
     </div>
 
@@ -43,18 +61,20 @@
 
             @if ((Model.ExternalLogins?.Count ?? 0) == 0)
             {
-                <p>
-                    There are no external authentication services configured.
-                    See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article</a>.
-                </p>
+                <div class="alert alert-warning">
+                    External register providers are currently unavailable.
+                </div>
             }
             else
             {
                 <form id="external-account"
                       asp-page="./ExternalLogin"
-                      asp-route-returnUrl="~/"
                       method="post"
                       class="form-horizontal">
+
+                    <input type="hidden" name="flow" value="register" />
+                    <input type="hidden" name="returnUrl" value="~/" />
+
                     <p>
                         @foreach (var provider in Model.ExternalLogins!)
                         {
@@ -73,6 +93,13 @@
     </div>
 </div>
 
+@* Server-controlled cooldown start marker *@
+<span id="authCooldownStart"
+      data-key="@TempData["StartCooldownKey"]"
+      data-seconds="@TempData["StartCooldownSeconds"]"
+      hidden></span>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/auth-cooldown.js" asp-append-version="true"></script>
 }

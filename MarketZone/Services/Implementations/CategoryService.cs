@@ -39,6 +39,35 @@ namespace MarketZone.Services.Implementations
 				})
 				.ToListAsync();
 		}
+		public async Task<List<CategoryPathDto>> GetCategoryPathAsync(int categoryId)
+		{
+			var path = new List<CategoryPathDto>();
 
+			int? currentId = categoryId;
+
+			while (currentId != null)
+			{
+				var current = await context.Categories
+					.AsNoTracking()
+					.Where(c => c.Id == currentId.Value)
+					.Select(c => new CategoryPathDto
+					{
+						Id = c.Id,
+						Name = c.Name,
+						ParentCategoryId = c.ParentCategoryId
+					})
+					.FirstOrDefaultAsync();
+
+				if (current == null)
+					break;
+
+				path.Add(current);
+				currentId = current.ParentCategoryId;
+			}
+
+			path.Reverse(); // root -> leaf
+			return path;
+		}
 	}
 }
+

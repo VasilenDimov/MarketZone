@@ -6,6 +6,7 @@ namespace MarketZone.Services.Interfaces
 	{
 		Task<IEnumerable<CategorySelectModel>> GetAllAsync();
 		Task<IEnumerable<CategoryChildDto>> GetChildrenAsync(int? parentId);
+		Task<List<CategoryPathDto>> GetCategoryPathAsync(int categoryId);
 
 	}
 }

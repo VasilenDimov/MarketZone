@@ -1,15 +1,15 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
-using MarketZone.Data;
+﻿#nullable disable
+
 using MarketZone.Data.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.WebUtilities;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Cryptography;
+using System.Text;
+using System.Text.Encodings.Web;
 
 namespace MarketZone.Areas.Identity.Pages.Account
 {
@@ -21,15 +21,13 @@ namespace MarketZone.Areas.Identity.Pages.Account
 		private readonly IUserEmailStore<User> _emailStore;
 		private readonly ILogger<RegisterModel> _logger;
 		private readonly IEmailSender _emailSender;
-		private readonly ApplicationDbContext _context;
 
 		public RegisterModel(
 			UserManager<User> userManager,
 			IUserStore<User> userStore,
 			SignInManager<User> signInManager,
 			ILogger<RegisterModel> logger,
-			IEmailSender emailSender,
-			ApplicationDbContext context)
+			IEmailSender emailSender)
 		{
 			_userManager = userManager;
 			_userStore = userStore;
@@ -37,13 +35,15 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			_signInManager = signInManager;
 			_logger = logger;
 			_emailSender = emailSender;
-			_context = context;
 		}
 
 		[BindProperty]
 		public InputModel Input { get; set; }
 
 		public IList<AuthenticationScheme> ExternalLogins { get; set; }
+
+		[TempData]
+		public string InfoMessage { get; set; }
 
 		public class InputModel
 		{
@@ -64,9 +64,15 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			public string ConfirmPassword { get; set; }
 		}
 
-		public async Task OnGetAsync()
+		public async Task OnGetAsync(string email = null)
 		{
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+			if (!string.IsNullOrWhiteSpace(email))
+			{
+				Input ??= new InputModel();
+				Input.Email = email;
+			}
 		}
 
 		public async Task<IActionResult> OnPostAsync()
@@ -74,17 +80,12 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
 			if (!ModelState.IsValid)
-			{
 				return Page();
-			}
 
-			// ✅ Email already exists handling (NO redirect, same message always)
 			var existingUser = await _userManager.FindByEmailAsync(Input.Email);
 			if (existingUser != null)
 			{
-				// Put the message on the Email field (best UX) + also in summary if you want
 				ModelState.AddModelError("Input.Email", "An account with this email already exists.");
-				// ModelState.AddModelError(string.Empty, "An account with this email already exists."); // optional
 				return Page();
 			}
 
@@ -100,15 +101,10 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			{
 				foreach (var error in result.Errors)
 				{
-					// ✅ If a duplicate happens due to race condition, show your exact message
 					if (error.Code == "DuplicateEmail" || error.Code == "DuplicateUserName")
-					{
 						ModelState.AddModelError("Input.Email", "An account with this email already exists.");
-					}
 					else
-					{
 						ModelState.AddModelError(string.Empty, error.Description);
-					}
 				}
 
 				return Page();
@@ -116,32 +112,77 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 			_logger.LogInformation("User created a new account with password.");
 
-			// 🔐 Generate 6-digit verification code
-			var verificationCode = RandomNumberGenerator.GetInt32(100000, 1000000)
-				.ToString();
+			await SendConfirmationEmailAsync(user, Input.Email);
+			InfoMessage = "Confirmation email sent. Please check your email.";
 
-			_context.EmailVerificationCodes.Add(new EmailVerificationCode
+			return RedirectToPage("./Register", new { email = Input.Email });
+		}
+
+		public async Task<IActionResult> OnPostResendConfirmationAsync()
+		{
+			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+			ModelState.Remove("Input.Password");
+			ModelState.Remove("Input.ConfirmPassword");
+
+			if (!ModelState.IsValid)
+				return Page();
+
+			var email = Input?.Email?.Trim();
+			if (string.IsNullOrWhiteSpace(email))
 			{
-				UserId = user.Id,
-				Code = verificationCode,
-				CreatedAt = DateTime.UtcNow,
-				ExpiresAt = DateTime.UtcNow.AddMinutes(10)
-			});
+				ModelState.AddModelError("Input.Email", "Please enter your email first.");
+				return Page();
+			}
 
-			await _context.SaveChangesAsync();
+			var user = await _userManager.FindByEmailAsync(email);
 
-			// ✉️ Send email with code
+			if (user == null)
+			{
+				InfoMessage = "No account found with this email. No email was sent.";
+				return RedirectToPage("./Register", new { email });
+			}
+
+			var logins = await _userManager.GetLoginsAsync(user);
+			if (logins.Any())
+			{
+				InfoMessage = "This account uses Google sign-in. Email confirmation resend is not available.";
+				return RedirectToPage("./Register", new { email });
+			}
+
+			if (user.EmailConfirmed)
+			{
+				InfoMessage = "This email is already confirmed. Please log in.";
+				return RedirectToPage("./Register", new { email });
+			}
+
+			await SendConfirmationEmailAsync(user, email);
+
+			InfoMessage = "Confirmation email resent. Please check your email.";
+
+			TempData["StartCooldownKey"] = "register_resend";
+			TempData["StartCooldownSeconds"] = 30;
+
+			return RedirectToPage("./Register", new { email });
+		}
+
+		private async Task SendConfirmationEmailAsync(User user, string email)
+		{
+			var userId = await _userManager.GetUserIdAsync(user);
+
+			var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+			code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+			var callbackUrl = Url.Page(
+				"/Account/ConfirmEmail",
+				pageHandler: null,
+				values: new { area = "Identity", userId, code },
+				protocol: Request.Scheme);
+
 			await _emailSender.SendEmailAsync(
-				Input.Email,
-				"MarketZone – verification code",
-				$"Your verification code is <b>{verificationCode}</b>. It expires in 10 minutes."
-			);
-
-			// ❗ Do NOT sign in the user
-			// ❗ Do NOT confirm email yet
-
-			// ➜ Redirect to code verification page
-			return RedirectToPage("VerifyEmailCode", new { email = Input.Email });
+				email,
+				"Confirm your email",
+				$"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 		}
 
 		private User CreateUser()
@@ -162,9 +203,7 @@ namespace MarketZone.Areas.Identity.Pages.Account
 		private IUserEmailStore<User> GetEmailStore()
 		{
 			if (!_userManager.SupportsUserEmail)
-			{
 				throw new NotSupportedException("The default UI requires a user store with email support.");
-			}
 
 			return (IUserEmailStore<User>)_userStore;
 		}
