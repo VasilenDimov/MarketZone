@@ -114,11 +114,8 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 			if (result.RequiresTwoFactor)
 			{
-				return RedirectToPage("./LoginWith2fa", new
-				{
-					ReturnUrl = returnUrl,
-					RememberMe = Input.RememberMe
-				});
+				ModelState.AddModelError(string.Empty, "Two-factor authentication is disabled on this site.");
+				return Page();
 			}
 
 			if (result.IsLockedOut)

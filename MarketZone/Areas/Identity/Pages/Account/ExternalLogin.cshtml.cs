@@ -82,6 +82,7 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
 			}
 
+			//) If the external login is already linked -> sign in
 			var result = await _signInManager.ExternalLoginSignInAsync(
 				info.LoginProvider,
 				info.ProviderKey,
@@ -99,60 +100,86 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			if (result.IsLockedOut)
 				return RedirectToPage("./Lockout");
 
+			//  If login is linked to a user (extra safety check)
+			var userByLogin = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
+			if (userByLogin != null)
+			{
+				await _signInManager.SignInAsync(userByLogin, isPersistent: false);
+				return LocalRedirect(returnUrl);
+			}
+
+			// Get email from provider
 			var email = info.Principal.FindFirstValue(ClaimTypes.Email);
 
-			if (!string.IsNullOrWhiteSpace(email))
+			// If provider did NOT give an email -> fallback to the confirmation page
+			if (string.IsNullOrWhiteSpace(email))
 			{
-				var existingUser = await _userManager.FindByEmailAsync(email);
+				ReturnUrl = returnUrl;
+				ProviderDisplayName = info.ProviderDisplayName;
+				return Page();
+			}
 
-				if (existingUser != null)
+			//  If a user already exists by email -> link Google and sign in
+			var existingUser = await _userManager.FindByEmailAsync(email);
+			if (existingUser != null)
+			{
+				if (!existingUser.EmailConfirmed)
 				{
-					if (!existingUser.EmailConfirmed)
-					{
-						ErrorMessage =
-							"An account with this email already exists but it is not confirmed. " +
-							"Please confirm your email or use 'Resend email confirmation'.";
+					ErrorMessage =
+						"An account with this email already exists but it is not confirmed. " +
+						"Please confirm your email or use 'Resend email confirmation'.";
 
-						return RedirectToPage("./Login", new { ReturnUrl = returnUrl, email, showResend = true });
-					}
-
-					var logins = await _userManager.GetLoginsAsync(existingUser);
-					bool alreadyLinked = logins.Any(l =>
-						l.LoginProvider.Equals(info.LoginProvider, StringComparison.OrdinalIgnoreCase) &&
-						l.ProviderKey == info.ProviderKey);
-
-					if (!alreadyLinked)
-					{
-						var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
-						if (!addLoginResult.Succeeded)
-						{
-							ErrorMessage = "This Google account is already linked to another user. Please log in using the correct account.";
-							return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
-						}
-					}
-
-					await _signInManager.SignInAsync(existingUser, isPersistent: false);
-
-					_logger.LogInformation("Linked {LoginProvider} to existing user {UserId} and signed in.",
-						info.LoginProvider, existingUser.Id);
-
-					return LocalRedirect(returnUrl);
+					return RedirectToPage("./Login", new { ReturnUrl = returnUrl, email, showResend = true });
 				}
+
+				var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
+				if (!addLoginResult.Succeeded)
+				{
+					ErrorMessage = "This Google account is already linked to another user.";
+					return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+				}
+
+				await _signInManager.SignInAsync(existingUser, isPersistent: false);
+				_logger.LogInformation("Linked {LoginProvider} to existing user {UserId} and signed in.",
+					info.LoginProvider, existingUser.Id);
+
+				return LocalRedirect(returnUrl);
 			}
 
-			ReturnUrl = returnUrl;
-			ProviderDisplayName = info.ProviderDisplayName;
+			//auto-create + link + sign in
+			var user = CreateUser();
+			user.CreatedOn = DateTime.UtcNow;
+			user.EmailConfirmed = true;
 
-			if (!string.IsNullOrWhiteSpace(email))
+			await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
+			await _emailStore.SetEmailAsync(user, email, CancellationToken.None);
+
+			var createResult = await _userManager.CreateAsync(user);
+			if (!createResult.Succeeded)
 			{
-				Input = new InputModel { Email = email };
+				ErrorMessage = string.Join(" ", createResult.Errors.Select(e => e.Description));
+				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
 			}
 
-			return Page();
+			var loginResult = await _userManager.AddLoginAsync(user, info);
+			if (!loginResult.Succeeded)
+			{
+				// Clean up created user if login linking failed
+				await _userManager.DeleteAsync(user);
+
+				ErrorMessage = string.Join(" ", loginResult.Errors.Select(e => e.Description));
+				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+			}
+
+			_logger.LogInformation("User created an account using {LoginProvider} provider.", info.LoginProvider);
+
+			await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+			return LocalRedirect(returnUrl);
 		}
 
 		public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
 		{
+			// This handler remains as a fallback ONLY for providers that don't return an email.
 			returnUrl ??= Url.Content("~/");
 
 			var info = await _signInManager.GetExternalLoginInfoAsync();
@@ -173,8 +200,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 				var user = CreateUser();
 				user.CreatedOn = DateTime.UtcNow;
-
-				// Google already verifies email ownership -> treat as confirmed
 				user.EmailConfirmed = true;
 
 				await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -216,8 +241,7 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			catch
 			{
 				throw new InvalidOperationException($"Can't create an instance of '{nameof(User)}'. " +
-					$"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor, or alternatively " +
-					$"override the external login page in /Areas/Identity/Pages/Account/ExternalLogin.cshtml");
+					$"Ensure that '{nameof(User)}' is not an abstract class and has a parameterless constructor.");
 			}
 		}
 
