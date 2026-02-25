@@ -18,7 +18,6 @@ namespace MarketZone.Data
 		public DbSet<Tag> Tags { get; set; } = null!;
 		public DbSet<Favorite> Favorites { get; set; } = null!;
 		public DbSet<AdTag> AdTags { get; set; } = null!;
-		public DbSet<EmailVerificationCode> EmailVerificationCodes { get; set; } = null!;
 		public DbSet<MessageImage> MessageImages { get; set; } = null!;
 		protected override void OnModelCreating(ModelBuilder builder)
 		{

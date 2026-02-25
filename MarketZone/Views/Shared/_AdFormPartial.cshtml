@@ -22,11 +22,10 @@
             <span asp-validation-for="Price" class="text-danger"></span>
         </div>
         <div class="col-md-4">
-            <label asp-for="Currency"></label>
-            <select asp-for="Currency"
-                    class="form-select"
-                    asp-items="Html.GetEnumSelectList<MarketZone.Data.Enums.Currency>()">
-            </select>
+            <label>Currency</label>
+            <input type="text" class="form-control" value="EUR" readonly />
+            <input type="hidden" asp-for="Currency" value="EUR" />
+            <span asp-validation-for="Currency" class="text-danger"></span>
         </div>
     </div>
 

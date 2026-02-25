@@ -23,7 +23,7 @@ namespace MarketZone.ViewModels.Ad
 		public decimal Price { get; set; }
 
 		[Required]
-		public Currency Currency { get; set; }
+		public Currency Currency { get; set; } = Currency.EUR;
 
 		[Required(ErrorMessage = "Please select a category.")]
 		[Range(1, int.MaxValue, ErrorMessage = "Please select a valid category.")]

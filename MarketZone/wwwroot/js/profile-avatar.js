@@ -1,138 +1,130 @@
 ﻿(function () {
-    const modalEl = document.getElementById('avatarModal');
-    if (!modalEl) return; // safety if script is loaded elsewhere
+    const fileInput = document.getElementById("avatarFileInput");
+    const previewImg = document.getElementById("avatarPreview");
+    const zoomInput = document.getElementById("avatarZoom");
 
-    const fileInput = document.getElementById('avatarFileInput');
+    const stepChoose = document.getElementById("avatarStepChoose");
+    const stepCrop = document.getElementById("avatarStepCrop");
 
-    const stepChoose = document.getElementById('avatarStepChoose');
-    const stepCrop = document.getElementById('avatarStepCrop');
+    const applyBtn = document.getElementById("applyAvatarBtn");
 
-    const previewImg = document.getElementById('avatarPreview');
-    const zoomSlider = document.getElementById('avatarZoom');
+    const mainAvatarImg = document.getElementById("profileAvatarImg");
+    const hiddenBase64 = document.getElementById("profileImageBase64");
 
-    const saveBtn = document.getElementById('avatarSaveBtn');
-    const currentAvatar = document.getElementById('currentAvatar');
+    const modalEl = document.getElementById("avatarModal");
 
-    let originalImage = null;
-    let objectUrl = null;
-
-    function resetModal() {
-        stepChoose.classList.remove('d-none');
-        stepCrop.classList.add('d-none');
-        saveBtn.classList.add('d-none');
-
-        fileInput.value = '';
-        zoomSlider.value = '1';
-
-        previewImg.style.transform = 'translate(-50%, -50%) scale(1)';
-        previewImg.removeAttribute('src');
-
-        if (objectUrl) {
-            URL.revokeObjectURL(objectUrl);
-            objectUrl = null;
-        }
-        originalImage = null;
+    if (!fileInput || !previewImg || !zoomInput || !applyBtn || !mainAvatarImg || !hiddenBase64 || !modalEl) {
+        return;
     }
 
-    modalEl.addEventListener('hidden.bs.modal', resetModal);
+    let loadedImage = new Image();
+    let imageReady = false;
 
-    zoomSlider.addEventListener('input', () => {
-        const z = parseFloat(zoomSlider.value);
-        previewImg.style.transform = `translate(-50%, -50%) scale(${z})`;
-    });
+    function showCropStep() {
+        stepChoose.classList.add("d-none");
+        stepCrop.classList.remove("d-none");
+    }
 
-    fileInput.addEventListener('change', () => {
+    function showChooseStep() {
+        stepCrop.classList.add("d-none");
+        stepChoose.classList.remove("d-none");
+        zoomInput.value = "1";
+        previewImg.removeAttribute("src");
+        imageReady = false;
+    }
+
+    function updatePreviewZoom() {
+        const zoom = parseFloat(zoomInput.value || "1");
+        previewImg.style.transform = `translate(-50%, -50%) scale(${zoom})`;
+    }
+
+    zoomInput.addEventListener("input", updatePreviewZoom);
+
+    fileInput.addEventListener("change", () => {
         const file = fileInput.files && fileInput.files[0];
         if (!file) return;
 
-        if (objectUrl) URL.revokeObjectURL(objectUrl);
-        objectUrl = URL.createObjectURL(file);
-
-        originalImage = new Image();
-        originalImage.onload = () => {
-            previewImg.src = objectUrl;
-
-            stepChoose.classList.add('d-none');
-            stepCrop.classList.remove('d-none');
-            saveBtn.classList.remove('d-none');
-        };
-        originalImage.src = objectUrl;
-    });
-
-    async function uploadBlob(blob) {
-        const form = new FormData();
-        form.append('ProfileImage', blob, 'avatar.png');
-
-        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-
-        const res = await fetch('?handler=ProfilePicture', {
-            method: 'POST',
-            headers: token ? { 'RequestVerificationToken': token } : {},
-            body: form
-        });
-
-        if (!res.ok) {
-            const txt = await res.text();
-            throw new Error(txt || 'Upload failed.');
+        if (!file.type || !file.type.startsWith("image/")) {
+            fileInput.value = "";
+            return;
         }
 
-        return await res.json();
-    }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const dataUrl = e.target.result;
 
-    function cropToCircleBlob() {
-        const size = 512;
-        const canvas = document.createElement('canvas');
+            loadedImage = new Image();
+            loadedImage.onload = () => {
+                imageReady = true;
+                previewImg.src = dataUrl;
+                updatePreviewZoom();
+                showCropStep();
+            };
+            loadedImage.src = dataUrl;
+        };
+
+        reader.readAsDataURL(file);
+    });
+
+    function renderCroppedPngBase64(size) {
+        const zoom = parseFloat(zoomInput.value || "1");
+
+        const canvas = document.createElement("canvas");
         canvas.width = size;
         canvas.height = size;
 
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
 
-        // Circle clip
+        const srcW = loadedImage.naturalWidth;
+        const srcH = loadedImage.naturalHeight;
+
+        if (!srcW || !srcH) return null;
+
+        // Crop a centered square from the source image, adjusted by zoom.
+        const baseCrop = Math.min(srcW, srcH);
+
+        const crop = baseCrop / zoom;
+
+        const sx = (srcW - crop) / 2;
+        const sy = (srcH - crop) / 2;
+
+        // Draw the crop into a circle mask.
+        ctx.clearRect(0, 0, size, size);
         ctx.save();
         ctx.beginPath();
         ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
         ctx.closePath();
         ctx.clip();
 
-        // Center crop with zoom
-        const z = parseFloat(zoomSlider.value);
+        ctx.drawImage(
+            loadedImage,
+            sx, sy, crop, crop,
+            0, 0, size, size
+        );
 
-        const iw = originalImage.naturalWidth;
-        const ih = originalImage.naturalHeight;
-
-        const minDim = Math.min(iw, ih);
-        const cropSize = minDim / z;
-
-        const sx = (iw - cropSize) / 2;
-        const sy = (ih - cropSize) / 2;
-
-        ctx.drawImage(originalImage, sx, sy, cropSize, cropSize, 0, 0, size, size);
         ctx.restore();
 
-        return new Promise((resolve) => {
-            canvas.toBlob((blob) => resolve(blob), 'image/png', 0.92);
-        });
+        return canvas.toDataURL("image/png");
     }
 
-    saveBtn.addEventListener('click', async () => {
-        if (!originalImage) return;
+    applyBtn.addEventListener("click", () => {
+        if (!imageReady) return;
 
-        saveBtn.disabled = true;
-        try {
-            const blob = await cropToCircleBlob();
-            const result = await uploadBlob(blob);
+        const base64 = renderCroppedPngBase64(256);
+        if (!base64) return;
 
-            if (result && result.imageUrl) {
-                currentAvatar.src = result.imageUrl;
-            }
+        mainAvatarImg.src = base64;
+        hiddenBase64.value = base64;
 
-            // Close
-            const bsModal = bootstrap.Modal.getInstance(modalEl);
-            bsModal.hide();
-        } catch (e) {
-            alert(e.message || 'Failed to update profile picture.');
-        } finally {
-            saveBtn.disabled = false;
-        }
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
     });
+
+    modalEl.addEventListener("hidden.bs.modal", () => {
+        fileInput.value = "";
+        showChooseStep();
+    });
+
+    showChooseStep();
 })();

@@ -13,8 +13,6 @@ namespace MarketZone.Data.Models
 		public ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();
 		public ICollection<Review> ReviewsWritten { get; set; } = new List<Review>();
 		public ICollection<Review> ReviewsReceived { get; set; } = new List<Review>();
-		public ICollection<EmailVerificationCode> EmailVerificationCodes { get; set; }
-			= new List<EmailVerificationCode>();
 
 	}
 }

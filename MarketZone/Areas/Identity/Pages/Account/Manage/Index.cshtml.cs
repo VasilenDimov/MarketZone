@@ -1,8 +1,13 @@
 ﻿#nullable disable
 
+using System;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -30,33 +35,26 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 		[TempData]
 		public string StatusMessage { get; set; }
 
-		// used for showing the current avatar
 		public string ProfilePictureUrl { get; set; }
 
 		[BindProperty]
 		public InputModel Input { get; set; }
 
-		// receives the uploaded file
-		[BindProperty]
-		public IFormFile ProfileImage { get; set; }
-
 		public class InputModel
 		{
+			public string ProfileImageBase64 { get; set; }
+
 			[Required]
 			[Display(Name = "Username")]
-			[StringLength(30, MinimumLength = 3, ErrorMessage = "Username must be between {2} and {1} characters.")]
-			[RegularExpression(@"^[a-zA-Z0-9._-]+$", ErrorMessage = "Username can contain letters, numbers, dot, underscore and dash only.")]
+			[StringLength(256, MinimumLength = 3, ErrorMessage = "Username must be between {2} and {1} characters.")]
+			[RegularExpression(@"^[a-zA-Z0-9._@-]+$", ErrorMessage = "Username can contain letters, numbers, @, dot, underscore and dash only.")]
 			public string UserName { get; set; }
 
-			[Phone]
-			[Display(Name = "Phone number")]
-			public string PhoneNumber { get; set; }
 		}
 
 		private async Task LoadAsync(User user)
 		{
 			var userName = await _userManager.GetUserNameAsync(user);
-			var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
 
 			ProfilePictureUrl = string.IsNullOrWhiteSpace(user.ProfilePictureUrl)
 				? DefaultAvatarUrl
@@ -65,7 +63,7 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 			Input = new InputModel
 			{
 				UserName = userName,
-				PhoneNumber = phoneNumber
+				ProfileImageBase64 = null
 			};
 		}
 
@@ -95,7 +93,6 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 				return Page();
 			}
 
-			// Username
 			var currentUserName = await _userManager.GetUserNameAsync(user);
 			var newUserName = Input.UserName?.Trim();
 
@@ -113,22 +110,69 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 				if (!setUserNameResult.Succeeded)
 				{
 					foreach (var error in setUserNameResult.Errors)
+					{
 						ModelState.AddModelError(string.Empty, error.Description);
+					}
 
 					await LoadAsync(user);
 					return Page();
 				}
 			}
 
-			// Phone
-			var phoneNumber = await _userManager.GetPhoneNumberAsync(user);
-			if (Input.PhoneNumber != phoneNumber)
+			if (!string.IsNullOrWhiteSpace(Input.ProfileImageBase64))
 			{
-				var setPhoneResult = await _userManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
-				if (!setPhoneResult.Succeeded)
+				var oldUrl = user.ProfilePictureUrl;
+
+				if (!TryParseDataUri(Input.ProfileImageBase64, out var contentType, out var bytes, out var fileExtension))
 				{
-					StatusMessage = "Unexpected error when trying to set phone number.";
-					return RedirectToPage();
+					ModelState.AddModelError(string.Empty, "Invalid image data.");
+					await LoadAsync(user);
+					return Page();
+				}
+
+				IFormFile formFile;
+				try
+				{
+					var ms = new MemoryStream(bytes);
+					formFile = new FormFile(ms, 0, bytes.Length, "ProfileImage", $"avatar.{fileExtension}")
+					{
+						Headers = new HeaderDictionary(),
+						ContentType = contentType
+					};
+				}
+				catch
+				{
+					ModelState.AddModelError(string.Empty, "Could not process the selected image.");
+					await LoadAsync(user);
+					return Page();
+				}
+
+				string newUrl;
+				try
+				{
+					newUrl = await _imageService.UploadProfileImageAsync(formFile);
+				}
+				catch (Exception ex)
+				{
+					ModelState.AddModelError(string.Empty, ex.Message);
+					await LoadAsync(user);
+					return Page();
+				}
+
+				user.ProfilePictureUrl = newUrl;
+				var updateResult = await _userManager.UpdateAsync(user);
+				if (!updateResult.Succeeded)
+				{
+					ModelState.AddModelError(string.Empty, string.Join(" ", updateResult.Errors.Select(e => e.Description)));
+					await LoadAsync(user);
+					return Page();
+				}
+
+				if (!string.IsNullOrWhiteSpace(oldUrl) &&
+					!string.Equals(oldUrl, DefaultAvatarUrl, StringComparison.OrdinalIgnoreCase) &&
+					oldUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+				{
+					await _imageService.DeleteImageAsync(oldUrl);
 				}
 			}
 
@@ -137,46 +181,46 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 			return RedirectToPage();
 		}
 
-		// AJAX/FORM handler for avatar upload
-		public async Task<IActionResult> OnPostProfilePictureAsync()
+		private static bool TryParseDataUri(string dataUri, out string contentType, out byte[] bytes, out string fileExtension)
 		{
-			var user = await _userManager.GetUserAsync(User);
-			if (user == null)
-				return NotFound($"Unable to load user with ID '{_userManager.GetUserId(User)}'.");
+			contentType = null;
+			bytes = null;
+			fileExtension = "png";
 
-			if (ProfileImage == null || ProfileImage.Length == 0)
-				return BadRequest("No image selected.");
+			var commaIndex = dataUri.IndexOf(',');
+			if (commaIndex <= 0)
+				return false;
 
-			string oldUrl = user.ProfilePictureUrl;
+			var header = dataUri[..commaIndex];
+			var base64 = dataUri[(commaIndex + 1)..];
 
-			string newUrl;
+			if (!header.StartsWith("data:", StringComparison.OrdinalIgnoreCase) ||
+				!header.Contains(";base64", StringComparison.OrdinalIgnoreCase))
+				return false;
+
+			contentType = header.Substring("data:".Length, header.IndexOf(';') - "data:".Length).Trim();
+
+			fileExtension = contentType.ToLowerInvariant() switch
+			{
+				"image/jpeg" => "jpg",
+				"image/jpg" => "jpg",
+				"image/png" => "png",
+				"image/webp" => "webp",
+				_ => null
+			};
+
+			if (fileExtension == null)
+				return false;
+
 			try
 			{
-				newUrl = await _imageService.UploadProfileImageAsync(ProfileImage);
+				bytes = Convert.FromBase64String(base64);
+				return bytes.Length > 0;
 			}
-			catch (Exception ex)
+			catch
 			{
-				return BadRequest(ex.Message);
+				return false;
 			}
-
-			user.ProfilePictureUrl = newUrl;
-			var updateResult = await _userManager.UpdateAsync(user);
-			if (!updateResult.Succeeded)
-			{
-				return BadRequest(string.Join(" ", updateResult.Errors.Select(e => e.Description)));
-			}
-
-			// delete old file (if it was uploaded and not default)
-			if (!string.IsNullOrWhiteSpace(oldUrl) &&
-				!string.Equals(oldUrl, DefaultAvatarUrl, StringComparison.OrdinalIgnoreCase) &&
-				oldUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
-			{
-				await _imageService.DeleteImageAsync(oldUrl);
-			}
-
-			await _signInManager.RefreshSignInAsync(user);
-
-			return new JsonResult(new { imageUrl = newUrl });
 		}
 	}
 }

@@ -1,5 +1,6 @@
 ﻿using MarketZone.Common;
 using MarketZone.Data;
+using MarketZone.Data.Enums;
 using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Ad;
@@ -13,7 +14,9 @@ namespace MarketZone.Services.Implementations
 		private readonly IImageService imageService;
 		private readonly ICategoryHierarchyService categoryHierarchyService;
 
-		public AdService(ApplicationDbContext context, IImageService imageService,
+		public AdService(
+			ApplicationDbContext context,
+			IImageService imageService,
 			ICategoryHierarchyService categoryHierarchyService)
 		{
 			this.context = context;
@@ -28,7 +31,6 @@ namespace MarketZone.Services.Implementations
 				throw new InvalidOperationException("At least one image is required.");
 			}
 
-			// Validate that the category exists
 			var categoryExists = await context.Categories
 				.AnyAsync(c => c.Id == model.CategoryId);
 
@@ -42,7 +44,7 @@ namespace MarketZone.Services.Implementations
 				Title = model.Title,
 				Description = model.Description,
 				Price = model.Price,
-				Currency = model.Currency,
+				Currency = Currency.EUR,
 				Address = model.Address,
 				Latitude = model.Latitude,
 				Longitude = model.Longitude,
@@ -52,7 +54,6 @@ namespace MarketZone.Services.Implementations
 				CreatedOn = DateTime.UtcNow
 			};
 
-			//Images
 			foreach (var image in model.Images)
 			{
 				var imageUrl = await imageService.UploadAdImageAsync(image);
@@ -63,7 +64,6 @@ namespace MarketZone.Services.Implementations
 				});
 			}
 
-			//Tags (optional, max 20)
 			if (!string.IsNullOrWhiteSpace(model.Tags))
 			{
 				var tagNames = model.Tags
@@ -105,7 +105,7 @@ namespace MarketZone.Services.Implementations
 						Title = a.Title,
 						Description = a.Description,
 						Price = a.Price,
-						Currency = a.Currency,
+						Currency = Currency.EUR,
 						Condition = a.Condition,
 						Address = a.Address,
 						Latitude = a.Latitude,
@@ -151,7 +151,7 @@ namespace MarketZone.Services.Implementations
 					Id = a.Id,
 					Title = a.Title,
 					Price = a.Price,
-					Currency = a.Currency,
+					Currency = Currency.EUR,
 					CreatedOn = a.CreatedOn,
 					MainImageUrl = a.Images
 						  .OrderBy(i => i.Id)
@@ -180,7 +180,7 @@ namespace MarketZone.Services.Implementations
 				Title = ad.Title,
 				Description = ad.Description,
 				Price = ad.Price,
-				Currency = ad.Currency,
+				Currency = Currency.EUR,
 				Condition = ad.Condition,
 				Address = ad.Address,
 				Latitude = ad.Latitude,
@@ -188,9 +188,9 @@ namespace MarketZone.Services.Implementations
 				CategoryId = ad.CategoryId,
 				Tags = string.Join(", ", ad.AdTags.Select(t => t.Tag.Name)),
 				ExistingImageUrls = ad.Images
-				 .OrderBy(i => i.Id)
-				 .Select(i => i.ImageUrl)
-				 .ToList()
+					.OrderBy(i => i.Id)
+					.Select(i => i.ImageUrl)
+					.ToList()
 			};
 		}
 
@@ -205,18 +205,16 @@ namespace MarketZone.Services.Implementations
 			if (ad == null)
 				return false;
 
-			// Update scalar fields
 			ad.Title = model.Title;
 			ad.Description = model.Description;
 			ad.Price = model.Price;
-			ad.Currency = model.Currency;
+			ad.Currency = Currency.EUR;
 			ad.Condition = model.Condition;
 			ad.Address = model.Address;
 			ad.Latitude = model.Latitude;
 			ad.Longitude = model.Longitude;
 			ad.CategoryId = model.CategoryId!.Value;
 
-			// Images
 			var imagesToRemove = ad.Images
 				.Where(i => !model.ExistingImageUrls.Contains(i.ImageUrl))
 				.ToList();
@@ -236,7 +234,6 @@ namespace MarketZone.Services.Implementations
 			if (!ad.Images.Any())
 				throw new InvalidOperationException("At least one image is required.");
 
-			// Tags
 			ad.AdTags.Clear();
 
 			if (!string.IsNullOrWhiteSpace(model.Tags))
@@ -281,9 +278,16 @@ namespace MarketZone.Services.Implementations
 			return true;
 		}
 
-		public async Task<AdSearchViewModel> SearchAsync(string? search,
-			string? address, int? categoryId, decimal? minPrice, decimal? maxPrice,
-			string? tags, string? sort, int page, string? userId)
+		public async Task<AdSearchViewModel> SearchAsync(
+			string? search,
+			string? address,
+			int? categoryId,
+			decimal? minPrice,
+			decimal? maxPrice,
+			string? tags,
+			string? sort,
+			int page,
+			string? userId)
 		{
 			const int PageSize = 21;
 
@@ -357,7 +361,7 @@ namespace MarketZone.Services.Implementations
 					Id = a.Id,
 					Title = a.Title,
 					Price = a.Price,
-					Currency = a.Currency,
+					Currency = Currency.EUR,
 					CreatedOn = a.CreatedOn,
 					MainImageUrl = a.Images
 						.OrderBy(i => i.Id)

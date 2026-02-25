@@ -63,9 +63,6 @@ builder.Services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
 // Email sender
 builder.Services.AddTransient<IEmailSender, SendGridEmailSender>();
 
-// Background service
-builder.Services.AddHostedService<EmailVerificationCleanupService>();
-
 // MVC + Razor Pages
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();

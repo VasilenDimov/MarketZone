@@ -7,8 +7,9 @@
 
 <h3>@ViewData["Title"]</h3>
 <partial name="_StatusMessage" for="StatusMessage" />
+
 <div class="d-flex align-items-center gap-3 mb-4">
-    <img id="currentAvatar"
+    <img id="profileAvatarImg"
          src="@Model.ProfilePictureUrl"
          alt="Profile picture"
          class="mz-avatar-circle" />
@@ -26,18 +27,15 @@
     <div class="col-md-6">
         <form id="profile-form" method="post">
             @Html.AntiForgeryToken()
+
+            <input type="hidden" asp-for="Input.ProfileImageBase64" id="profileImageBase64" />
+
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 
             <div class="form-floating mb-3">
                 <input asp-for="Input.UserName" class="form-control" placeholder="Please choose your username." />
                 <label asp-for="Input.UserName" class="form-label"></label>
                 <span asp-validation-for="Input.UserName" class="text-danger"></span>
-            </div>
-
-            <div class="form-floating mb-3">
-                <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
-                <label asp-for="Input.PhoneNumber" class="form-label"></label>
-                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
             </div>
 
             <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">
@@ -57,7 +55,6 @@
             </div>
 
             <div class="modal-body">
-                <!-- Choosing file -->
                 <div id="avatarStepChoose">
                     <p class="text-muted mb-3">Choose an image to use as your profile picture.</p>
 
@@ -67,7 +64,6 @@
                            class="form-control" />
                 </div>
 
-                <!-- Zooming -->
                 <div id="avatarStepCrop" class="d-none">
                     <p class="text-muted mb-2">Resize the image to fit the circle.</p>
 
@@ -84,12 +80,13 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline-secondary" id="avatarCancelBtn" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary d-none" id="avatarSaveBtn">Save</button>
+                <button type="button" id="applyAvatarBtn" class="btn btn-primary">Apply</button>
             </div>
 
         </div>
     </div>
 </div>
+
 @section Styles {
     <link rel="stylesheet" href="~/css/profile-avatar.css" asp-append-version="true" />
 }
