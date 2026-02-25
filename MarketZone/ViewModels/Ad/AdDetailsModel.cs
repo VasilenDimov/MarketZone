@@ -25,6 +25,7 @@ namespace MarketZone.ViewModels.Ad
 
 		public string SellerId { get; set; } = null!;
 		public string SellerName { get; set; } = null!;
+		public string SellerProfilePictureUrl { get; set; } = null!;
 
 		public List<string> ImageUrls { get; set; } = new();
 	}

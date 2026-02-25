@@ -10,8 +10,8 @@
 		// The other participant in THIS conversation
 		public string OtherUserId { get; set; } = null!;
 		public string OtherUserName { get; set; } = null!;
-
 		public string CurrentUserId { get; set; } = null!;
+		public string OtherUserProfilePictureUrl { get; set; } = null!;
 
 		public List<ChatMessageViewModel> Messages { get; set; } = new();
 

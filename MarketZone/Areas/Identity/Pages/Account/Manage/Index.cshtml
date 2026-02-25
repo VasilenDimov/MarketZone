@@ -7,10 +7,25 @@
 
 <h3>@ViewData["Title"]</h3>
 <partial name="_StatusMessage" for="StatusMessage" />
+<div class="d-flex align-items-center gap-3 mb-4">
+    <img id="currentAvatar"
+         src="@Model.ProfilePictureUrl"
+         alt="Profile picture"
+         class="mz-avatar-circle" />
+
+    <button type="button"
+            class="btn btn-primary"
+            id="btnChangeAvatar"
+            data-bs-toggle="modal"
+            data-bs-target="#avatarModal">
+        Change profile picture
+    </button>
+</div>
 
 <div class="row">
     <div class="col-md-6">
         <form id="profile-form" method="post">
+            @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 
             <div class="form-floating mb-3">
@@ -32,6 +47,54 @@
     </div>
 </div>
 
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Change profile picture</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <!-- Choosing file -->
+                <div id="avatarStepChoose">
+                    <p class="text-muted mb-3">Choose an image to use as your profile picture.</p>
+
+                    <input type="file"
+                           id="avatarFileInput"
+                           accept="image/*"
+                           class="form-control" />
+                </div>
+
+                <!-- Zooming -->
+                <div id="avatarStepCrop" class="d-none">
+                    <p class="text-muted mb-2">Resize the image to fit the circle.</p>
+
+                    <div class="mz-crop-wrap mb-3">
+                        <div class="mz-crop-circle">
+                            <img id="avatarPreview" alt="Preview" />
+                        </div>
+                    </div>
+
+                    <label class="form-label">Zoom</label>
+                    <input type="range" id="avatarZoom" min="1" max="2.5" step="0.01" value="1" class="form-range" />
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" id="avatarCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary d-none" id="avatarSaveBtn">Save</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/profile-avatar.css" asp-append-version="true" />
+}
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/profile-avatar.js" asp-append-version="true"></script>
 }

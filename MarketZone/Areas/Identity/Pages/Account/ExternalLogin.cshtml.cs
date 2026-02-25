@@ -1,11 +1,9 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
+﻿#nullable disable
 
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using MarketZone.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -42,6 +40,7 @@ namespace MarketZone.Areas.Identity.Pages.Account
 		public InputModel Input { get; set; }
 
 		public string ProviderDisplayName { get; set; }
+
 		public string ReturnUrl { get; set; }
 
 		[TempData]
@@ -82,14 +81,13 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
 			}
 
-			//) If the external login is already linked -> sign in
-			var result = await _signInManager.ExternalLoginSignInAsync(
+			var signInResult = await _signInManager.ExternalLoginSignInAsync(
 				info.LoginProvider,
 				info.ProviderKey,
 				isPersistent: false,
 				bypassTwoFactor: true);
 
-			if (result.Succeeded)
+			if (signInResult.Succeeded)
 			{
 				_logger.LogInformation("{Name} logged in with {LoginProvider} provider.",
 					info.Principal.Identity?.Name, info.LoginProvider);
@@ -97,10 +95,11 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return LocalRedirect(returnUrl);
 			}
 
-			if (result.IsLockedOut)
+			if (signInResult.IsLockedOut)
+			{
 				return RedirectToPage("./Lockout");
+			}
 
-			//  If login is linked to a user (extra safety check)
 			var userByLogin = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
 			if (userByLogin != null)
 			{
@@ -108,10 +107,7 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return LocalRedirect(returnUrl);
 			}
 
-			// Get email from provider
 			var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-
-			// If provider did NOT give an email -> fallback to the confirmation page
 			if (string.IsNullOrWhiteSpace(email))
 			{
 				ReturnUrl = returnUrl;
@@ -119,24 +115,22 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return Page();
 			}
 
-			//  If a user already exists by email -> link Google and sign in
+			var pictureUrl = GetExternalPictureUrl(info.Principal);
+
 			var existingUser = await _userManager.FindByEmailAsync(email);
 			if (existingUser != null)
 			{
-				if (!existingUser.EmailConfirmed)
-				{
-					ErrorMessage =
-						"An account with this email already exists but it is not confirmed. " +
-						"Please confirm your email or use 'Resend email confirmation'.";
-
-					return RedirectToPage("./Login", new { ReturnUrl = returnUrl, email, showResend = true });
-				}
-
 				var addLoginResult = await _userManager.AddLoginAsync(existingUser, info);
 				if (!addLoginResult.Succeeded)
 				{
-					ErrorMessage = "This Google account is already linked to another user.";
+					ErrorMessage = "This external account is already linked to another user.";
 					return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+				}
+
+				if (string.IsNullOrWhiteSpace(existingUser.ProfilePictureUrl) && !string.IsNullOrWhiteSpace(pictureUrl))
+				{
+					existingUser.ProfilePictureUrl = pictureUrl;
+					await _userManager.UpdateAsync(existingUser);
 				}
 
 				await _signInManager.SignInAsync(existingUser, isPersistent: false);
@@ -146,10 +140,14 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return LocalRedirect(returnUrl);
 			}
 
-			//auto-create + link + sign in
 			var user = CreateUser();
 			user.CreatedOn = DateTime.UtcNow;
 			user.EmailConfirmed = true;
+
+			if (!string.IsNullOrWhiteSpace(pictureUrl))
+			{
+				user.ProfilePictureUrl = pictureUrl;
+			}
 
 			await _userStore.SetUserNameAsync(user, email, CancellationToken.None);
 			await _emailStore.SetEmailAsync(user, email, CancellationToken.None);
@@ -164,7 +162,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			var loginResult = await _userManager.AddLoginAsync(user, info);
 			if (!loginResult.Succeeded)
 			{
-				// Clean up created user if login linking failed
 				await _userManager.DeleteAsync(user);
 
 				ErrorMessage = string.Join(" ", loginResult.Errors.Select(e => e.Description));
@@ -179,7 +176,6 @@ namespace MarketZone.Areas.Identity.Pages.Account
 
 		public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
 		{
-			// This handler remains as a fallback ONLY for providers that don't return an email.
 			returnUrl ??= Url.Content("~/");
 
 			var info = await _signInManager.GetExternalLoginInfoAsync();
@@ -202,6 +198,12 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				user.CreatedOn = DateTime.UtcNow;
 				user.EmailConfirmed = true;
 
+				var pictureUrl = GetExternalPictureUrl(info.Principal);
+				if (!string.IsNullOrWhiteSpace(pictureUrl))
+				{
+					user.ProfilePictureUrl = pictureUrl;
+				}
+
 				await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
 				await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
@@ -218,18 +220,29 @@ namespace MarketZone.Areas.Identity.Pages.Account
 					}
 
 					foreach (var error in loginResult.Errors)
+					{
 						ModelState.AddModelError(string.Empty, error.Description);
+					}
 				}
 				else
 				{
 					foreach (var error in createResult.Errors)
+					{
 						ModelState.AddModelError(string.Empty, error.Description);
+					}
 				}
 			}
 
 			ProviderDisplayName = info.ProviderDisplayName;
 			ReturnUrl = returnUrl;
 			return Page();
+		}
+
+		private static string GetExternalPictureUrl(ClaimsPrincipal principal)
+		{
+			return principal.FindFirstValue("picture")
+				   ?? principal.FindFirstValue("urn:google:picture")
+				   ?? principal.FindFirstValue("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/uri");
 		}
 
 		private User CreateUser()
@@ -248,7 +261,9 @@ namespace MarketZone.Areas.Identity.Pages.Account
 		private IUserEmailStore<User> GetEmailStore()
 		{
 			if (!_userManager.SupportsUserEmail)
+			{
 				throw new NotSupportedException("The default UI requires a user store with email support.");
+			}
 
 			return (IUserEmailStore<User>)_userStore;
 		}

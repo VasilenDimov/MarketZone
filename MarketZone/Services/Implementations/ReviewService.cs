@@ -1,4 +1,5 @@
-﻿using MarketZone.Data;
+﻿using MarketZone.Common;
+using MarketZone.Data;
 using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Review;
@@ -66,7 +67,9 @@ namespace MarketZone.Services.Implementations
 					CreatedOn = r.CreatedOn,
 
 					ReviewerName = r.Reviewer.UserName!,
-					ReviewerProfilePictureUrl = r.Reviewer.ProfilePictureUrl
+					ReviewerProfilePictureUrl = string.IsNullOrWhiteSpace(r.Reviewer.ProfilePictureUrl)
+					     ? AppConstants.DefaultAvatarUrl
+					     : r.Reviewer.ProfilePictureUrl,
 				})
 				.ToListAsync();
 		}

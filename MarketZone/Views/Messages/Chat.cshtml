@@ -7,7 +7,6 @@
 
 <h4>Chat with @Model.OtherUserName</h4>
 
-<!-- Ad preview -->
 <a asp-controller="Ad"
    asp-action="Details"
    asp-route-id="@Model.AdId"
@@ -20,7 +19,6 @@
     </div>
 </a>
 
-<!-- CHAT -->
 <div id="chat-box" class="chat-box">
     @foreach (var msg in Model.Messages)
     {
@@ -35,7 +33,7 @@
         <div class="chat-message @(isMine ? "mine" : "theirs")">
             @if (!isMine)
             {
-                <img src="/images/default-avatar.png" class="chat-avatar" />
+                <img src="@Model.OtherUserProfilePictureUrl" class="chat-avatar" />
             }
 
             <div class="chat-bubble">
@@ -63,7 +61,6 @@
     }
 </div>
 
-<!-- input -->
 <div class="chat-footer">
 
     <div id="imagePreview" class="chat-image-preview"></div>
@@ -79,12 +76,10 @@
     </div>
 </div>
 
-<!-- image viewer -->
 <div id="imageViewer" class="image-viewer hidden">
     <div class="image-viewer-header">
         <span id="imageCounter"></span>
         <div>
-            <!--id added -->
             <button id="downloadBtn" title="Download">⬇</button>
             <button onclick="closeViewer()">✕</button>
         </div>
@@ -100,10 +95,10 @@
         chatId: "@Model.ChatId",
         adId: @Model.AdId,
         currentUserId: "@Model.CurrentUserId",
-        otherUserId: "@Model.OtherUserId"
+        otherUserId: "@Model.OtherUserId",
+        otherUserAvatarUrl: "@Model.OtherUserProfilePictureUrl"
     };
 </script>
-
 
 @section Styles {
     <link rel="stylesheet" href="~/css/chat.css" asp-append-version="true" />

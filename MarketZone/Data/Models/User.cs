@@ -5,8 +5,7 @@ namespace MarketZone.Data.Models
 {
 	public class User : IdentityUser
 	{
-		[Required]
-		public string ProfilePictureUrl { get; set; } = "/images/default-avatar.png";
+		public string? ProfilePictureUrl { get; set; }
 		public DateTime CreatedOn { get; set; }
 		public DateTime? LastOnlineOn { get; set; }
 		public ICollection<Ad> Ads { get; set; } = new List<Ad>();

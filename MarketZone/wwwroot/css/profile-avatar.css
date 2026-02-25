@@ -1,0 +1,35 @@
+﻿.mz-avatar-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #dee2e6;
+}
+
+.mz-crop-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.mz-crop-circle {
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #e9ecef;
+    background: #f8f9fa;
+    position: relative;
+}
+
+#avatarPreview {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    transform-origin: center center;
+    max-width: none;
+    max-height: none;
+    width: 260px;
+    height: 260px;
+    object-fit: cover;
+}

@@ -1,4 +1,5 @@
-﻿using MarketZone.Data;
+﻿using MarketZone.Common;
+using MarketZone.Data;
 using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Ad;
@@ -113,8 +114,11 @@ namespace MarketZone.Services.Implementations
 						SellerId = a.UserId,
 
 						SellerName = a.User.UserName!,
+						SellerProfilePictureUrl =
+							string.IsNullOrWhiteSpace(a.User.ProfilePictureUrl)
+								? AppConstants.DefaultAvatarUrl
+								: a.User.ProfilePictureUrl,
 
-						// will be filled after query
 						CategoryPath = string.Empty,
 
 						ImageUrls = a.Images

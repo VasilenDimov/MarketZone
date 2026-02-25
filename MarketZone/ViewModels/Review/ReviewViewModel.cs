@@ -9,6 +9,6 @@
 		public DateTime CreatedOn { get; set; }
 
 		public string ReviewerName { get; set; } = null!;
-		public string ReviewerProfilePictureUrl { get; set; } = "/images/default-avatar.png";
+		public string? ReviewerProfilePictureUrl { get; set; }
 	}
 }

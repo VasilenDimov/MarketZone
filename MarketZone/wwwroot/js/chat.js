@@ -60,7 +60,7 @@
         div.className = `chat-message ${mine ? "mine" : "theirs"}`;
 
         div.innerHTML = `
-            ${!mine ? `<img src="/images/default-avatar.png" class="chat-avatar" />` : ""}
+            ${!mine ? `<img src="${window.otherUserAvatarUrl || '/images/default-avatar.png'}" class="chat-avatar` : ""}
             <div class="chat-bubble">
                 ${imageUrls.length ? `
                     <div class="chat-images">

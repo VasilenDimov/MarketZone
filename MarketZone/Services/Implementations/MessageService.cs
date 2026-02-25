@@ -1,4 +1,5 @@
-﻿using MarketZone.Data;
+﻿using MarketZone.Common;
+using MarketZone.Data;
 using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Message;
@@ -20,29 +21,32 @@ namespace MarketZone.Services.Implementations
 			if (string.IsNullOrWhiteSpace(otherUserId))
 				return null;
 
-			// Load ad + seller
 			var ad = await context.Ads
+				.AsNoTracking()
 				.Include(a => a.User)
 				.Include(a => a.Images)
-				.AsNoTracking()
 				.FirstOrDefaultAsync(a => a.Id == adId);
 
 			if (ad == null)
 				return null;
 
-			// Must be either: (current is seller) or (current is buyer)
-			// And otherUser must be the other side.
 			bool currentIsSeller = ad.UserId == currentUserId;
 			bool otherIsSeller = ad.UserId == otherUserId;
 
-			// Valid pairs:
-			// - currentIsSeller && !otherIsSeller
-			// - !currentIsSeller && otherIsSeller
 			if (currentIsSeller == otherIsSeller)
 				return null;
 
-			// Pull only messages for this exact conversation (two users + ad)
+			var otherUser = await context.Users
+				.AsNoTracking()
+				.Where(u => u.Id == otherUserId)
+				.Select(u => new { u.Id, u.UserName, u.ProfilePictureUrl })
+				.FirstOrDefaultAsync();
+
+			if (otherUser == null)
+				return null;
+
 			var messages = await context.Messages
+				.AsNoTracking()
 				.Where(m => m.AdId == adId &&
 					((m.SenderId == currentUserId && m.ReceiverId == otherUserId) ||
 					 (m.SenderId == otherUserId && m.ReceiverId == currentUserId)))
@@ -53,29 +57,14 @@ namespace MarketZone.Services.Implementations
 				{
 					SenderId = m.SenderId,
 					SenderName = m.Sender.UserName!,
-					SenderProfileImage = m.Sender.ProfilePictureUrl, // ✅ use real image
+					SenderProfileImage = string.IsNullOrWhiteSpace(m.Sender.ProfilePictureUrl)
+						? AppConstants.DefaultAvatarUrl
+						: m.Sender.ProfilePictureUrl,
 					Content = m.Content,
 					ImageUrls = m.Images.Select(i => i.ImageUrl).ToList(),
 					SentOn = m.SentOn
 				})
-				.AsNoTracking()
 				.ToListAsync();
-
-			// Determine other user's name
-			string otherUserName;
-			if (otherIsSeller)
-			{
-				otherUserName = ad.User.UserName!;
-			}
-			else
-			{
-				// other is buyer
-				otherUserName = await context.Users
-					.AsNoTracking()
-					.Where(u => u.Id == otherUserId)
-					.Select(u => u.UserName!)
-					.FirstOrDefaultAsync() ?? "Unknown user";
-			}
 
 			var buyerId = currentIsSeller ? otherUserId : currentUserId;
 
@@ -84,7 +73,10 @@ namespace MarketZone.Services.Implementations
 				AdId = adId,
 				ChatId = $"ad_{adId}_u_{buyerId}",
 				OtherUserId = otherUserId,
-				OtherUserName = otherUserName,
+				OtherUserName = otherUser.UserName ?? "Unknown user",
+				OtherUserProfilePictureUrl = string.IsNullOrWhiteSpace(otherUser.ProfilePictureUrl)
+					? AppConstants.DefaultAvatarUrl
+					: otherUser.ProfilePictureUrl,
 				CurrentUserId = currentUserId,
 				Messages = messages,
 				AdTitle = ad.Title,
@@ -93,7 +85,6 @@ namespace MarketZone.Services.Implementations
 					.Select(i => i.ImageUrl)
 					.FirstOrDefault() ?? "/images/no-image.png"
 			};
-
 		}
 
 		public async Task SaveMessageAsync(int adId, string senderId, string receiverId, string? content, List<string> imageUrls)
@@ -105,8 +96,6 @@ namespace MarketZone.Services.Implementations
 			if (string.IsNullOrWhiteSpace(senderId) || string.IsNullOrWhiteSpace(receiverId))
 				throw new InvalidOperationException("Invalid sender/receiver.");
 
-			// Validate that this receiver makes sense for this ad
-			// One must be seller (ad owner), the other must be non-seller.
 			bool senderIsSeller = ad.UserId == senderId;
 			bool receiverIsSeller = ad.UserId == receiverId;
 			if (senderIsSeller == receiverIsSeller)
@@ -117,7 +106,7 @@ namespace MarketZone.Services.Implementations
 
 			var message = new Message
 			{
-				AdId = adId,	
+				AdId = adId,
 				SenderId = senderId,
 				ReceiverId = receiverId,
 				Content = content ?? string.Empty,
@@ -146,19 +135,15 @@ namespace MarketZone.Services.Implementations
 		{
 			mode = (mode ?? "buying").ToLowerInvariant();
 
-			// 1) Base query WITHOUT Include (important!)
 			IQueryable<Message> baseQuery = context.Messages
 				.AsNoTracking()
 				.Where(m => m.SenderId == userId || m.ReceiverId == userId);
 
-			// selling = chats for ads I own, buying = chats for ads I don't own
 			if (mode == "selling")
 				baseQuery = baseQuery.Where(m => m.Ad.UserId == userId);
 			else
 				baseQuery = baseQuery.Where(m => m.Ad.UserId != userId);
 
-			// 2) Get only the latest message Id per Ad (still NO Include)
-			// ✅ Group by (AdId + OtherUserId) so seller gets one thread per buyer per ad
 			var latestMessageIds = await baseQuery
 				.Select(m => new
 				{
@@ -174,7 +159,6 @@ namespace MarketZone.Services.Implementations
 					.First())
 				.ToListAsync();
 
-			// 3) Now load the message rows we need WITH Include
 			var chats = await context.Messages
 				.AsNoTracking()
 				.Where(m => latestMessageIds.Contains(m.Id))
@@ -185,13 +169,15 @@ namespace MarketZone.Services.Implementations
 				{
 					AdId = m.AdId,
 					AdTitle = m.Ad.Title,
-
-					// if I'm sender -> other is receiver, else other is sender
 					OtherUserId = m.SenderId == userId ? m.ReceiverId : m.SenderId,
 					OtherUserName = m.SenderId == userId
 						? m.Receiver.UserName!
 						: m.Sender.UserName!,
-
+					OtherUserProfilePictureUrl = m.SenderId == userId
+	               ? (string.IsNullOrWhiteSpace(m.Receiver.ProfilePictureUrl)
+				   ? AppConstants.DefaultAvatarUrl : m.Receiver.ProfilePictureUrl)
+	               : (string.IsNullOrWhiteSpace(m.Sender.ProfilePictureUrl)
+				   ? AppConstants.DefaultAvatarUrl : m.Sender.ProfilePictureUrl),
 					LastMessage = m.Content,
 					LastMessageTime = m.SentOn
 				})

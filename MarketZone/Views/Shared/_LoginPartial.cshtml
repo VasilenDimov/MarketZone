@@ -1,5 +1,7 @@
 ﻿@using MarketZone.Data.Models
 @using Microsoft.AspNetCore.Identity
+@using MarketZone.Common
+@using MarketZone.Infrastructure.Identity
 
 @inject SignInManager<User> SignInManager
 
@@ -12,8 +14,9 @@
                asp-page="/Account/Manage/Index"
                title="Manage account">
 
-                <img src="/images/default-avatar.png"
-                     onerror="this.src='/images/default-avatar.png'"
+                <img src="@(User.FindFirst(AppUserClaimsPrincipalFactory.ProfilePictureUrlClaimType)?.Value
+                                  ?? AppConstants.DefaultAvatarUrl)"
+                     onerror="this.onerror=null;this.src='@AppConstants.DefaultAvatarUrl';"
                      class="rounded-circle me-2"
                      style="width:40px;height:40px;object-fit:cover;flex-shrink:0;" />
 

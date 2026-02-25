@@ -31,6 +31,10 @@ namespace MarketZone.Services.Implementations
 		{
 			return UploadImageAsync(image, "ads");
 		}
+		public Task<string> UploadProfileImageAsync(IFormFile image)
+		{
+			return UploadImageAsync(image, "profile");
+		}
 		public Task DeleteImageAsync(string imageUrl)
 		{
 			if (string.IsNullOrWhiteSpace(imageUrl))

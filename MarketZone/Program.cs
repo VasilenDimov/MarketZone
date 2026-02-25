@@ -1,5 +1,6 @@
 using MarketZone.Data;
 using MarketZone.Data.Models;
+using MarketZone.Infrastructure.Identity;
 using MarketZone.Infrastructure.SignalR;
 using MarketZone.Middlewares;
 using MarketZone.Services.Implementations;
@@ -78,6 +79,7 @@ builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<User>, AppUserClaimsPrincipalFactory>();
 
 var app = builder.Build();
 

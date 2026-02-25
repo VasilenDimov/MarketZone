@@ -9,7 +9,7 @@ namespace MarketZone.ViewModels.User
 		public string UserId { get; set; } = null!;
 		public string UserName { get; set; } = null!;
 		public string Email { get; set; } = null!;
-		public string ProfilePictureUrl { get; set; } = "/images/default-avatar.png";
+		public string? ProfilePictureUrl { get; set; }
 
 		public DateTime CreatedOn { get; set; }
 		public DateTime? LastOnlineOn { get; set; }
