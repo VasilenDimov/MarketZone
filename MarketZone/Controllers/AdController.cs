@@ -97,7 +97,14 @@ namespace MarketZone.Controllers
 
 			await adService.CreateAsync(model, userId);
 
-			TempData["StatusMessage"] = "Your ad was submitted for review.";
+			if (User.IsInRole("Admin") || User.IsInRole("Moderator"))
+			{
+				TempData["StatusMessage"] = "Your ad was published successfully.";
+			}
+			else
+			{
+				TempData["StatusMessage"] = "Your ad was submitted for review.";
+			}
 			return RedirectToAction(nameof(MyAds));
 		}
 
@@ -113,11 +120,18 @@ namespace MarketZone.Controllers
 
 			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-			bool updated = await adService.UpdateAsync(model, userId);
+			bool autoApprove = User.IsInRole("Admin") || User.IsInRole("Moderator");
+			bool updated = await adService.UpdateAsync(model, userId, autoApprove);
 			if (!updated)
 				return Forbid();
-
-			TempData["StatusMessage"] = "Your changes were saved and the ad was sent for review.";
+			if (User.IsInRole("Admin") || User.IsInRole("Moderator"))
+			{
+				TempData["StatusMessage"] = "Your ad was published successfully.";
+			}
+			else
+			{
+				TempData["StatusMessage"] = "Your changes were saved and the ad was sent for review.";
+			}		
 			return RedirectToAction(nameof(MyAds));
 		}
 

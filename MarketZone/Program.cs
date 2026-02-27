@@ -59,6 +59,16 @@ builder.Services.AddAuthentication()
 		};
 	});
 
+// Authorization policies
+builder.Services.AddAuthorization(options =>
+{
+	options.AddPolicy("CanModerateAds", policy =>
+	policy.RequireRole("Admin", "Moderator"));
+
+	options.AddPolicy("AdminOnly", policy =>
+		policy.RequireRole("Admin"));
+});
+
 // SignalR
 builder.Services.AddSignalR(options =>
 {

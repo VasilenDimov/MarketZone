@@ -1,13 +1,18 @@
-﻿@using System.Security.Claims
+﻿@* Views/User/Profile.cshtml *@
+@using System.Security.Claims
+@using MarketZone.ViewModels.AdminUsers
 @model MarketZone.ViewModels.User.UserProfileViewModel
 
 @{
     ViewData["Title"] = Model.UserName;
+
+    var roleSuffix = Model.IsAdmin
+        ? " (Admin)"
+        : (Model.IsModerator ? " (Moderator)" : "");
 }
 
 <div class="container mt-4">
-
-    <!-- USER HEADER -->
+    <!-- User header -->
     <div class="card mb-4">
         <div class="card-body d-flex align-items-center justify-content-between flex-wrap">
 
@@ -18,7 +23,7 @@
                      style="width:80px;height:80px;object-fit:cover;" />
 
                 <div>
-                    <h4 class="mb-1">@Model.UserName</h4>
+                    <h4 class="mb-1">@Model.UserName@roleSuffix</h4>
 
                     <div class="text-muted small">
                         Member since @Model.CreatedOn.ToString("dd MMM yyyy")
@@ -36,8 +41,15 @@
             <div class="d-flex gap-2 mt-3 mt-md-0">
                 <a class="btn btn-outline-primary" href="#leave-review">Leave review</a>
                 <a class="btn btn-outline-secondary" href="#reviews">View reviews</a>
-            </div>
 
+                <partial name="_AdminUserActions" model="new AdminUserActionsViewModel
+                {
+                    TargetUserId = Model.UserId,
+                    IsDeleted = Model.IsDeleted,
+                    IsAdmin = Model.IsAdmin,
+                    IsModerator = Model.IsModerator
+                }" />
+            </div>
         </div>
     </div>
 
@@ -46,7 +58,7 @@
         <partial name="_SearchFilters" model="Model" />
     </form>
 
-    <!-- ADS -->
+    <!-- Ads -->
     @if (!Model.Ads.Any())
     {
         <div class="alert alert-info">This user has no ads yet.</div>
@@ -72,6 +84,7 @@
             }
         </div>
     }
+
     @if (Model.TotalPages > 1)
     {
         <nav>
@@ -81,14 +94,14 @@
                     <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
                         <a class="page-link"
                            href="?id=@Model.UserId
-                                      &search=@Model.SearchTerm
-                                      &address=@Model.Address
-                                      &categoryId=@Model.CategoryId
-                                      &minPrice=@Model.MinPrice
-                                      &maxPrice=@Model.MaxPrice
-                                      &tags=@Model.Tags
-                                      &sort=@Model.Sort
-                                      &page=@i">
+                             &search=@Model.SearchTerm
+                             &address=@Model.Address
+                             &categoryId=@Model.CategoryId
+                             &minPrice=@Model.MinPrice
+                             &maxPrice=@Model.MaxPrice
+                             &tags=@Model.Tags
+                             &sort=@Model.Sort
+                             &page=@i">
                             @i
                         </a>
                     </li>
@@ -96,7 +109,8 @@
             </ul>
         </nav>
     }
-    <!-- REVIEWS -->
+
+    <!-- Reviews -->
     <div class="card mt-4" id="reviews">
         <div class="card-body">
             <h5 class="card-title">Reviews (@Model.ReviewCount)</h5>
@@ -125,7 +139,7 @@
                                 </div>
 
                                 @if (User.Identity?.IsAuthenticated == true &&
-                                                        review.ReviewerId == User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier))
+                                                        review.ReviewerId == User.FindFirstValue(ClaimTypes.NameIdentifier))
                                 {
                                     <div class="d-flex gap-1">
                                         <a asp-controller="Review"
@@ -169,7 +183,7 @@
         </div>
     </div>
 
-    <!-- LEAVE REVIEW -->
+    <!-- Leave review -->
     <div class="card mt-4" id="leave-review">
         <div class="card-body">
             <h5 class="card-title">Leave a review</h5>
@@ -203,11 +217,11 @@
                     Submit review
                 </button>
             </form>
-            }
+                        }
         </div>
     </div>
-
 </div>
+
 @section Styles {
     <link rel="stylesheet" href="~/css/filters.css" asp-append-version="true" />
 }

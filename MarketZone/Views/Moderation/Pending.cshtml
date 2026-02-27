@@ -1,9 +1,9 @@
-﻿@model MarketZone.ViewModels.Ad.AdSearchViewModel
+﻿@* Views/Moderation/Pending.cshtml *@
+@model MarketZone.ViewModels.Ad.AdSearchViewModel
 
 @{
     ViewData["Title"] = "Pending ads";
 
-    // Return URL back to THIS moderation list (keeps filters + page)
     var returnUrl = Url.Action(
         "Pending",
         "Moderation",

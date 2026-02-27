@@ -18,7 +18,7 @@ namespace MarketZone.ViewModels.User
 		public IEnumerable<AdListItemViewModel> Ads { get; set; }
 			= new List<AdListItemViewModel>();
 
-		//Reviews
+		// Reviews
 		public IEnumerable<ReviewViewModel> Reviews { get; set; }
 			= new List<ReviewViewModel>();
 
@@ -26,11 +26,16 @@ namespace MarketZone.ViewModels.User
 		public int ReviewCount { get; set; }
 		public bool CanReview { get; set; }
 
-		//Last Online Dislay
+		// Roles / Status
+		public bool IsDeleted { get; set; }  
+		public bool IsModerator { get; set; }
+		public bool IsAdmin { get; set; }
+
+		// Last Online Display
 		public string? LastOnlineDisplay =>
-	    LastOnlineOn == null
-		? "Never"
-		: FormatLastOnline(LastOnlineOn.Value);
+			LastOnlineOn == null
+				? "Never"
+				: FormatLastOnline(LastOnlineOn.Value);
 
 		private static string FormatLastOnline(DateTime date)
 		{
@@ -40,14 +45,12 @@ namespace MarketZone.ViewModels.User
 				return date.ToString("HH:mm");
 
 			if (date.Date == now.AddDays(-1).Date)
-				return $"Yesterday";
+				return "Yesterday";
 
 			if (date.Year == now.Year)
 				return date.ToString("dd MMM");
 
 			return date.ToString("yyyy MMM dd");
 		}
-
 	}
-
 }

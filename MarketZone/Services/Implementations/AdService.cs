@@ -4,6 +4,7 @@ using MarketZone.Data.Enums;
 using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Ad;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketZone.Services.Implementations
@@ -13,15 +14,18 @@ namespace MarketZone.Services.Implementations
 		private readonly ApplicationDbContext context;
 		private readonly IImageService imageService;
 		private readonly ICategoryHierarchyService categoryHierarchyService;
+		private readonly UserManager<User> userManager;
 
 		public AdService(
 			ApplicationDbContext context,
 			IImageService imageService,
-			ICategoryHierarchyService categoryHierarchyService)
+			ICategoryHierarchyService categoryHierarchyService,
+			UserManager<User> userManager)
 		{
 			this.context = context;
 			this.imageService = imageService;
 			this.categoryHierarchyService = categoryHierarchyService;
+			this.userManager = userManager;
 		}
 
 		public async Task<int> CreateAsync(AdCreateModel model, string userId)
@@ -32,6 +36,14 @@ namespace MarketZone.Services.Implementations
 			var categoryExists = await context.Categories.AnyAsync(c => c.Id == model.CategoryId);
 			if (!categoryExists)
 				throw new InvalidOperationException("The selected category does not exist.");
+
+			// Determine role-based status
+			var user = await userManager.FindByIdAsync(userId);
+			var isStaff = user != null &&
+						  (await userManager.IsInRoleAsync(user, "Admin") ||
+						   await userManager.IsInRoleAsync(user, "Moderator"));
+
+			var initialStatus = isStaff ? AdStatus.Approved : AdStatus.Pending;
 
 			var ad = new Ad
 			{
@@ -47,9 +59,9 @@ namespace MarketZone.Services.Implementations
 				UserId = userId,
 				CreatedOn = DateTime.UtcNow,
 
-				Status = AdStatus.Pending,
-				ReviewedOn = null,
-				ReviewedByUserId = null,
+				Status = initialStatus,
+				ReviewedOn = isStaff ? DateTime.UtcNow : null,
+				ReviewedByUserId = isStaff ? userId : null,
 				RejectionReason = null
 			};
 
@@ -195,7 +207,7 @@ namespace MarketZone.Services.Implementations
 			};
 		}
 
-		public async Task<bool> UpdateAsync(AdCreateModel model, string userId)
+		public async Task<bool> UpdateAsync(AdCreateModel model, string userId, bool autoApprove)
 		{
 			var ad = await context.Ads
 				.Include(a => a.Images)
@@ -216,10 +228,14 @@ namespace MarketZone.Services.Implementations
 			ad.Longitude = model.Longitude;
 			ad.CategoryId = model.CategoryId!.Value;
 
-			ad.Status = AdStatus.Pending;
-			ad.ReviewedOn = null;
-			ad.ReviewedByUserId = null;
-			ad.RejectionReason = null;
+			ad.Status = autoApprove ? AdStatus.Approved : AdStatus.Pending;
+
+			if (!autoApprove)
+			{
+				ad.ReviewedOn = null;
+				ad.ReviewedByUserId = null;
+				ad.RejectionReason = null;
+			}
 
 			var keepUrls = new HashSet<string>(
 				model.ExistingImageUrls ?? Enumerable.Empty<string>(),
@@ -228,6 +244,7 @@ namespace MarketZone.Services.Implementations
 			var imagesToRemove = ad.Images
 				.Where(i => !keepUrls.Contains(i.ImageUrl))
 				.ToList();
+
 			foreach (var img in imagesToRemove)
 			{
 				ad.Images.Remove(img);

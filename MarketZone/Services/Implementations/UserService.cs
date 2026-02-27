@@ -1,9 +1,12 @@
 ﻿using MarketZone.Common;
 using MarketZone.Data;
 using MarketZone.Data.Enums;
+using MarketZone.Data.Models;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Ad;
+using MarketZone.ViewModels.AdminUsers;
 using MarketZone.ViewModels.User;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketZone.Services.Implementations
@@ -13,15 +16,21 @@ namespace MarketZone.Services.Implementations
 		private readonly ApplicationDbContext context;
 		private readonly IReviewService reviewService;
 		private readonly ICategoryHierarchyService categoryHierarchyService;
+		private readonly UserManager<User> userManager;
+		private readonly RoleManager<IdentityRole> roleManager;
 
 		public UserService(
 			ApplicationDbContext context,
 			IReviewService reviewService,
-			ICategoryHierarchyService categoryHierarchyService)
+			ICategoryHierarchyService categoryHierarchyService,
+			UserManager<User> userManager,
+			RoleManager<IdentityRole> roleManager)
 		{
 			this.context = context;
 			this.reviewService = reviewService;
 			this.categoryHierarchyService = categoryHierarchyService;
+			this.userManager = userManager;
+			this.roleManager = roleManager;
 		}
 
 		public async Task<UserProfileViewModel> GetProfileAsync(
@@ -44,6 +53,18 @@ namespace MarketZone.Services.Implementations
 
 			if (user == null)
 				throw new ArgumentException("User not found");
+
+			// ✅ Role flags for admin actions on profile page
+			// (use UserManager here; it’s the correct source of truth for roles)
+			var roleUser = await userManager.FindByIdAsync(userId);
+			bool isAdmin = false;
+			bool isModerator = false;
+
+			if (roleUser != null)
+			{
+				isAdmin = await userManager.IsInRoleAsync(roleUser, "Admin");
+				isModerator = await userManager.IsInRoleAsync(roleUser, "Moderator");
+			}
 
 			var adsQuery = context.Ads
 				.AsNoTracking()
@@ -177,6 +198,10 @@ namespace MarketZone.Services.Implementations
 				CreatedOn = user.CreatedOn,
 				LastOnlineOn = user.LastOnlineOn,
 
+				IsDeleted = user.IsDeleted,
+				IsAdmin = isAdmin,
+				IsModerator = isModerator,
+
 				SearchTerm = search,
 				Address = address,
 				CategoryId = categoryId,
@@ -195,6 +220,174 @@ namespace MarketZone.Services.Implementations
 				ReviewCount = reviewStats?.ReviewCount ?? 0,
 				CanReview = canReview
 			};
+		}
+
+		public async Task<bool> SoftDeleteUserAsync(string targetUserId, string adminId)
+		{
+			// Prevent admin from deleting themselves from this action
+			if (targetUserId == adminId)
+				return false;
+
+			var user = await userManager.FindByIdAsync(targetUserId);
+			if (user == null)
+				return false;
+
+			// Prevent deleting other admins
+			if (await userManager.IsInRoleAsync(user, "Admin"))
+				return false;
+
+			if (user.IsDeleted)
+				return true;
+
+			// Mark as deleted
+			user.IsDeleted = true;
+			user.DeletedOn = DateTime.UtcNow;
+
+			// Lock account permanently
+			await userManager.SetLockoutEnabledAsync(user, true);
+			await userManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddYears(100));
+
+			// Remove external logins (Google etc.)
+			var logins = await userManager.GetLoginsAsync(user);
+			foreach (var login in logins)
+			{
+				await userManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
+			}
+
+			// Clear sensitive data (same logic as self-delete)
+			user.ProfilePictureUrl = null;
+			user.PhoneNumber = null;
+
+			// Scrub email & username so they can be reused
+			var token = Guid.NewGuid().ToString("N");
+
+			user.Email = $"deleted_{token}@deleted.local";
+			user.NormalizedEmail = user.Email.ToUpperInvariant();
+
+			user.UserName = $"deleted_{token}";
+			user.NormalizedUserName = user.UserName.ToUpperInvariant();
+
+			await userManager.UpdateSecurityStampAsync(user);
+
+			var result = await userManager.UpdateAsync(user);
+			return result.Succeeded;
+		}
+
+		public async Task<AdminUsersPageViewModel> GetAdminUsersPageAsync(string? search, int page, string adminId)
+		{
+			const int PageSize = 20;
+			if (page < 1) page = 1;
+
+			var adminRoleId = await context.Roles
+				.Where(r => r.Name == "Admin")
+				.Select(r => r.Id)
+				.FirstOrDefaultAsync();
+
+			var moderatorRoleId = await context.Roles
+				.Where(r => r.Name == "Moderator")
+				.Select(r => r.Id)
+				.FirstOrDefaultAsync();
+
+			var adminUserIds = await context.UserRoles
+				.Where(ur => ur.RoleId == adminRoleId)
+				.Select(ur => ur.UserId)
+				.ToListAsync();
+
+			var moderatorUserIds = await context.UserRoles
+				.Where(ur => ur.RoleId == moderatorRoleId)
+				.Select(ur => ur.UserId)
+				.ToListAsync();
+
+			var query = context.Users
+				.AsNoTracking()
+				.Where(u => u.Id != adminId)              // hide current admin
+				.Where(u => !adminUserIds.Contains(u.Id)) // hide other admins
+				.Where(u => !u.IsDeleted)                 // hide deleted users
+				.AsQueryable();
+
+			if (!string.IsNullOrWhiteSpace(search))
+			{
+				var term = search.Trim().ToLower();
+				query = query.Where(u =>
+					(u.Email != null && u.Email.ToLower().Contains(term)) ||
+					(u.UserName != null && u.UserName.ToLower().Contains(term)));
+			}
+
+			var totalCount = await query.CountAsync();
+			var totalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
+			if (totalPages < 1) totalPages = 1;
+			if (page > totalPages) page = totalPages;
+
+			var users = await query
+				.OrderByDescending(u => u.CreatedOn)
+				.Skip((page - 1) * PageSize)
+				.Take(PageSize)
+				.Select(u => new AdminUserListItemViewModel
+				{
+					Id = u.Id,
+					Email = u.Email ?? string.Empty,
+					UserName = u.UserName ?? string.Empty,
+					IsDeleted = u.IsDeleted,
+					DeletedOn = u.DeletedOn,
+					CreatedOn = u.CreatedOn,
+					IsModerator = moderatorUserIds.Contains(u.Id)
+				})
+				.ToListAsync();
+
+			return new AdminUsersPageViewModel
+			{
+				SearchTerm = search,
+				CurrentPage = page,
+				TotalPages = totalPages,
+				Users = users
+			};
+		}
+
+		public async Task<bool> PromoteToModeratorAsync(string targetUserId, string adminId)
+		{
+			if (targetUserId == adminId)
+				return false;
+
+			var user = await userManager.FindByIdAsync(targetUserId);
+			if (user == null || user.IsDeleted)
+				return false;
+
+			// cannot promote admins
+			if (await userManager.IsInRoleAsync(user, "Admin"))
+				return false;
+
+			if (await userManager.IsInRoleAsync(user, "Moderator"))
+				return true;
+
+			if (!await roleManager.RoleExistsAsync("Moderator"))
+			{
+				var roleResult = await roleManager.CreateAsync(new IdentityRole("Moderator"));
+				if (!roleResult.Succeeded)
+					return false;
+			}
+
+			var result = await userManager.AddToRoleAsync(user, "Moderator");
+			return result.Succeeded;
+		}
+		public async Task<bool> DemoteFromModeratorAsync(string targetUserId, string adminId)
+		{
+			if (targetUserId == adminId)
+				return false;
+
+			var user = await userManager.FindByIdAsync(targetUserId);
+			if (user == null || user.IsDeleted)
+				return false;
+
+			// Cannot demote admins
+			if (await userManager.IsInRoleAsync(user, "Admin"))
+				return false;
+
+			// If not a moderator, nothing to do
+			if (!await userManager.IsInRoleAsync(user, "Moderator"))
+				return true;
+
+			var result = await userManager.RemoveFromRoleAsync(user, "Moderator");
+			return result.Succeeded;
 		}
 	}
 }

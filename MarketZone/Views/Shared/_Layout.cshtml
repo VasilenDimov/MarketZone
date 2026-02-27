@@ -4,162 +4,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - MarketZone</title>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>@ViewData["Title"] - MarketZone</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/MarketZone.styles.css" asp-append-version="true" />
-    @RenderSection("Styles", required: false)
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+	<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+	<link rel="stylesheet" href="~/MarketZone.styles.css" asp-append-version="true" />
+	@RenderSection("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
+	<header>
+		<nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+			<div class="container-fluid">
 
-                <a class="navbar-brand"
-                   asp-controller="Home"
-                   asp-action="Index">
-                    MarketZone
-                </a>
+				<a class="navbar-brand"
+				   asp-controller="Home"
+				   asp-action="Index">
+					MarketZone
+				</a>
 
-                <button class="navbar-toggler"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target=".navbar-collapse"
-                        aria-expanded="false"
-                        aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+				<button class="navbar-toggler"
+						type="button"
+						data-bs-toggle="collapse"
+						data-bs-target=".navbar-collapse"
+						aria-expanded="false"
+						aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
 
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+				<div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
 
-                    <ul class="navbar-nav flex-grow-1"></ul>
+					<ul class="navbar-nav flex-grow-1"></ul>
 
-                    <div class="d-flex align-items-center gap-3">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <a class="btn btn-outline-secondary d-flex align-items-center gap-1"
-                               asp-controller="Messages"
-                               asp-action="Inbox">
-                                💬 Chat
-                            </a>
+					<div class="d-flex align-items-center gap-3">
+						@if (User.Identity?.IsAuthenticated == true)
+						{
+							<a class="btn btn-outline-secondary d-flex align-items-center gap-1"
+							   asp-controller="Messages"
+							   asp-action="Inbox">
+								💬 Chat
+							</a>
 
-                            <a class="btn btn-primary"
-                               asp-controller="Ad"
-                               asp-action="Create">
-                                + Create Ad
-                            </a>
+							<a class="btn btn-primary"
+							   asp-controller="Ad"
+							   asp-action="Create">
+								+ Create Ad
+							</a>
 
-                            <div class="user-dropdown d-flex align-items-center gap-2">
-                                <a href="#"
-                                   class="d-flex align-items-center gap-2 text-decoration-none"
-                                   aria-haspopup="true"
-                                   aria-expanded="false">
+							<div class="user-dropdown d-flex align-items-center gap-2">
+								<a href="#"
+								   class="d-flex align-items-center gap-2 text-decoration-none"
+								   aria-haspopup="true"
+								   aria-expanded="false">
 
-                                    <img src="@(User.FindFirst(AppUserClaimsPrincipalFactory.ProfilePictureUrlClaimType)?.Value ?? AppConstants.DefaultAvatarUrl)"
-                                         class="rounded-circle"
-                                         width="32"
-                                         height="32"
-                                         alt="User profile" />
+									<img src="@(User.FindFirst(AppUserClaimsPrincipalFactory.ProfilePictureUrlClaimType)?.Value ?? AppConstants.DefaultAvatarUrl)"
+										 class="rounded-circle"
+										 width="32"
+										 height="32"
+										 alt="User profile" />
 
-                                    <span class="text-dark small">
-                                        @User.Identity!.Name
-                                    </span>
-                                </a>
+									<span class="text-dark small">
+										@User.Identity!.Name
+									</span>
+								</a>
 
-                                <ul class="dropdown-menu user-dropdown-menu shadow">
-                                    @if (User.IsInRole("Admin") || User.IsInRole("Moderator"))
-                                    {
-                                        <li>
-                                            <a class="dropdown-item"
-                                               asp-controller="Moderation"
-                                               asp-action="Pending">
-                                                Moderation
-                                            </a>
-                                        </li>
-                                    }
+								<ul class="dropdown-menu user-dropdown-menu shadow">
+									@if (User.IsInRole("Admin") || User.IsInRole("Moderator"))
+									{
+										<li>
+											<a class="dropdown-item"
+											   asp-controller="Moderation"
+											   asp-action="Pending">
+												Moderation
+											</a>
+										</li>
+									}
 
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="Ad"
-                                           asp-action="MyAds">
-                                            My Ads
-                                        </a>
-                                    </li>
+									@if (User.IsInRole("Admin"))
+									{
+										<li>
+											<a class="dropdown-item"
+											   asp-controller="AdminUsers"
+											   asp-action="Index">
+												Users
+											</a>
+										</li>
+									}
 
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-controller="Favorites"
-                                           asp-action="MyFavorites">
-                                            My Favorites
-                                        </a>
-                                    </li>
+									<li>
+										<a class="dropdown-item"
+										   asp-controller="Ad"
+										   asp-action="MyAds">
+											My Ads
+										</a>
+									</li>
 
-                                    <li>
-                                        <a class="dropdown-item"
-                                           asp-area="Identity"
-                                           asp-page="/Account/Manage/Index">
-                                            Settings
-                                        </a>
-                                    </li>
+									<li>
+										<a class="dropdown-item"
+										   asp-controller="Favorites"
+										   asp-action="MyFavorites">
+											My Favorites
+										</a>
+									</li>
 
-                                    <li>
-                                        <hr class="dropdown-divider" />
-                                    </li>
+									<li>
+										<a class="dropdown-item"
+										   asp-area="Identity"
+										   asp-page="/Account/Manage/Index">
+											Settings
+										</a>
+									</li>
 
-                                    <li>
-                                        <form asp-area="Identity"
-                                              asp-page="/Account/Logout"
-                                              asp-route-returnUrl="@Url.Action("Index", "Home")"
-                                              method="post">
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                Logout
-                                            </button>
-                                        </form>
-                                    </li>
-                                </ul>
-                            </div>
-                        }
-                        else
-                        {
-                            <a class="nav-link"
-                               asp-area="Identity"
-                               asp-page="/Account/Register">
-                                Register
-                            </a>
-                            <a class="nav-link"
-                               asp-area="Identity"
-                               asp-page="/Account/Login">
-                                Login
-                            </a>
-                        }
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
+									<li>
+										<hr class="dropdown-divider" />
+									</li>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+									<li>
+										<form asp-area="Identity"
+											  asp-page="/Account/Logout"
+											  asp-route-returnUrl="@Url.Action("Index", "Home")"
+											  method="post">
+											<button type="submit" class="dropdown-item text-danger">
+												Logout
+											</button>
+										</form>
+									</li>
+								</ul>
+							</div>
+						}
+						else
+						{
+							<a class="nav-link"
+							   asp-area="Identity"
+							   asp-page="/Account/Register">
+								Register
+							</a>
+							<a class="nav-link"
+							   asp-area="Identity"
+							   asp-page="/Account/Login">
+								Login
+							</a>
+						}
+					</div>
+				</div>
+			</div>
+		</nav>
+	</header>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - MarketZone
-        </div>
-    </footer>
+	<div class="container">
+		<main role="main" class="pb-3">
+			@RenderBody()
+		</main>
+	</div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-    <script src="~/js/auth-cooldown.js" asp-append-version="true"></script>
+	<footer class="border-top footer text-muted">
+		<div class="container">
+			&copy; 2025 - MarketZone
+		</div>
+	</footer>
 
-    @await RenderSectionAsync("Scripts", required: false)
+	<script src="~/lib/jquery/dist/jquery.min.js"></script>
+	<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+	<script src="~/js/site.js" asp-append-version="true"></script>
+	<script src="~/js/auth-cooldown.js" asp-append-version="true"></script>
+
+	@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

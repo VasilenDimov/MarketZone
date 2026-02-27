@@ -1,0 +1,71 @@
+﻿@using System.Security.Claims
+@model MarketZone.ViewModels.AdminUsers.AdminUserActionsViewModel
+
+@{
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    var isAdminViewer = User.IsInRole("Admin");
+    var isSelf = !string.IsNullOrEmpty(currentUserId) && currentUserId == Model.TargetUserId;
+
+    // Promote only normal users
+    var canPromote = !Model.IsDeleted && !Model.IsAdmin && !Model.IsModerator;
+
+    // Demote only moderator
+    var canDemote = !Model.IsDeleted && !Model.IsAdmin && Model.IsModerator;
+
+    // Admin can delete normal users + moderators
+    var canDelete = !Model.IsDeleted && !Model.IsAdmin;
+}
+
+@if (isAdminViewer && !isSelf)
+{
+    @if (canPromote)
+    {
+        <form method="post"
+              asp-controller="AdminUsers"
+              asp-action="PromoteToModerator"
+              class="d-inline ms-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.TargetUserId" />
+            <input type="hidden" name="returnUrl" value="@Url.Action("Index", "AdminUsers")" />
+            <button type="submit"
+                    class="btn btn-warning"
+                    onclick="return confirm('Promote this user to Moderator?');">
+                Promote to moderator
+            </button>
+        </form>
+    }
+    else if (canDemote)
+    {
+        <form method="post"
+              asp-controller="AdminUsers"
+              asp-action="DemoteFromModerator"
+              class="d-inline ms-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.TargetUserId" />
+            <input type="hidden" name="returnUrl" value="@Url.Action("Index", "AdminUsers")" />
+            <button type="submit"
+                    class="btn btn-secondary"
+                    onclick="return confirm('Remove Moderator role from this user?');">
+                Demote from moderator
+            </button>
+        </form>
+    }
+
+    @* Delete stays available for moderators too *@
+    @if (canDelete)
+    {
+        <form method="post"
+              asp-controller="AdminUsers"
+              asp-action="Delete"
+              class="d-inline ms-2">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.TargetUserId" />
+            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+            <button type="submit"
+                    class="btn btn-danger"
+                    onclick="return confirm('Delete this user?');">
+                Delete
+            </button>
+        </form>
+    }
+}

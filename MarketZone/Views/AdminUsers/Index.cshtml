@@ -1,0 +1,109 @@
+﻿@model MarketZone.ViewModels.AdminUsers.AdminUsersPageViewModel
+
+@{
+    ViewData["Title"] = "Users";
+    var returnUrl = Url.Action("Index", "AdminUsers", new { search = Model.SearchTerm, page = Model.CurrentPage });
+}
+
+<h3>Users</h3>
+<partial name="_StatusMessage" />
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-6">
+        <input name="search" value="@Model.SearchTerm" class="form-control" placeholder="Search by email/username..." />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary w-100" type="submit">Search</button>
+    </div>
+</form>
+
+<table class="table align-middle">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>UserName</th>
+            <th>Created</th>
+            <th>Status</th>
+            <th style="width: 460px;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model.Users)
+        {
+            <tr>
+                <td>@u.Email</td>
+                <td>
+                    @u.UserName
+                    @if (u.IsModerator)
+                    {
+                        <span class="text-muted">(Moderator)</span>
+                    }
+                </td>
+                <td>@u.CreatedOn.ToString("yyyy-MM-dd")</td>
+                <td>
+                    @if (u.IsDeleted)
+                    {
+                        <span class="badge bg-secondary">Deleted</span>
+                    }
+                    else if (u.IsModerator)
+                    {
+                        <span class="badge bg-info text-dark">Moderator</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                </td>
+                <td class="text-end">
+                    <a class="btn btn-outline-secondary btn-sm"
+                       asp-controller="User"
+                       asp-action="Profile"
+                       asp-route-id="@u.Id">
+                        View profile
+                    </a>
+                    @* Promote/Demote toggle *@
+                    @if (!u.IsDeleted)
+                    {
+                        if (!u.IsModerator)
+                        {
+                            <form method="post" asp-action="PromoteToModerator" class="d-inline ms-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button class="btn btn-warning" type="submit"
+                                        onclick="return confirm('Promote this user to Moderator?');">
+                                    Promote to moderator
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <form method="post" asp-action="DemoteFromModerator" class="d-inline ms-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button class="btn btn-secondary" type="submit"
+                                        onclick="return confirm('Remove Moderator role from this user?');">
+                                    Demote from moderator
+                                </button>
+                            </form>
+                        }
+                    }
+
+                    @if (!u.IsDeleted)
+                    {
+                        <form method="post" asp-action="Delete" class="d-inline ms-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@u.Id" />
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button class="btn btn-danger" type="submit"
+                                    onclick="return confirm('Delete this user?');">
+                                Delete
+                            </button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

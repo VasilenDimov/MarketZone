@@ -8,8 +8,8 @@ namespace MarketZone.Services.Interfaces
 		Task<AdDetailsModel?> GetDetailsAsync(int id, string? userId,bool isModeratorOrAdmin);
 		Task<IEnumerable<AdListItemViewModel>> GetMyAdsAsync(string userId);
 		Task<AdCreateModel?> GetEditModelAsync(int adId, string userId);
-		Task<bool> UpdateAsync(AdCreateModel model, string userId);	
-        Task<bool> DeleteAsync(int adId, string userId);
+		Task<bool> UpdateAsync(AdCreateModel model, string userId, bool autoApprove);
+		Task<bool> DeleteAsync(int adId, string userId);
 		Task<AdSearchViewModel> SearchAsync(string? search,string? address,
 	    int? categoryId,decimal? minPrice,decimal? maxPrice,string? tags,
 	    string? sort,int page,string? userId);

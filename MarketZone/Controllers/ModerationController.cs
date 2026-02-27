@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MarketZone.Controllers
 {
-	[Authorize(Roles = "Admin,Moderator")]
+	[Authorize(Policy = "CanModerateAds")]
 	public class ModerationController : Controller
 	{
 		private readonly IAdService adService;
