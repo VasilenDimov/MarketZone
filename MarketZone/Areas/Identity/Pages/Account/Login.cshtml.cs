@@ -94,6 +94,13 @@ namespace MarketZone.Areas.Identity.Pages.Account
 				return Page();
 			}
 
+			// Prevent login for soft-deleted accounts
+			if (user.IsDeleted)
+			{
+				ModelState.AddModelError(string.Empty, "This account has been deleted.");
+				return Page();
+			}
+
 			if (!user.EmailConfirmed)
 			{
 				ModelState.AddModelError(string.Empty, "You must verify your email before logging in.");
@@ -141,6 +148,12 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			if (user == null)
 			{
 				TempData["StatusMessage"] = "No account found with this email. No email was sent.";
+				return RedirectToPage("./Login", new { returnUrl, email });
+			}
+
+			if (user.IsDeleted)
+			{
+				TempData["StatusMessage"] = "This account has been deleted.";
 				return RedirectToPage("./Login", new { returnUrl, email });
 			}
 
@@ -196,6 +209,12 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			if (user == null)
 			{
 				TempData["StatusMessage"] = "No account found with this email. No email was sent.";
+				return RedirectToPage("./Login", new { returnUrl, email });
+			}
+
+			if (user.IsDeleted)
+			{
+				TempData["StatusMessage"] = "This account has been deleted.";
 				return RedirectToPage("./Login", new { returnUrl, email });
 			}
 

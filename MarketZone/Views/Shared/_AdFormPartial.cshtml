@@ -118,11 +118,13 @@
         <label asp-for="Tags"></label>
         <input asp-for="Tags" class="form-control" placeholder="e.g. phone, samsung" />
     </div>
-    @for (int i = 0; i < Model.ExistingImageUrls.Count; i++)
+    @foreach (var url in Model.ExistingImageUrls)
     {
         <input type="hidden"
-               name="ExistingImageUrls[@i]"
-               value="@Model.ExistingImageUrls[i]" />
+           name="ExistingImageUrls"
+           value="@url"
+           class="existing-image-input"
+           data-url="@url" />
     }
 <script>
     window.adFormConfig = {

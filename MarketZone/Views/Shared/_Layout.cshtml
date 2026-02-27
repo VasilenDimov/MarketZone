@@ -1,5 +1,6 @@
 ﻿@using MarketZone.Common
 @using MarketZone.Infrastructure.Identity
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,7 +19,6 @@
         <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
 
-                <!-- Home -->
                 <a class="navbar-brand"
                    asp-controller="Home"
                    asp-action="Index">
@@ -38,24 +38,21 @@
 
                     <ul class="navbar-nav flex-grow-1"></ul>
 
-                    <!-- Right side actions -->
                     <div class="d-flex align-items-center gap-3">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <!-- Chat (Inbox) -->
                             <a class="btn btn-outline-secondary d-flex align-items-center gap-1"
                                asp-controller="Messages"
                                asp-action="Inbox">
                                 💬 Chat
                             </a>
-                            <!-- Creating ads -->
+
                             <a class="btn btn-primary"
                                asp-controller="Ad"
                                asp-action="Create">
                                 + Create Ad
                             </a>
 
-                            <!-- User hover dropdown -->
                             <div class="user-dropdown d-flex align-items-center gap-2">
                                 <a href="#"
                                    class="d-flex align-items-center gap-2 text-decoration-none"
@@ -74,6 +71,17 @@
                                 </a>
 
                                 <ul class="dropdown-menu user-dropdown-menu shadow">
+                                    @if (User.IsInRole("Admin") || User.IsInRole("Moderator"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-controller="Moderation"
+                                               asp-action="Pending">
+                                                Moderation
+                                            </a>
+                                        </li>
+                                    }
+
                                     <li>
                                         <a class="dropdown-item"
                                            asp-controller="Ad"
@@ -81,6 +89,7 @@
                                             My Ads
                                         </a>
                                     </li>
+
                                     <li>
                                         <a class="dropdown-item"
                                            asp-controller="Favorites"
@@ -88,6 +97,7 @@
                                             My Favorites
                                         </a>
                                     </li>
+
                                     <li>
                                         <a class="dropdown-item"
                                            asp-area="Identity"
@@ -95,9 +105,11 @@
                                             Settings
                                         </a>
                                     </li>
+
                                     <li>
                                         <hr class="dropdown-divider" />
                                     </li>
+
                                     <li>
                                         <form asp-area="Identity"
                                               asp-page="/Account/Logout"
@@ -107,14 +119,12 @@
                                                 Logout
                                             </button>
                                         </form>
-
                                     </li>
                                 </ul>
                             </div>
                         }
                         else
                         {
-                            <!-- Guest actions -->
                             <a class="nav-link"
                                asp-area="Identity"
                                asp-page="/Account/Register">
@@ -132,7 +142,6 @@
         </nav>
     </header>
 
-    <!-- Main content -->
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -145,7 +154,6 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

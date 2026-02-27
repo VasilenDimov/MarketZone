@@ -12,15 +12,12 @@ namespace MarketZone.Controllers
 		private readonly IAdService adService;
 		private readonly ICategoryService categoryService;
 
-		public AdController(
-			IAdService adService,
-			ICategoryService categoryService)
+		public AdController(IAdService adService, ICategoryService categoryService)
 		{
 			this.adService = adService;
 			this.categoryService = categoryService;
 		}
 
-		// GET: /Ad/Create
 		[HttpGet]
 		public async Task<IActionResult> Create()
 		{
@@ -31,6 +28,7 @@ namespace MarketZone.Controllers
 
 			return View(model);
 		}
+
 		[AllowAnonymous]
 		[HttpGet]
 		public async Task<IActionResult> Details(int id)
@@ -39,7 +37,10 @@ namespace MarketZone.Controllers
 				? User.FindFirstValue(ClaimTypes.NameIdentifier)
 				: null;
 
-			var model = await adService.GetDetailsAsync(id, userId);
+			bool isModeratorOrAdmin = User.Identity.IsAuthenticated &&
+				(User.IsInRole("Admin") || User.IsInRole("Moderator"));
+
+			var model = await adService.GetDetailsAsync(id, userId, isModeratorOrAdmin);
 
 			if (model == null)
 				return NotFound();
@@ -47,37 +48,33 @@ namespace MarketZone.Controllers
 			return View(model);
 		}
 
-
 		[HttpGet]
 		public async Task<IActionResult> MyAds()
 		{
 			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
 			var ads = await adService.GetMyAdsAsync(userId);
-
 			return View(ads);
 		}
+
 		[HttpGet]
 		public async Task<IActionResult> Edit(int id)
 		{
 			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
 			var model = await adService.GetEditModelAsync(id, userId);
-
 			if (model == null)
-			{
 				return NotFound();
-			}
 
 			return View(model);
 		}
+
 		[HttpGet]
 		public async Task<IActionResult> GetCategoryPath(int categoryId)
 		{
 			var path = await categoryService.GetCategoryPathAsync(categoryId);
 			return Json(path);
 		}
-		// GET: /Ad/GetChildren
+
 		[HttpGet]
 		[AllowAnonymous]
 		public async Task<IActionResult> GetChildren(int? parentId)
@@ -86,7 +83,6 @@ namespace MarketZone.Controllers
 			return Json(categories);
 		}
 
-		// POST: /Ad/Create
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(AdCreateModel model)
@@ -99,10 +95,12 @@ namespace MarketZone.Controllers
 
 			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-			int adId = await adService.CreateAsync(model, userId);
+			await adService.CreateAsync(model, userId);
 
-			return RedirectToAction("Details", new { id = adId });
+			TempData["StatusMessage"] = "Your ad was submitted for review.";
+			return RedirectToAction(nameof(MyAds));
 		}
+
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Edit(AdCreateModel model)
@@ -116,12 +114,13 @@ namespace MarketZone.Controllers
 			string userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
 			bool updated = await adService.UpdateAsync(model, userId);
-
 			if (!updated)
 				return Forbid();
 
-			return RedirectToAction("Details", new { id = model.Id });
+			TempData["StatusMessage"] = "Your changes were saved and the ad was sent for review.";
+			return RedirectToAction(nameof(MyAds));
 		}
+
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Delete(int id)
@@ -129,12 +128,10 @@ namespace MarketZone.Controllers
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
 			var success = await adService.DeleteAsync(id, userId!);
-
 			if (!success)
 				return BadRequest();
 
 			return RedirectToAction(nameof(MyAds));
 		}
-
 	}
 }

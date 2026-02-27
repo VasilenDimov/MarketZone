@@ -1,5 +1,6 @@
 ﻿using MarketZone.Common;
 using MarketZone.Data;
+using MarketZone.Data.Enums;
 using MarketZone.Services.Interfaces;
 using MarketZone.ViewModels.Ad;
 using MarketZone.ViewModels.User;
@@ -49,10 +50,18 @@ namespace MarketZone.Services.Implementations
 				.Where(a => a.UserId == userId)
 				.AsQueryable();
 
+			var isOwner = !string.IsNullOrWhiteSpace(viewerId) && viewerId == userId;
+			if (!isOwner)
+			{
+				adsQuery = adsQuery.Where(a => a.Status == AdStatus.Approved);
+			}
+
 			if (!string.IsNullOrWhiteSpace(search))
+			{
 				adsQuery = adsQuery.Where(a =>
 					a.Title.Contains(search) ||
 					a.Description.Contains(search));
+			}
 
 			if (!string.IsNullOrWhiteSpace(address))
 			{
@@ -96,8 +105,7 @@ namespace MarketZone.Services.Implementations
 				if (tagList.Count > 0)
 				{
 					adsQuery = adsQuery.Where(a =>
-						a.AdTags.Any(at =>
-							tagList.Contains(at.Tag.Name.ToLower())));
+						a.AdTags.Any(at => tagList.Contains(at.Tag.Name.ToLower())));
 				}
 			}
 
@@ -119,7 +127,7 @@ namespace MarketZone.Services.Implementations
 					Id = a.Id,
 					Title = a.Title,
 					Price = a.Price,
-					Currency = a.Currency,
+					Currency = Currency.EUR,
 					CreatedOn = a.CreatedOn,
 					MainImageUrl = a.Images
 						.OrderBy(i => i.Id)
@@ -155,14 +163,17 @@ namespace MarketZone.Services.Implementations
 					.FirstOrDefaultAsync();
 			}
 
+			var displayName = user.IsDeleted ? "Deleted user" : user.UserName!;
+			var profilePic = string.IsNullOrWhiteSpace(user.ProfilePictureUrl)
+				? AppConstants.DefaultAvatarUrl
+				: user.ProfilePictureUrl;
+
 			return new UserProfileViewModel
 			{
 				UserId = user.Id,
-				UserName = user.UserName!,
-				Email = user.Email!,
-				ProfilePictureUrl = string.IsNullOrWhiteSpace(user.ProfilePictureUrl)
-					? AppConstants.DefaultAvatarUrl
-					: user.ProfilePictureUrl,
+				UserName = displayName,
+				Email = user.IsDeleted ? string.Empty : (user.Email ?? string.Empty),
+				ProfilePictureUrl = profilePic,
 				CreatedOn = user.CreatedOn,
 				LastOnlineOn = user.LastOnlineOn,
 

@@ -1,0 +1,140 @@
+﻿@model MarketZone.ViewModels.Ad.AdSearchViewModel
+
+@{
+    ViewData["Title"] = "Pending ads";
+
+    // Return URL back to THIS moderation list (keeps filters + page)
+    var returnUrl = Url.Action(
+        "Pending",
+        "Moderation",
+        new
+        {
+            search = Model.SearchTerm,
+            address = Model.Address,
+            categoryId = Model.CategoryId,
+            minPrice = Model.MinPrice,
+            maxPrice = Model.MaxPrice,
+            tags = Model.Tags,
+            sort = Model.Sort,
+            page = Model.CurrentPage
+        });
+}
+
+<h3>Pending ads</h3>
+<partial name="_StatusMessage" />
+
+<form method="get"
+      asp-controller="Moderation"
+      asp-action="Pending"
+      class="mb-3">
+    <partial name="_SearchFilters" model="Model" />
+</form>
+
+@if (Model.Ads == null || !Model.Ads.Any())
+{
+    <div class="alert alert-secondary">No pending ads.</div>
+}
+else
+{
+    <table class="table align-middle">
+        <thead>
+            <tr>
+                <th>Ad</th>
+                <th>Price</th>
+                <th>Created</th>
+                <th style="width: 340px;"></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var ad in Model.Ads)
+            {
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            @if (!string.IsNullOrWhiteSpace(ad.MainImageUrl))
+                            {
+                                <img src="@ad.MainImageUrl"
+                                     style="width:56px;height:56px;object-fit:cover;border-radius:8px;" />
+                            }
+                            <div>
+                                <div class="fw-semibold">@ad.Title</div>
+                                <div class="text-muted small">ID: @ad.Id</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>@ad.Price €</td>
+                    <td>@ad.CreatedOn.ToString("yyyy-MM-dd")</td>
+                    <td class="text-end">
+                        <a class="btn btn-outline-primary btn-sm"
+                           asp-controller="Ad"
+                           asp-action="Details"
+                           asp-route-id="@ad.Id"
+                           asp-route-returnUrl="@returnUrl">
+                            Details
+                        </a>
+
+                        <form method="post" asp-action="Approve" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@ad.Id" />
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+                            <button class="btn btn-success btn-sm" type="submit">Approve</button>
+                        </form>
+
+                        <button type="button"
+                                class="btn btn-danger btn-sm"
+                                data-bs-toggle="modal"
+                                data-bs-target="#rejectModal"
+                                data-adid="@ad.Id">
+                            Reject
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-action="Reject">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" id="rejectAdId" name="id" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Reject ad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <label class="form-label">Reason</label>
+                    <textarea name="reason" class="form-control" rows="3" maxlength="300"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Reject</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/filters.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        const rejectModal = document.getElementById('rejectModal');
+        rejectModal?.addEventListener('show.bs.modal', event => {
+            const button = event.relatedTarget;
+            const adId = button.getAttribute('data-adid');
+            document.getElementById('rejectAdId').value = adId;
+        });
+    </script>
+
+    <script src="~/js/search-filters.js" asp-append-version="true"></script>
+}

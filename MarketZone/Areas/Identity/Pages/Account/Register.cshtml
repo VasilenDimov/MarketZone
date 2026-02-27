@@ -51,6 +51,12 @@
                     data-cooldown-seconds="30">
                 Resend email confirmation
             </button>
+            <div class="mt-3 text-center">
+                <a asp-page="./Login"
+                   asp-route-returnUrl="@Model.ReturnUrl">
+                    Already have an account? Log in
+                </a>
+            </div>
         </form>
     </div>
 

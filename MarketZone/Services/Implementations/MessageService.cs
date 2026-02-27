@@ -56,7 +56,7 @@ namespace MarketZone.Services.Implementations
 				.Select(m => new ChatMessageViewModel
 				{
 					SenderId = m.SenderId,
-					SenderName = m.Sender.UserName!,
+					SenderName = m.Sender.GetDisplayName()!,
 					SenderProfileImage = string.IsNullOrWhiteSpace(m.Sender.ProfilePictureUrl)
 						? AppConstants.DefaultAvatarUrl
 						: m.Sender.ProfilePictureUrl,

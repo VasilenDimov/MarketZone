@@ -235,15 +235,23 @@
             const box = document.createElement("div");
             box.className = "image-box";
             box.innerHTML = `
-                <img src="${url}">
-                <div class="image-actions"><button type="button">🗑</button></div>`;
+        <img src="${url}">
+        <div class="image-actions"><button type="button">🗑</button></div>`;
+
             box.querySelector("button").onclick = e => {
                 e.stopPropagation();
+
+                const urlToRemove = url;
+
                 existingImages.splice(index, 1);
-                document.querySelectorAll("input[name^='ExistingImageUrls']")[index]?.remove();
+
+                const escaped = CSS.escape(urlToRemove);
+                document.querySelector(`input.existing-image-input[data-url="${escaped}"]`)?.remove();
+
                 renderGrid();
                 validateAll();
             };
+
             grid.appendChild(box);
         });
 

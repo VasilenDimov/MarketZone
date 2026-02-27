@@ -2,16 +2,17 @@
 
 using System.ComponentModel.DataAnnotations;
 using MarketZone.Data.Models;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Authentication;
 
 namespace MarketZone.Areas.Identity.Pages.Account.Manage
 {
 	public class DeletePersonalDataModel : PageModel
 	{
 		private const string ExternalDeleteProvider = "Google";
+		private const string DefaultAvatarUrl = "/images/default-avatar.png";
 
 		private readonly UserManager<User> _userManager;
 		private readonly SignInManager<User> _signInManager;
@@ -58,7 +59,6 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 
 			if (!RequirePassword)
 			{
-				// No password -> must re-auth with Google instead of deleting here
 				return RedirectToPage();
 			}
 
@@ -70,7 +70,7 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 
 			var userId = await _userManager.GetUserIdAsync(user);
 
-			var result = await _userManager.DeleteAsync(user);
+			var result = await SoftDeleteUserAsync(user);
 			if (!result.Succeeded)
 				throw new InvalidOperationException("Unexpected error occurred deleting user.");
 
@@ -89,7 +89,6 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 
 			RequirePassword = await _userManager.HasPasswordAsync(user);
 
-			// If they actually have a password, don't do external delete flow
 			if (RequirePassword)
 				return RedirectToPage();
 
@@ -120,7 +119,6 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 
 			RequirePassword = await _userManager.HasPasswordAsync(user);
 
-			// If they now have a password, just go back to normal flow
 			if (RequirePassword)
 				return RedirectToPage();
 
@@ -140,7 +138,6 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 				return Page();
 			}
 
-			// Verify the external login used in the callback is linked to THIS signed-in user
 			var linkedLogins = await _userManager.GetLoginsAsync(user);
 			bool isLinked = linkedLogins.Any(l =>
 				l.LoginProvider.Equals(info.LoginProvider, StringComparison.OrdinalIgnoreCase) &&
@@ -157,7 +154,7 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 
 			var userId = await _userManager.GetUserIdAsync(user);
 
-			var result = await _userManager.DeleteAsync(user);
+			var result = await SoftDeleteUserAsync(user);
 			if (!result.Succeeded)
 				throw new InvalidOperationException("Unexpected error occurred deleting user.");
 
@@ -174,6 +171,49 @@ namespace MarketZone.Areas.Identity.Pages.Account.Manage
 			if (user == null) return;
 
 			RequirePassword = await _userManager.HasPasswordAsync(user);
+		}
+
+		private async Task<IdentityResult> SoftDeleteUserAsync(User user)
+		{
+			if (user.IsDeleted)
+				return IdentityResult.Success;
+
+			user.IsDeleted = true;
+			user.DeletedOn = DateTime.UtcNow;
+
+			user.ProfilePictureUrl = DefaultAvatarUrl;
+
+			user.PhoneNumber = null;
+			user.PhoneNumberConfirmed = false;
+
+			user.TwoFactorEnabled = false;
+			user.EmailConfirmed = false;
+
+			user.LockoutEnabled = true;
+			user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+
+			var userId = await _userManager.GetUserIdAsync(user);
+			var deletedUserName = $"deleted_{userId}";
+			var deletedEmail = $"deleted_{userId}@deleted.local";
+
+			var setUserName = await _userManager.SetUserNameAsync(user, deletedUserName);
+			if (!setUserName.Succeeded) return setUserName;
+
+			var setEmail = await _userManager.SetEmailAsync(user, deletedEmail);
+			if (!setEmail.Succeeded) return setEmail;
+
+			user.PasswordHash = null;
+
+			var logins = await _userManager.GetLoginsAsync(user);
+			foreach (var login in logins)
+			{
+				var removeLoginResult = await _userManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
+				if (!removeLoginResult.Succeeded) return removeLoginResult;
+			}
+
+			await _userManager.UpdateSecurityStampAsync(user);
+
+			return await _userManager.UpdateAsync(user);
 		}
 	}
 }

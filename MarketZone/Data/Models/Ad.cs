@@ -44,6 +44,12 @@ namespace MarketZone.Data.Models
 		[ForeignKey(nameof(UserId))]
 		public User User { get; set; } = null!;
 
+		public AdStatus Status { get; set; } = AdStatus.Pending;
+		public DateTime? ReviewedOn { get; set; }
+		public string? ReviewedByUserId { get; set; }
+		public User? ReviewedByUser { get; set; }
+		public string? RejectionReason { get; set; }
+
 		public ICollection<Message> Messages { get; set; } = new List<Message>();
 		public ICollection<AdImage> Images { get; set; } = new List<AdImage>();
 		public ICollection<AdTag> AdTags { get; set; } = new List<AdTag>();

@@ -16,5 +16,7 @@ namespace MarketZone.ViewModels.Ad
 
 		public DateTime CreatedOn { get; set; }
 		public bool CanEdit { get; set; }
+		public AdStatus Status { get; set; }
+		public string? RejectionReason { get; set; }
 	}
 }

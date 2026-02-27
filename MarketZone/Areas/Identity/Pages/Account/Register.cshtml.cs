@@ -40,6 +40,8 @@ namespace MarketZone.Areas.Identity.Pages.Account
 		[BindProperty]
 		public InputModel Input { get; set; }
 
+		public string ReturnUrl { get; set; }
+
 		public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
 		[TempData]
@@ -64,8 +66,9 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			public string ConfirmPassword { get; set; }
 		}
 
-		public async Task OnGetAsync(string email = null)
+		public async Task OnGetAsync(string returnUrl = null, string email = null)
 		{
+			ReturnUrl = returnUrl ?? Url.Content("~/");
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
 			if (!string.IsNullOrWhiteSpace(email))
@@ -75,8 +78,9 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			}
 		}
 
-		public async Task<IActionResult> OnPostAsync()
+		public async Task<IActionResult> OnPostAsync(string returnUrl = null)
 		{
+			ReturnUrl = returnUrl ?? Url.Content("~/");
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
 			if (!ModelState.IsValid)
@@ -115,11 +119,12 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			await SendConfirmationEmailAsync(user, Input.Email);
 			InfoMessage = "Confirmation email sent. Please check your email.";
 
-			return RedirectToPage("./Register", new { email = Input.Email });
+			return RedirectToPage("./Register", new { returnUrl = ReturnUrl, email = Input.Email });
 		}
 
-		public async Task<IActionResult> OnPostResendConfirmationAsync()
+		public async Task<IActionResult> OnPostResendConfirmationAsync(string returnUrl = null)
 		{
+			ReturnUrl = returnUrl ?? Url.Content("~/");
 			ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
 			ModelState.Remove("Input.Password");
@@ -140,20 +145,20 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			if (user == null)
 			{
 				InfoMessage = "No account found with this email. No email was sent.";
-				return RedirectToPage("./Register", new { email });
+				return RedirectToPage("./Register", new { returnUrl = ReturnUrl, email });
 			}
 
 			var logins = await _userManager.GetLoginsAsync(user);
 			if (logins.Any())
 			{
 				InfoMessage = "This account uses Google sign-in. Email confirmation resend is not available.";
-				return RedirectToPage("./Register", new { email });
+				return RedirectToPage("./Register", new { returnUrl = ReturnUrl, email });
 			}
 
 			if (user.EmailConfirmed)
 			{
 				InfoMessage = "This email is already confirmed. Please log in.";
-				return RedirectToPage("./Register", new { email });
+				return RedirectToPage("./Register", new { returnUrl = ReturnUrl, email });
 			}
 
 			await SendConfirmationEmailAsync(user, email);
@@ -163,7 +168,7 @@ namespace MarketZone.Areas.Identity.Pages.Account
 			TempData["StartCooldownKey"] = "register_resend";
 			TempData["StartCooldownSeconds"] = 30;
 
-			return RedirectToPage("./Register", new { email });
+			return RedirectToPage("./Register", new { returnUrl = ReturnUrl, email });
 		}
 
 		private async Task SendConfirmationEmailAsync(User user, string email)

@@ -76,6 +76,12 @@ namespace MarketZone.Data
 				.WithMany(t => t.AdTags)
 				.HasForeignKey(at => at.TagId);
 
+			builder.Entity<Ad>()
+				.HasOne(a => a.ReviewedByUser)
+				.WithMany()
+				.HasForeignKey(a => a.ReviewedByUserId)
+				.OnDelete(DeleteBehavior.Restrict);
+
 			builder.Entity<Category>().HasData(
                	new Category { Id = 1, Name = "Real Estate", ParentCategoryId = null },
 	            new Category { Id = 2, Name = "Sales", ParentCategoryId = 1 },

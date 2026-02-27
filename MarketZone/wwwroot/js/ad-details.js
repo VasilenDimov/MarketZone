@@ -12,7 +12,7 @@
     /* Require login */
     window.requireLogin = function () {
         alert("You need an account to use this feature.");
-        window.location.href = "/Identity/Account/Login";
+        window.location.href = "/Identity/Account/Register";
     };
 
     /* Favorites */

@@ -23,6 +23,8 @@ namespace MarketZone.ViewModels.Ad
 		public double? Longitude { get; set; }
 		public DateTime CreatedOn { get; set; }
 
+		public AdStatus Status { get; set; }
+
 		public string SellerId { get; set; } = null!;
 		public string SellerName { get; set; } = null!;
 		public string SellerProfilePictureUrl { get; set; } = null!;

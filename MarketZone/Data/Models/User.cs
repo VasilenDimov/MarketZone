@@ -8,6 +8,10 @@ namespace MarketZone.Data.Models
 		public string? ProfilePictureUrl { get; set; }
 		public DateTime CreatedOn { get; set; }
 		public DateTime? LastOnlineOn { get; set; }
+
+		public bool IsDeleted { get; set; }
+		public DateTime? DeletedOn { get; set; }
+
 		public ICollection<Ad> Ads { get; set; } = new List<Ad>();
 		public ICollection<Message> SentMessages { get; set; } = new List<Message>();
 		public ICollection<Message> ReceivedMessages { get; set; } = new List<Message>();

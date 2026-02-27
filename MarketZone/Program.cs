@@ -9,8 +9,8 @@ using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
-using System.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,7 +26,8 @@ builder.Services
 		options.User.RequireUniqueEmail = true;
 	})
 	.AddRoles<IdentityRole>()
-	.AddEntityFrameworkStores<ApplicationDbContext>();
+	.AddEntityFrameworkStores<ApplicationDbContext>()
+	.AddDefaultTokenProviders();
 
 // External login
 builder.Services.AddAuthentication()
@@ -40,12 +41,17 @@ builder.Services.AddAuthentication()
 			OnRedirectToAuthorizationEndpoint = context =>
 			{
 				var uri = new Uri(context.RedirectUri);
-				var query = HttpUtility.ParseQueryString(uri.Query);
+				var query = QueryHelpers.ParseQuery(uri.Query)
+					.ToDictionary(
+						kvp => kvp.Key,
+						kvp => (string?)kvp.Value.ToString()
+					);
 
-				query.Remove("prompt");
-				query.Add("prompt", "select_account");
+				query["prompt"] = "select_account";
 
-				var newUrl = $"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}?{query}";
+				var newUrl = QueryHelpers.AddQueryString(
+					$"{uri.Scheme}://{uri.Authority}{uri.AbsolutePath}",
+					query);
 
 				context.Response.Redirect(newUrl);
 				return Task.CompletedTask;
@@ -79,6 +85,22 @@ builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<User>, AppUserClaimsPrincipalFactory>();
 
 var app = builder.Build();
+
+// Seed roles
+using (var scope = app.Services.CreateScope())
+{
+	var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+	string[] roles = { "Admin", "Moderator" };
+
+	foreach (var role in roles)
+	{
+		if (!await roleManager.RoleExistsAsync(role))
+		{
+			await roleManager.CreateAsync(new IdentityRole(role));
+		}
+	}
+}
 
 // Global exception handling
 app.UseMiddleware<ExceptionHandlingMiddleware>();

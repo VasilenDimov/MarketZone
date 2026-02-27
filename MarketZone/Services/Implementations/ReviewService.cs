@@ -66,7 +66,7 @@ namespace MarketZone.Services.Implementations
 					Comment = r.Comment,
 					CreatedOn = r.CreatedOn,
 
-					ReviewerName = r.Reviewer.UserName!,
+					ReviewerName = r.Reviewer.GetDisplayName()!,
 					ReviewerProfilePictureUrl = string.IsNullOrWhiteSpace(r.Reviewer.ProfilePictureUrl)
 					     ? AppConstants.DefaultAvatarUrl
 					     : r.Reviewer.ProfilePictureUrl,

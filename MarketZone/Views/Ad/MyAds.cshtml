@@ -1,6 +1,12 @@
-﻿@model IEnumerable<MarketZone.ViewModels.Ad.AdListItemViewModel>
+﻿@using MarketZone.Data.Enums
+@model IEnumerable<MarketZone.ViewModels.Ad.AdListItemViewModel>
+
+@{
+    ViewData["Title"] = "My Ads";
+}
 
 <h2>My Ads</h2>
+<partial name="_StatusMessage" />
 
 @if (Model == null || !Model.Any())
 {
@@ -16,10 +22,34 @@ else
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
 
-                    <!-- Ad content -->
-                    <partial name="_AdCardPartial" model="ad" />
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="fw-semibold">Status</div>
 
-                    <!-- Actions -->
+                            @if (ad.Status == AdStatus.Pending)
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                            else if (ad.Status == AdStatus.Approved)
+                            {
+                                <span class="badge bg-success">Approved</span>
+                            }
+                            else if (ad.Status == AdStatus.Rejected)
+                            {
+                                <span class="badge bg-danger">Rejected</span>
+                            }
+                        </div>
+
+                        @if (ad.Status == AdStatus.Rejected && !string.IsNullOrWhiteSpace(ad.RejectionReason))
+                        {
+                            <div class="text-danger small mb-3">
+                                Reason: @ad.RejectionReason
+                            </div>
+                        }
+
+                        <partial name="_AdCardPartial" model="ad" />
+                    </div>
+
                     <div class="card-footer d-flex gap-2 bg-white border-0">
                         <a asp-controller="Ad"
                            asp-action="Details"
@@ -45,7 +75,6 @@ else
                                 Delete
                             </button>
                         </form>
-
                     </div>
 
                 </div>
