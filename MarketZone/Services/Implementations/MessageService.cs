@@ -39,8 +39,17 @@ namespace MarketZone.Services.Implementations
 			var otherUser = await context.Users
 				.AsNoTracking()
 				.Where(u => u.Id == otherUserId)
-				.Select(u => new { u.Id, u.UserName, u.ProfilePictureUrl })
+				.Select(u => new
+				{
+					u.Id,
+					u.UserName,
+					u.ProfilePictureUrl,
+					u.IsDeleted
+				})
 				.FirstOrDefaultAsync();
+
+			if (otherUser == null)
+				throw new ArgumentException("User not found");
 
 			if (otherUser == null)
 				return null;
@@ -73,7 +82,7 @@ namespace MarketZone.Services.Implementations
 				AdId = adId,
 				ChatId = $"ad_{adId}_u_{buyerId}",
 				OtherUserId = otherUserId,
-				OtherUserName = otherUser.UserName ?? "Unknown user",
+				OtherUserName = otherUser.IsDeleted ? "Deleted user" : (otherUser.UserName ?? "User"),
 				OtherUserProfilePictureUrl = string.IsNullOrWhiteSpace(otherUser.ProfilePictureUrl)
 					? AppConstants.DefaultAvatarUrl
 					: otherUser.ProfilePictureUrl,
@@ -170,14 +179,19 @@ namespace MarketZone.Services.Implementations
 					AdId = m.AdId,
 					AdTitle = m.Ad.Title,
 					OtherUserId = m.SenderId == userId ? m.ReceiverId : m.SenderId,
+
 					OtherUserName = m.SenderId == userId
-						? m.Receiver.UserName!
-						: m.Sender.UserName!,
+						? (m.Receiver.IsDeleted ? "Deleted user" : (m.Receiver.UserName ?? "User"))
+						: (m.Sender.IsDeleted ? "Deleted user" : (m.Sender.UserName ?? "User")),
+
 					OtherUserProfilePictureUrl = m.SenderId == userId
-	               ? (string.IsNullOrWhiteSpace(m.Receiver.ProfilePictureUrl)
-				   ? AppConstants.DefaultAvatarUrl : m.Receiver.ProfilePictureUrl)
-	               : (string.IsNullOrWhiteSpace(m.Sender.ProfilePictureUrl)
-				   ? AppConstants.DefaultAvatarUrl : m.Sender.ProfilePictureUrl),
+						? (string.IsNullOrWhiteSpace(m.Receiver.ProfilePictureUrl)
+							? AppConstants.DefaultAvatarUrl
+							: m.Receiver.ProfilePictureUrl)
+						: (string.IsNullOrWhiteSpace(m.Sender.ProfilePictureUrl)
+							? AppConstants.DefaultAvatarUrl
+							: m.Sender.ProfilePictureUrl),
+
 					LastMessage = m.Content,
 					LastMessageTime = m.SentOn
 				})

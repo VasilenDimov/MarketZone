@@ -54,8 +54,6 @@ namespace MarketZone.Services.Implementations
 			if (user == null)
 				throw new ArgumentException("User not found");
 
-			// ✅ Role flags for admin actions on profile page
-			// (use UserManager here; it’s the correct source of truth for roles)
 			var roleUser = await userManager.FindByIdAsync(userId);
 			bool isAdmin = false;
 			bool isModerator = false;

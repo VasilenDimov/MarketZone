@@ -36,7 +36,6 @@ body {
     text-align: start;
 }
 
-/* User dropdown */
 .user-dropdown {
     position: relative;
 }
@@ -44,14 +43,33 @@ body {
 .user-dropdown-menu {
     display: none;
     position: absolute;
-    top: 110%;
+    top: calc(100% + 8px);
     right: 0;
     min-width: 180px;
     border-radius: 8px;
     z-index: 1050;
 }
 
-.user-dropdown:hover .user-dropdown-menu {
+.user-dropdown.open .user-dropdown-menu {
     display: block;
 }
 
+.user-dropdown-toggle {
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+}
+
+.dropdown-caret {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #444;
+    margin-left: 4px;
+    transition: transform 150ms ease;
+}
+
+.user-dropdown.open .dropdown-caret {
+    transform: rotate(180deg);
+}

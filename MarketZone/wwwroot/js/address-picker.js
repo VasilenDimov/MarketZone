@@ -38,7 +38,7 @@
             return;
         }
 
-        if (query.length < 3) {
+        if (query.length < 1) {
             closeSuggestions();
             return;
         }
@@ -206,7 +206,6 @@
         showMap(parseFloat(existingLat), parseFloat(existingLng));
         confirmedBadge?.classList.add("show");
 
-        // THIS is the key for your submit button validation on Edit
         window.addressConfirmed = true;
         window.validateAll?.();
     }

@@ -53,12 +53,11 @@
 								+ Create Ad
 							</a>
 
-							<div class="user-dropdown d-flex align-items-center gap-2">
-								<a href="#"
-								   class="d-flex align-items-center gap-2 text-decoration-none"
-								   aria-haspopup="true"
-								   aria-expanded="false">
-
+							<div class="user-dropdown d-flex align-items-center gap-2 position-relative">
+								<button type="button"
+										class="user-dropdown-toggle d-flex align-items-center gap-2 text-decoration-none btn btn-link p-0"
+										aria-haspopup="true"
+										aria-expanded="false">
 									<img src="@(User.FindFirst(AppUserClaimsPrincipalFactory.ProfilePictureUrlClaimType)?.Value ?? AppConstants.DefaultAvatarUrl)"
 										 class="rounded-circle"
 										 width="32"
@@ -68,7 +67,9 @@
 									<span class="text-dark small">
 										@User.Identity!.Name
 									</span>
-								</a>
+
+									<span class="dropdown-caret" aria-hidden="true"></span>
+								</button>
 
 								<ul class="dropdown-menu user-dropdown-menu shadow">
 									@if (User.IsInRole("Admin") || User.IsInRole("Moderator"))
